@@ -30,9 +30,12 @@ ca = con.table("mydata")
 
 # session state for syncing app 
 for key in [
-    'richness', 'rsr', 'irrecoverable_carbon', 'manageable_carbon',
-    'fire', 'rxburn', 'disadvantaged_communities',
-    'svi']:
+    "ACE_amphibian", "ACE_reptile", "ACE_bird",
+    "ACE_mammal", "ACE_rare_amphibian", "ACE_rare_reptile",
+    "ACE_rare_bird", "ACE_rare_mammal", "ACE_end_amphibian",
+    "ACE_end_reptile", "ACE_end_bird", "ACE_end_mammal",
+    "plant", "end_plant", "farmlands", "grazing",
+    "DAC", "low-income", "fire"]:
     if key not in st.session_state:
         st.session_state[key] = False
 
@@ -127,6 +130,35 @@ st.divider()
            
 m = leafmap.Map(style="positron")
 #############
+with st.popover("💬 Example Queries"):
+    '''
+    Mapping queries:        
+    - Show me all GAP 1 and 2 lands managed by The Nature Conservancy.
+    - Show me Joshua Tree National Park.
+    - Show me all protected lands that have experienced forest fire over at least 50% of their area.
+    - Show me the biggest protected area in California. 
+    - Show me all land managed by the United States Forest Service. 
+    '''
+    
+    '''
+    Exploratory data queries:
+    - What is a GAP code?
+    - What percentage of 30x30 conserved land has been impacted by wildfire?
+    - What is the total acreage of areas designated as easements?
+    - Who manages the land with the highest percentage of wetlands?
+    '''
+    
+    st.info('If the map appears blank, queried data may be too small to see at the default zoom level. Check the table below the map, as query results will also be displayed there.', icon="ℹ️")
+
+
+chatbot_container = st.container()
+with chatbot_container:
+    llm_choice_col, llm_input_col = st.columns([1,8])
+
+    with llm_choice_col:
+        with st.popover("LLM"):
+            llm_options = ['Llama-3.3-70B-Instruct-AWQ']
+            llm_choice = st.radio("LLM:", llm_options, key = "llm", help = "Select which model to use.")   
 
 
 ##### Chatbot stuff 
@@ -146,7 +178,9 @@ from langchain_openai import ChatOpenAI
 #llm = ChatOpenAI(model = "kosbu/Llama-3.3-70B-Instruct-AWQ", api_key = st.secrets['CIRRUS_LLM_API_KEY'], base_url = "https://llm.cirrus.carlboettiger.info/v1/",  temperature=0)
 # llm = ChatOpenAI(model="gpt-4", temperature=0)
 # llm = ChatOpenAI(model = "llama3", api_key=st.secrets['NRP_API_KEY'], base_url = "https://llm.nrp-nautilus.io/",  temperature=0)
-llm = ChatOpenAI(model = "groq-tools", api_key=st.secrets['NRP_API_KEY'], base_url = "https://llm.nrp-nautilus.io/",  temperature=0)
+if llm_choice == 'Llama-3.3-70B-Instruct-AWQ':
+    llm = ChatOpenAI(model = "groq-tools", api_key=st.secrets['NRP_API_KEY'], base_url = "https://llm.nrp-nautilus.io/",  temperature=0)
+
 # llm = ChatOpenAI(model = "llama3-sdsc", api_key=st.secrets['NRP_API_KEY'], base_url = "https://llm.nrp-nautilus.io/",  temperature=0)
 
 managers = ca.sql("SELECT DISTINCT manager FROM mydata;").execute()
@@ -162,10 +196,14 @@ prompt = ChatPromptTemplate.from_messages([
 structured_llm = llm.with_structured_output(SQLResponse)
 few_shot_structured_llm = prompt | structured_llm
 
+
 chatbot_toggles = {key: False for key in [
-    'richness', 'rsr', 'irrecoverable_carbon', 'manageable_carbon',
-    'fire', 'rxburn', 'disadvantaged_communities',
-    'svi', 
+    "ACE_amphibian", "ACE_reptile", "ACE_bird",
+    "ACE_mammal", "ACE_rare_amphibian", "ACE_rare_reptile",
+    "ACE_rare_bird", "ACE_rare_mammal", "ACE_end_amphibian",
+    "ACE_end_reptile", "ACE_end_bird", "ACE_end_mammal",
+    "plant", "end_plant", "farmlands", "grazing",
+    "DAC", "low-income", "fire"
 ]}
 
 def run_sql(query,color_choice):
@@ -222,7 +260,7 @@ filters = {}
 with st.sidebar:
     with st.popover("ℹ️ Help"):
         '''
-        - ❌ Safari/iOS not yet supported. For Safari/iOS users, try [this version](https://huggingface.co/spaces/boettiger-lab/ca-30x30-folium) with similar functionality. 
+        - ❌ Safari/iOS not yet supported.  
         - 📊 Use this sidebar to color-code the map by different attributes **(Group by)**, toggle on data layers and view summary charts **(Data Layers)**, or filter data **(Filters)**.
         - 💬 For a more tailored experience, query our dataset of protected areas and their precomputed mean values for each of the displayed layers, using the experimental chatbot. The language model tries to answer natural language questions by drawing only from curated datasets (listed below).
         '''
@@ -236,112 +274,187 @@ with st.sidebar:
 
 
 ##### Chatbot 
-with st.container():
-
-    with st.popover("💬 Example Queries"):
-        '''
-        Mapping queries:        
-        - Show me areas open to the public that are in the top 10% of species richness.
-        - Show me all GAP 1 and 2 lands managed by The Nature Conservancy.
-        - Show me state land smaller than 1000 acres, with a social vulnerability index in the 90th percentile.
-        - Show me GAP 3 and 4 lands managed by BLM in the top 5% of range-size rarity.
-        - Show me Joshua Tree National Park.
-        - Show me all protected lands that have experienced forest fire over at least 50% of their area.
-        - Show me the biggest protected area in California. 
-        - Show me all land managed by the United States Forest Service. 
-        '''
-        
-        '''
-        Exploratory data queries:
-        - What is a GAP code?
-        - What percentage of 30x30 conserved land has been impacted by wildfire?
-        - What is the total acreage of areas designated as easements?
-        - Who manages the land with the highest amount of irrecoverable carbon and highest social vulnerability index? 
-        '''
-        
-        st.info('If the map appears blank, queried data may be too small to see at the default zoom level. Check the table below the map, as query results will also be displayed there.', icon="ℹ️")
 
 
-    example_query = "👋 Input query here"
-    if prompt := st.chat_input(example_query, key="chain", max_chars = 300):
-        st.chat_message("user").write(prompt)
 
-        try:
-            with st.chat_message("assistant"):
-                with st.spinner("Invoking query..."):
 
-                    out = run_sql(prompt,color_choice)
-                    if ("id" in out.columns) and (not out.empty):
-                        ids = out['id'].tolist()
-                        cols = out.columns.tolist()
-                        chatbot_toggles = {
-                                key: (True if key in cols else value) 
-                                for key, value in chatbot_toggles.items()
-                            }
-                        for key, value in chatbot_toggles.items():
-                            st.session_state[key] = value  # Update session state
-                    else:
-                        ids = []
-        except Exception as e:
-            error_message = f"ERROR: An unexpected error has occured with the following query:\n\n*{prompt}*\n\n which raised the following error:\n\n{type(e)}: {e}\n"
-            st.warning("Please try again with a different query", icon="⚠️")
-            st.write(error_message)
-            st.stop()
-
+with chatbot_container:
+    with llm_input_col:
+    
+       
+    
+        example_query = "👋 Input query here"
+        if prompt := st.chat_input(example_query, key="chain", max_chars = 300):
+            st.chat_message("user").write(prompt)
+    
+            try:
+                with st.chat_message("assistant"):
+                    with st.spinner("Invoking query..."):
+    
+                        out = run_sql(prompt,color_choice)
+                        if ("id" in out.columns) and (not out.empty):
+                            ids = out['id'].tolist()
+                            cols = out.columns.tolist()
+                            chatbot_toggles = {
+                                    key: (True if key in cols else value) 
+                                    for key, value in chatbot_toggles.items()
+                                }
+                            for key, value in chatbot_toggles.items():
+                                st.session_state[key] = value  # Update session state
+                        else:
+                            ids = []
+            except Exception as e:
+                error_message = f"ERROR: An unexpected error has occured with the following query:\n\n*{prompt}*\n\n which raised the following error:\n\n{type(e)}: {e}\n"
+                st.warning("Please try again with a different query", icon="⚠️")
+                st.write(error_message)
+                st.stop()
+    
 
 #### Data layers 
 with st.sidebar:  
     st.markdown('<p class = "medium-font-sidebar"> Data Layers:</p>', help = "Select data layers to visualize on the map. Summary charts will update based on the displayed layers.", unsafe_allow_html= True)
-    # Biodiversity Section 
-    with st.expander("🦜 Biodiversity"):
-        a_bio = st.slider("transparency", 0.0, 1.0, 0.1, key = "biodiversity")
-        show_richness = st.toggle("Species Richness", key = "richness", value=chatbot_toggles['richness'])
-        show_rsr = st.toggle("Range-Size Rarity", key = "rsr", value=chatbot_toggles['rsr'])
-        
-        if show_richness:
-            m.add_tile_layer(url_sr, name="MOBI Species Richness",opacity=a_bio)
-        if show_rsr:           
-            m.add_tile_layer(url_rsr, name="MOBI Range-Size Rarity", opacity=a_bio)
+    with st.expander("🐸 Amphibian"):
+        a_amph = st.slider("transparency", 0.0, 1.0, 0.1, key = "a_amph")
+        show_ACE_amph = st.toggle("Amphibian Richness", key = "ACE_amphibian")
+        show_ACE_rare_amph = st.toggle("Rare Amphibian Richness", key = "ACE_rare_amphibian")
+        show_ACE_end_amph = st.toggle("Endemic Amphibian Richness", key = "ACE_end_amphibian")
 
-    #Carbon Section
-    with st.expander("⛅ Carbon & Climate"):
-        a_climate = st.slider("transparency", 0.0, 1.0, 0.15, key = "climate")
-        show_irrecoverable_carbon = st.toggle("Irrecoverable Carbon", key = "irrecoverable_carbon", value=chatbot_toggles['irrecoverable_carbon'])
-        show_manageable_carbon = st.toggle("Manageable Carbon", key = "manageable_carbon", value=chatbot_toggles['manageable_carbon'])
-        
-        if show_irrecoverable_carbon:
-            m.add_cog_layer(url_irr_carbon, palette="reds", name="Irrecoverable Carbon", opacity = a_climate, fit_bounds=False)
-        
-        if show_manageable_carbon:
-           m.add_cog_layer(url_man_carbon, palette="purples", name="Manageable Carbon", opacity = a_climate, fit_bounds=False)
+        if show_ACE_amph:       
+            m.add_pmtiles(url_ACE_amph_richness, name = "Amphibian Richness", attribution = "CDFW (2025)", 
+                          style = get_pmtiles_layer('ACE_amphibian_richness',url_ACE_amph_richness), opacity = a_amph)
 
+        if show_ACE_rare_amph:       
+            m.add_pmtiles(url_ACE_rare_amph_richness, name = "Amphibian Richness", attribution = "CDFW (2025)", 
+                          style = get_pmtiles_layer('ACE_amphibian_richness',url_ACE_rare_amph_richness), opacity = a_amph)
+
+        if show_ACE_end_amph:       
+            m.add_pmtiles(url_ACE_end_amph_richness, name = "Endemic Amphibian Richness", attribution = "CDFW (2025)", 
+                          style = get_pmtiles_layer('ACE_amphibian_richness',url_ACE_end_amph_richness), opacity = a_amph)
+
+    with st.expander("🐍 Reptile"):
+        a_rept = st.slider("transparency", 0.0, 1.0, 0.1, key = "a_rept")            
+        show_ACE_reptile = st.toggle("Reptile Richness", key = "ACE_reptile")
+        show_ACE_rare_reptile = st.toggle("Rare Reptile Richness", key = "ACE_rare_reptile")
+        show_ACE_end_reptile = st.toggle("Endemic Reptile Richness", key = "ACE_end_reptile")
+
+        if show_ACE_reptile:       
+            m.add_pmtiles(url_ACE_reptile_richness, name = "Reptile Richness", attribution = "CDFW (2025)", 
+                          style = get_pmtiles_layer('ACE_reptile_richness',url_ACE_reptile_richness), opacity = a_rept)
+
+        if show_ACE_rare_reptile:       
+            m.add_pmtiles(url_ACE_rare_reptile_richness, name = "Rare Reptile Richness", attribution = "CDFW (2025)", 
+                          style = get_pmtiles_layer('ACE_reptile_richness',url_ACE_rare_reptile_richness), opacity = a_rept)
+
+        if show_ACE_end_reptile:       
+            m.add_pmtiles(url_ACE_end_reptile_richness, name = "Endemic Reptile Richness", attribution = "CDFW (2025)", 
+                          style = get_pmtiles_layer('ACE_reptile_richness',url_ACE_end_reptile_richness), opacity = a_rept)
+
+        
+    # # Bird Section 
+    with st.expander("🦜 Bird"):
+        a_bird = st.slider("transparency", 0.0, 1.0, 0.1, key = "a_bird")
+        show_ACE_bird = st.toggle("Bird Richness", key = "ACE_bird")
+        show_ACE_rare_bird = st.toggle("Rare Bird Richness", key = "ACE_rare_bird")
+        show_ACE_end_bird = st.toggle("ACE Endemic Bird Richness", key = "ACE_end_bird")
+        
+
+        if show_ACE_bird:       
+            m.add_pmtiles(url_ACE_bird_richness, name = "Bird Richness", attribution = "CDFW (2025)",  
+                          style = get_pmtiles_layer('ACE_bird_richness',url_ACE_bird_richness), opacity = a_bird)
+
+        if show_ACE_rare_bird:       
+            m.add_pmtiles(url_ACE_rare_bird_richness, name = "Rare Bird Richness", attribution = "CDFW (2025)",  
+                          style = get_pmtiles_layer('ACE_rare_bird_richness',url_ACE_rare_bird_richness), opacity = a_bird)
+
+        if show_ACE_end_bird:       
+            m.add_pmtiles(url_ACE_end_bird_richness, name = "Endemic Bird Richness", attribution = "CDFW (2025)",  
+                          style = get_pmtiles_layer('ACE_bird_richness',url_ACE_end_bird_richness), opacity = a_bird)
+            
+            
+            # # Mammal Section 
+    with st.expander("🦌 Mammal"):
+        a_mammal = st.slider("transparency", 0.0, 1.0, 0.1, key = "a_mammal")
+
+        show_ACE_mammal = st.toggle("Mammal Richness", key = "ACE_mammal")
+        show_ACE_rare_mammal = st.toggle("Rare Mammal Richness", key = "ACE_rare_mammal")
+        show_ACE_end_mammal = st.toggle("Endemic Mammal Richness", key = "ACE_end_mammal")
+
+
+        if show_ACE_mammal:       
+            m.add_pmtiles(url_ACE_mammal_richness, name = "Mammal Richness", attribution = "CDFW (2025)", 
+                          style = get_pmtiles_layer('ACE_mammal_richness',url_ACE_mammal_richness), opacity = a_mammal)
+        if show_ACE_rare_mammal:       
+            m.add_pmtiles(url_ACE_rare_mammal_richness, name = "Rare Mammal Richness", attribution = "CDFW (2025)", 
+                          style = get_pmtiles_layer('ACE_mammal_richness',url_ACE_rare_mammal_richness), opacity = a_mammal)
+
+        if show_ACE_end_mammal:       
+            m.add_pmtiles(url_ACE_end_mammal_richness, name = "Endemic Mammal Richness", attribution = "CDFW (2025)", 
+                          style = get_pmtiles_layer('ACE_mammal_richness',url_ACE_end_mammal_richness), opacity = a_mammal)
+
+        
+            # # Plants Section 
+    with st.expander("🌿 Plant"):
+        a_plant = st.slider("transparency", 0.0, 1.0, 0.1, key = "a_plant")
+
+        show_plant = st.toggle("Plant Richness", key = "plant")
+        show_end_plant = st.toggle("Rarity-Weighted Endemic Plant Richness", key = "end_plant")
+        
+        if show_plant:       
+            m.add_cog_layer(url_plant_richness, name = "Plant Richness", attribution =  "Kling et al. (2018)", opacity = a_plant)
+        if show_end_plant:       
+            m.add_cog_layer(url_endemic_plant_richness, name = "Rarity-Weighted Endemic Plant Richness", attribution = "Kling et al. (2018)", opacity = a_plant)
+
+    ## Connectivity Section
+    # with st.expander("🔗 Connectivity"):
+    #     a_connect = st.slider("transparency", 0.0, 1.0, 0.1, key = "connectivity")
+    #     show_resilient = st.toggle("Resilient Connected Network", key = "resilient")
+    #     if show_resilient:       
+    #         m.add_cog_layer(url_resilient_conn_network, name = "Resilient Connected Network", attribution = "Anderson et al. (2023)", opacity = a_connect)
+    
+
+    # Freshwater Section
+    with st.expander("💧 Freshwater Resources"):
+        a_freshwater= st.slider("transparency", 0.0, 1.0, 0.1, key = "freshwater")
+        show_wetlands = st.toggle("Wetlands", key = "wetlands")
+        
+        if show_wetlands:       
+            m.add_pmtiles(url_wetlands, name = "Wetlands", attribution = "National Wetland Inventory, US Fish and Wildlife Service (2019)", style = get_pmtiles_layer('CA_wetlands',url_wetlands), opacity = a_freshwater)
+
+    # Agriculture Section
+    with st.expander("🚜 Agriculture"):
+        a_ag= st.slider("transparency", 0.0, 1.0, 0.1, key = "agriculture")
+        show_farm = st.toggle("Farmlands", key = "farmlands")
+        show_grazing = st.toggle("Grazing lands", key = "grazing")
+
+        if show_farm:       
+            m.add_pmtiles(url_farmland, name = "Farmlands", attribution = "DOC FMMP (2018)", 
+                          style = get_pmtiles_layer('Farmland_2018',url_farmland), opacity = a_ag)
+        if show_grazing:       
+            m.add_pmtiles(url_grazing, name = "Grazing Lands", attribution = "DOC FMMP (2018)",
+                          style = get_pmtiles_layer('Grazing_land_2018',url_grazing), opacity = a_ag)
 
     # People Section 
     with st.expander("👤 People"):
         a_people = st.slider("transparency", 0.0, 1.0, 0.1, key = "SVI")
-        show_justice40 = st.toggle("Disadvantaged Communities (Justice40)", key = "disadvantaged_communities", value=chatbot_toggles['disadvantaged_communities'])
-        show_sv = st.toggle("Social Vulnerability Index (SVI)", key = "svi", value=chatbot_toggles['svi'])
-        
-        if show_justice40:
-            m.add_pmtiles(url_justice40, style=justice40_style, name="Justice40", opacity=a_people, tooltip=False, fit_bounds = False)
-            
-        if show_sv:
-            m.add_pmtiles(url_svi, style = svi_style, opacity=a_people, tooltip=False, fit_bounds = False)
-        
-    # Fire Section
-    with st.expander("🔥 Fire"):
+        show_DAC = st.toggle("Disadvantaged Communities", key = "DAC")
+        show_low_income = st.toggle("Low-Income Communities", key = "low-income")
+
+        if show_DAC:
+            m.add_pmtiles(url_DAC, name = "Disadvantaged Communities", attribution = "CalEnviroScreen (2022)",
+                          style = get_pmtiles_layer('DAC_2022',url_DAC), opacity = a_people)
+        if show_low_income:
+            m.add_pmtiles(url_low_income, name = "Low-Income Communities", attribution = "CalEnviroScreen (2022)",
+                          style = get_pmtiles_layer('low_income_CalEnviroScreen4',url_low_income), opacity = a_people)
+
+    # Climate Risk Section
+    with st.expander("🔥 Climate Risks"):
         a_fire = st.slider("transparency", 0.0, 1.0, 0.15, key = "calfire")
         show_fire = st.toggle("Fires (2013-2023)", key = "fire", value=chatbot_toggles['fire'])
-
-        show_rxburn = st.toggle("Prescribed Burns (2013-2023)", key = "rxburn", value=chatbot_toggles['rxburn'])
-
-
         if show_fire:
-            m.add_pmtiles(url_calfire, style=fire_style, name="CALFIRE Fire Polygons (2013-2023)", opacity=a_fire, tooltip=False, fit_bounds = False)
+            m.add_pmtiles(url_fire, name="Historic Fire Perimeters", attribution = "CAL FIRE (2023)",
+                          style=get_pmtiles_layer('calfire_2023',url_fire),  opacity=a_fire, tooltip=False,
+                          fit_bounds = True)
 
-        if show_rxburn:
-            m.add_pmtiles(url_rxburn, style=rx_style, name="CAL FIRE Prescribed Burns (2013-2023)", opacity=a_fire, tooltip=False, fit_bounds = False)
-                    
 
     st.divider()
     st.markdown('<p class = "medium-font-sidebar"> Filters:</p>', help = "Apply filters to adjust what data is shown on the map.", unsafe_allow_html= True)
@@ -366,14 +479,7 @@ with st.sidebar:
     
     # adding github logo 
     st.markdown(f"<div class='spacer'>{github_html}</div>", unsafe_allow_html=True)
-    
-    # st.markdown("""
-    # <p class='medium-font-sidebar'> 
-    # :left_speech_bubble: <a href='https://github.com/boettiger-lab/ca-30x30/issues' target='_blank'>Report an issue</a>
-    # </p> 
-    # """, unsafe_allow_html=True)
-
-    st.markdown(":left_speech_bubble: [Get in touch or report an issue](https://github.com/boettiger-lab/ca-30x30/issues)")
+    st.markdown(":left_speech_bubble: [Get in touch or report an issue](https://github.com/boettiger-lab/CBN-taskforce/issues)")
 
 
 
@@ -384,18 +490,22 @@ if 'out' not in locals():
     style = get_pmtiles_style(style_options[color_choice], alpha, filter_cols, filter_vals)
     legend, position, bg_color, fontsize = get_legend(style_options, color_choice)
     m.add_legend(legend_dict = legend, position = position, bg_color = bg_color, fontsize = fontsize)
-    m.add_pmtiles(ca_pmtiles, style=style, name="CA", opacity=alpha, tooltip=True, fit_bounds=True)
+    m.add_pmtiles(ca_pmtiles, style=style, name="CA", tooltip=True, fit_bounds=True)
     
 column = select_column[color_choice]
 
 select_colors = {
     "30x30 Status": status["stops"],
     "GAP Code": gap["stops"],
-    "Year": year["stops"],
+    # "Year": year["stops"],
     "Ecoregion": ecoregion["stops"],
+    "Climate Zone": climate_zone["stops"],
+    "Habitat Type": habitat_type["stops"],
     "Manager Type": manager["stops"],
     "Easement": easement["stops"],
     "Access Type": access["stops"],
+    "Resilient & Connected Network": networks["stops"],
+
 }
 
 colors = (
@@ -417,14 +527,28 @@ else:
 
 
 # charts displayed based on color_by variable
-richness_chart = bar_chart(df, column, 'mean_richness', "Species Richness (2022)")
-rsr_chart = bar_chart(df, column, 'mean_rsr', "Range-Size Rarity (2022)")
-irr_carbon_chart = bar_chart(df, column, 'mean_irrecoverable_carbon', "Irrecoverable Carbon (2018)")
-man_carbon_chart = bar_chart(df, column, 'mean_manageable_carbon', "Manageable Carbon (2018)")
-fire_10_chart = bar_chart(df, column, 'mean_fire', "Fires (2013-2023)")
-rx_10_chart = bar_chart(df, column, 'mean_rxburn',"Prescribed Burns (2013-2023)")
-justice40_chart = bar_chart(df, column, 'mean_disadvantaged', "Disadvantaged Communities (2021)")
-svi_chart = bar_chart(df, column, 'mean_svi', "Social Vulnerability Index (2022)")
+amph_chart = bar_chart(df, column, 'percent_amph_richness', "Amphibian Richness")
+reptile_chart = bar_chart(df, column, 'percent_reptile_richness', "Reptile Richness")
+bird_chart = bar_chart(df, column, 'percent_bird_richness', "Bird Richness")
+mammal_chart = bar_chart(df, column, 'percent_mammal_richness', "Mammal Richness")
+rare_amph_chart = bar_chart(df, column, 'percent_rare_amph_richness', "Rare Amphibian Richness")
+rare_reptile_chart = bar_chart(df, column, 'percent_rare_reptile_richness', "Rare Reptile Richness")
+rare_bird_chart = bar_chart(df, column, 'percent_rare_bird_richness', "Rare Bird Richness")
+rare_mammal_chart = bar_chart(df, column, 'percent_rare_mammal_richness', "Rare Mammal Richness")
+end_amph_chart = bar_chart(df, column, 'percent_end_amph_richness', "Endemic Amphibian Richness")
+end_reptile_chart = bar_chart(df, column, 'percent_end_reptile_richness', "Endemic Reptile Richness")
+end_bird_chart = bar_chart(df, column, 'percent_end_bird_richness', "Endemic Bird Richness")
+end_mammal_chart = bar_chart(df, column, 'percent_end_mammal_richness', "Endemic Mammal Richness")
+plant_chart = bar_chart(df, column, 'percent_plant_richness', "Plant Richness")
+rarity_plant_chart = bar_chart(df, column, 'percent_rarityweight_endemic_plant_richness', "Rarity-Weighted\nEndemic Plant Richness")
+wetlands_chart = bar_chart(df, column, 'percent_wetlands', "Wetlands")
+farmland_chart = bar_chart(df, column, 'percent_farmland', "Farmland")
+grazing_chart = bar_chart(df, column, 'percent_grazing', "Lands Suitable for Grazing")
+DAC_chart = bar_chart(df, column, 'percent_disadvantaged', "Disadvantaged Communities")
+low_income_chart = bar_chart(df, column, 'percent_low_income', "Low-Income Communities")
+fire_chart = bar_chart(df, column, 'percent_fire', "Historical Fire Perimeters")
+
+
 
 main = st.container()
 
@@ -449,32 +573,69 @@ with main:
                 if column not in ["status", "gap_code"]:
                     st.altair_chart(stacked_bar(df_bar_30x30, column,'percent_group','status', color_choice + ' by 30x30 Status',colors), use_container_width=True)
 
-            if show_richness:
-                st.altair_chart(richness_chart, use_container_width=True)
 
-            if show_rsr:
-                st.altair_chart(rsr_chart, use_container_width=True)
-
-            if show_irrecoverable_carbon:
-                st.altair_chart(irr_carbon_chart, use_container_width=True)
-
-            if show_manageable_carbon:
-                st.altair_chart(man_carbon_chart, use_container_width=True)
-
-            if show_justice40:
-                st.altair_chart(justice40_chart, use_container_width=True)
+            if show_ACE_amph:
+                st.altair_chart(amph_chart, use_container_width=True)
                 
-            if show_sv:
-                st.altair_chart(svi_chart, use_container_width=True)
+            if show_ACE_reptile:
+                st.altair_chart(reptile_chart, use_container_width=True)            
 
+            if show_ACE_bird:
+                st.altair_chart(bird_chart, use_container_width=True)
+                
+            if show_ACE_mammal:
+                st.altair_chart(mammal_chart, use_container_width=True) 
+
+            if show_ACE_rare_amph:
+                st.altair_chart(rare_amph_chart, use_container_width=True)
+                
+            if show_ACE_rare_reptile:
+                st.altair_chart(rare_reptile_chart, use_container_width=True)            
+
+            if show_ACE_rare_bird:
+                st.altair_chart(rare_bird_chart, use_container_width=True)
+                
+            if show_ACE_rare_mammal:
+                st.altair_chart(rare_mammal_chart, use_container_width=True) 
+
+            if show_ACE_end_amph:
+                st.altair_chart(end_amph_chart, use_container_width=True)
+                
+            if show_ACE_end_reptile:
+                st.altair_chart(end_reptile_chart, use_container_width=True)            
+
+            if show_ACE_end_bird:
+                st.altair_chart(end_bird_chart, use_container_width=True)
+                
+            if show_ACE_end_mammal:
+                st.altair_chart(end_mammal_chart, use_container_width=True) 
+                
+            if show_plant:
+                st.altair_chart(plant_chart, use_container_width=True)
+
+            if show_end_plant:
+                st.altair_chart(rarity_plant_chart, use_container_width=True)
+                
+            if show_wetlands:
+                st.altair_chart(wetlands_chart, use_container_width=True)            
+
+            if show_farm:
+                st.altair_chart(farmland_chart, use_container_width=True)
+                
+            if show_grazing:
+                st.altair_chart(grazing_chart, use_container_width=True) 
+                
+            if show_DAC:
+                st.altair_chart(DAC_chart, use_container_width=True)
+                            
+            if show_low_income:
+                st.altair_chart(low_income_chart, use_container_width=True)
+                 
             if show_fire:
-                st.altair_chart(fire_10_chart, use_container_width=True)
-                
-            if show_rxburn:
-                st.altair_chart(rx_10_chart, use_container_width=True)
+                st.altair_chart(fire_chart, use_container_width=True)
+            
 
-
-st.caption("***The label 'established' is inferred from the California Protected Areas Database, which may introduce artifacts. For details on our methodology, please refer to our <a href='https://github.com/boettiger-lab/ca-30x30' target='_blank'>our source code</a>.", unsafe_allow_html=True)
+st.caption("***The label 'established' is inferred from the California Protected Areas Database, which may introduce artifacts. For details on our methodology, please refer to our <a href='https://github.com/boettiger-lab/CBN-taskforce' target='_blank'>our source code</a>.", unsafe_allow_html=True)
 
             
 st.caption("***Under California’s 30x30 framework, only GAP codes 1 and 2 are counted toward the conservation goal.") 
