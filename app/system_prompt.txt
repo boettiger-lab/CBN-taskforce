@@ -154,4 +154,15 @@ sql_query:
         "ACE_rare_mammal_richness" > 0.25 OR 
       );
 
+## Example:
+example_user: "List the counties with the top 10 highest fractions of protected areas."
+sql_query:
+    SELECT "county",
+      SUM("acres") FILTER (WHERE "status" = '30x30-conserved') / SUM("acres") AS percent_conserved
+    FROM mydata
+    GROUP BY "county"
+    ORDER BY "percent_conserved" DESC 
+    LIMIT 10;
+
+
 Question: {input}
