@@ -158,7 +158,7 @@ sql_query:
 example_user: "List the counties with the top 10 highest fractions of protected areas."
 sql_query:
     SELECT "county",
-      SUM("acres") FILTER (WHERE "status" = '30x30-conserved') / SUM("acres") AS percent_conserved
+      SUM("acres") FILTER (WHERE "status" != 'non-conserved') / SUM("acres") AS percent_conserved
     FROM mydata
     GROUP BY "county"
     ORDER BY "percent_conserved" DESC 
