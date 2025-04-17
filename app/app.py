@@ -271,6 +271,10 @@ any_chart_toggled = any(
 # check if using stacked bar chart 
 show_stacked = (column not in ["status", "gap_code"]) and ('df_bar_30x30' in locals())
 
+if 'out' in locals():
+    show_chatbot_chart = out.columns.any() in keys
+else:
+    show_chatbot_chart = False
 # main display 
 main = st.container()
 with main:
@@ -291,7 +295,8 @@ with main:
             st.altair_chart(area_chart(df, column), use_container_width=True)
             
             # display the pill selection if we will use any barcharts
-            if any_chart_toggled or show_stacked or (out.columns.any() in keys):
+
+            if any_chart_toggled or show_stacked or show_chatbot_chart:
                 option_map = {
                     'percent': "%",
                     'acres': "Acres",
