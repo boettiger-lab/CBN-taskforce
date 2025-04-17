@@ -5,14 +5,31 @@
 ca_parquet = 'https://minio.carlboettiger.info/public-ca30x30/ca-30x30-cbn.parquet'
 ca_pmtiles = 'https://minio.carlboettiger.info/public-ca30x30/ca-30x30-cbn.pmtiles'
 
+# ca_parquet = 'https://minio.carlboettiger.info/public-ca30x30/hex/zoom8/ca-30x30-cbn-newlyprotected.parquet'
+# ca_pmtiles = 'https://minio.carlboettiger.info/public-ca30x30/ca-30x30-cbn-newlyprotected.pmtiles'
+
 # computed by taking the sum of all the acres in this file:
 # https://minio.carlboettiger.info/public-ca30x30/CBN-data/Progress_data_new_protection/Land_Status_Zone_Ecoregion_Counties/all_regions_reGAP_county_eco.parquet
 ca_area_acres = 101523750.68856516 
-
 style_choice = "GAP Status Code"
+chart_choice = "percent" # 
 
-from utils import get_url
-
+# this should go in utils, but I need it to build urls
+# so keeping it here to avoid circular import 
+import os
+def get_url(folder, file, base_folder = 'CBN'):
+    """
+    Get url for minio hosted data
+    """
+    minio = 'https://minio.carlboettiger.info/'
+    bucket = 'public-ca30x30'
+    if base_folder is None:
+        path = os.path.join(bucket,folder,file)
+    else:
+        path = os.path.join(bucket,base_folder,folder,file)
+    url = minio+path
+    return url
+    
 #vector data 
 url_ACE_rarerank_statewide = get_url('ACE_biodiversity/ACE_rarerank_statewide','ACE_rarerank_statewide.pmtiles')
 url_ACE_rarerank_ecoregion = get_url('ACE_biodiversity/ACE_rarerank_ecoregion','ACE_rarerank_ecoregion.pmtiles')
@@ -47,6 +64,59 @@ url_endemic_plant_richness = get_url('Biodiversity_unique/Rarityweighted_endemic
 url_resilient_conn_network = get_url('Connectivity_resilience/Resilient_connected_network_allcategories', 
                                  'rcn_wIntactBioCat_caOnly_2020-10-27_processed_COG.tif')
 
+# column names for all data layers 
+keys = [
+    "ACE_amphibian_richness", "ACE_reptile_richness", "ACE_bird_richness",
+    "ACE_mammal_richness", "ACE_rare_amphibian_richness", "ACE_rare_reptile_richness",
+    "ACE_rare_bird_richness", "ACE_rare_mammal_richness", "ACE_endemic_amphibian_richness",
+    "ACE_endemic_reptile_richness", "ACE_endemic_bird_richness", "ACE_endemic_mammal_richness",
+    "plant_richness", "rarityweighted_endemic_plant_richness", "wetlands", "farmland", "grazing",
+    "DAC", "low_income", "fire"]
+
+chatbot_toggles = {key: False for key in keys}
+
+# data layers dict 
+layer_config = [
+    #[(section, 'a_amph', [(col_name, full name, key, chatbot toggle key)])]
+    ('🐸 Amphibian', 'a_amph', [
+        ('amphibian_richness', 'Amphibian Richness', keys[0], chatbot_toggles[keys[0]]),
+        ('rare_amphibian_richness', 'Rare Amphibian Richness', keys[1], chatbot_toggles[keys[1]]),
+        ('endemic_amphibian_richness', 'Endemic Amphibian Richness', keys[2], chatbot_toggles[keys[2]]),
+    ]),
+    ('🐍 Reptile', 'a_rept', [
+        ('reptile_richness', 'Reptile Richness', keys[3], chatbot_toggles[keys[3]]),
+        ('rare_reptile_richness', 'Rare Reptile Richness', keys[4], chatbot_toggles[keys[4]]),
+        ('endemic_reptile_richness', 'Endemic Reptile Richness', keys[5], chatbot_toggles[keys[5]]),
+    ]),
+    ('🦜 Bird', 'a_bird', [
+        ('bird_richness', 'Bird Richness', keys[6], chatbot_toggles[keys[6]]),
+        ('rare_bird_richness', 'Rare Bird Richness', keys[7], chatbot_toggles[keys[7]]),
+        ('endemic_bird_richness', 'Endemic Bird Richness', keys[8], chatbot_toggles[keys[8]]),
+    ]),
+    ('🦌 Mammal', 'a_mammal', [
+        ('mammal_richness', 'Mammal Richness', keys[9], chatbot_toggles[keys[9]]),
+        ('rare_mammal_richness', 'Rare Mammal Richness', keys[10], chatbot_toggles[keys[10]]),
+        ('endemic_mammal_richness', 'Endemic Mammal Richness', keys[11], chatbot_toggles[keys[11]]),
+    ]),
+    ('🌿 Plant', 'a_plant', [
+        ('plant_richness', 'Plant Richness', keys[12], chatbot_toggles[keys[12]]),
+        ('rarityweighted_endemic_plant_richness', 'Rarity-Weighted\nEndemic Plant Richness', keys[13], chatbot_toggles[keys[13]]),
+    ]),
+    ('💧 Freshwater Resources', 'freshwater', [
+        ('wetlands', 'Wetlands', keys[14], chatbot_toggles[keys[14]]),
+    ]),
+    ('🚜 Agriculture', 'agriculture', [
+        ('farmland', 'Farmland', keys[15], chatbot_toggles[keys[15]]),
+        ('grazing', 'Lands Suitable for Grazing', keys[16], chatbot_toggles[keys[16]]),
+    ]),
+    ('👤 People', 'SVI', [
+        ('DAC', 'Disadvantaged Communities', keys[17], chatbot_toggles[keys[17]]),
+        ('low_income', 'Low-Income Communities', keys[18], chatbot_toggles[keys[18]]),
+    ]),
+    ('🔥 Climate Risks', 'calfire', [
+        ('fire', 'Historical Fire Perimeters', keys[19], chatbot_toggles[keys[19]]),
+    ])
+]
 
 # colors for plotting 
 private_access_color = "#DE881E" # orange 
@@ -85,6 +155,64 @@ github_html = f"""
 """
 
 
+## customize formatting
+app_formatting =  """
+    <style>
+        /* Customizing font size for radio text */
+        div[class*="stRadio"] > label > div[data-testid="stMarkdownContainer"] > p {
+            font-size: 18px !important;
+        }
+        /* Reduce margin below the header */
+        h2 {
+            margin-top: 0rem !important; 
+            margin-bottom: 0rem !important; /* Reduce space below headers */
+        }
+        /* Customizing font size for medium-font class */
+        .medium-font {
+            font-size: 18px !important; 
+            margin-top: 0rem !important;
+            margin-bottom: 0.25rem !important; /* Reduce space below */
+        }
+        .medium-font-sidebar {
+            font-size: 17px !important;
+            margin-bottom: 0.75rem !important; /* Reduce space below */
+        }
+        /* Customizing layout and divider */
+        hr {
+            margin-top: 0rem !important;  /* Adjust to reduce top margin */
+            margin-bottom: 0.5rem !important; /* Adjust to reduce bottom margin */
+        }
+        .stAppHeader {
+            background-color: rgba(255, 255, 255, 0.0);  /* Transparent background */
+            visibility: visible;  /* Ensure the header is visible */
+        }
+        .block-container {
+            padding-top: 0.5rem;
+            padding-bottom: 2rem;
+            padding-left: 5rem;
+            padding-right: 5rem;
+        }
+        /* Reduce whitespace for the overall expander container */
+        .st-expander {
+            margin-top: 0rem;  /* Space above the expander */
+            margin-bottom: 0rem; /* Space below the expander */
+        }
+        /* Adjust padding for the content inside the expander */
+        .st-expander-content {
+            padding: 0rem 0rem;  /* Reduce padding inside */
+        }
+        /* Optional: Adjust the expander header if needed */
+        .st-expander-header {
+            margin-top: 0rem;
+            margin-bottom: 0rem;
+        }
+        .spacer { margin-bottom: 30px; } /* padding in sidebar */
+        [data-testid="stSidebar"] > div:first-child { /* reduce whitespace at the top of the sidebar */
+            padding-top: 0rem !important; 
+        }
+    </style>
+    """
+
 # gap codes 3 and 4 are off by default. 
 default_boxes = {
     0: False,
@@ -114,7 +242,6 @@ manager = {
     ],
     'default': white
 }
-
 
 easement = {
     'property': 'easement',
@@ -173,8 +300,6 @@ status = {
     ],
 }
 
-
-
 ecoregion = {
     'property': 'ecoregion',
     'type': 'categorical',
@@ -202,7 +327,6 @@ ecoregion = {
     ],
     'default': white
 }
-
 
 climate_zone = {
     'property': 'climate_zone',
@@ -292,7 +416,6 @@ networks = {
     'default': white
 }
 
-
 style_options = {
     "30x30 Status": status,
     "GAP Code": gap,
@@ -306,7 +429,6 @@ style_options = {
     "Access Type": access,
 }
 
-
 select_column = {
     "30x30 Status":  "status",
     "GAP Code": "gap_code",
@@ -319,19 +441,32 @@ select_column = {
     # "Year": "established",
     "Access Type": "access_type",
 }
+
+select_colors = {
+    "30x30 Status": status["stops"],
+    "GAP Code": gap["stops"],
+    # "Year": year["stops"],
+    "Ecoregion": ecoregion["stops"],
+    "Climate Zone": climate_zone["stops"],
+    "Habitat Type": habitat_type["stops"],
+    "Manager Type": manager["stops"],
+    "Easement": easement["stops"],
+    "Access Type": access["stops"],
+    "Resilient & Connected Network": networks["stops"],
+
+}
+
 from langchain_openai import ChatOpenAI
 import streamlit as st
-
-from langchain_openai.chat_models.base import BaseChatOpenAI
-
+# from langchain_openai.chat_models.base import BaseChatOpenAI
 
 llm_options = {
-    "llama3": ChatOpenAI(model = "llama3-sdsc", api_key=st.secrets['NRP_API_KEY'], base_url = "https://llm.nrp-nautilus.io/",  temperature=0),
+    # "llama-3.3-quantized": ChatOpenAI(model = "llama3-awq4", api_key=st.secrets['NRP_API_KEY'], base_url = "https://llm.nrp-nautilus.io/",  temperature=0),
+    "llama3.3": ChatOpenAI(model = "llama3-sdsc", api_key=st.secrets['NRP_API_KEY'], base_url = "https://llm.nrp-nautilus.io/",  temperature=0),
     "gemma3": ChatOpenAI(model = "gemma3", api_key=st.secrets['NRP_API_KEY'], base_url = "https://llm.nrp-nautilus.io/",  temperature=0),
     # "DeepSeek-R1-Distill-Qwen-32B": BaseChatOpenAI(model = "DeepSeek-R1-Distill-Qwen-32B", api_key=st.secrets['NRP_API_KEY'], base_url = "https://llm.nrp-nautilus.io/",  temperature=0),
     "watt": ChatOpenAI(model = "watt", api_key=st.secrets['NRP_API_KEY'], base_url = "https://llm.nrp-nautilus.io/",  temperature=0),
-    "llama-3.3": ChatOpenAI(model = "groq-tools", api_key=st.secrets['NRP_API_KEY'], base_url = "https://llm.nrp-nautilus.io/",  temperature=0),
-    "phi3": ChatOpenAI(model = "phi3", api_key=st.secrets['NRP_API_KEY'], base_url = "https://llm.nrp-nautilus.io/",  temperature=0),
-
+    # "phi3": ChatOpenAI(model = "phi3", api_key=st.secrets['NRP_API_KEY'], base_url = "https://llm.nrp-nautilus.io/",  temperature=0),
 }
+
 
