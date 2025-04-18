@@ -213,16 +213,6 @@ app_formatting =  """
     </style>
     """
 
-# gap codes 3 and 4 are off by default. 
-default_boxes = {
-    0: False,
-    # 3: False,
-    # 4: False,
-    # "other-conserved":False,
-    # "unknown":False,
-    # "non-conserved":False
-}
-
 # Maplibre styles. (should these be functions?)
 manager = {
     'property': 'manager_type',
@@ -429,6 +419,7 @@ style_options = {
     "Access Type": access,
 }
 
+print(style_options)
 select_column = {
     "30x30 Status":  "status",
     "GAP Code": "gap_code",

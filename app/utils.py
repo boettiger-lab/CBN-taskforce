@@ -15,13 +15,12 @@ import re
 from variables import *
 
 ######################## UI FUNCTIONS 
-def get_buttons(style_options, style_choice, default_boxes=None):
+def get_buttons(style_options, style_choice):
     """
     Creates Streamlit checkboxes based on style options and returns the selected filters.
     """
     column = style_options[style_choice]['property']
     opts = [style[0] for style in style_options[style_choice]['stops']]
-    default_boxes = default_boxes or {}
 
     buttons = {}
     for name in opts:
@@ -92,7 +91,6 @@ def get_summary(ca, combined_filter, column, main_group, colors = None):
         "percent_CA": (_.acres.sum() / ca_area_acres),
         "acres": _.acres.sum(),
         }
-    
     # add percent + acres aggregates
     dynamic_aggs = {}
     for key in keys:
@@ -102,7 +100,7 @@ def get_summary(ca, combined_filter, column, main_group, colors = None):
     
     # join all aggregates
     all_aggs = {**base_aggs, **dynamic_aggs}
-    
+
     # group and aggregate
     df = (ca.filter(combined_filter)
           .group_by(*column)
@@ -117,8 +115,10 @@ def get_summary(ca, combined_filter, column, main_group, colors = None):
                     )
     
     df = (df.inner_join(group_totals, main_group)
-          .mutate(percent_group=( _.acres / _.total_acres).round(3))
+          # .mutate(percent_group=( _.acres / _.total_acres).round(3))
+          .mutate(percent_group=( _.acres / _.total_acres))
          )
+    
     # if colors is not None and not colors.empty:
     if colors is not None:
         df = df.inner_join(colors, column[-1])
@@ -155,6 +155,7 @@ def get_summary_table(ca, column, select_colors, color_choice, filter_cols, filt
 
     # df for stacked 30x30 status bar chart 
     df_bar_30x30 = None if column in ["status", "gap_code"] else get_summary(ca, combined_filter, [column, 'status'], column, color_table(select_colors, "30x30 Status", 'status'))
+
     return df, df_tab, df_percent, df_bar_30x30
 
 
