@@ -270,7 +270,8 @@ def area_chart(df, column):
             ]
         )
     )
-    return pie.properties(width="container", height=290)
+    # return pie.properties(width="container", height=290)
+    return pie.properties(height=290)
 
 
 def bar_chart(df, x, y, title, metric = "percent"):
@@ -306,8 +307,8 @@ def get_chart_settings(x, y, stacked, metric):
     elif metric == "acres":
         y_titles = "Acres"
 
-    angle = 270 if x in ["manager_type", "ecoregion", "status", "habitat_type", "resilient_connected_network"] else 0
-    height = 470 if y == "percent_rarityweighted_endemic_plant_richness" else 250 if stacked else 400 if x == "ecoregion" else 350 if x == "manager_type" else 300
+    angle = 270 if x in ["manager_type", "ecoregion", "status", "habitat_type", "resilient_connected_network","access_type"] else 0
+    height = 470 if y == "percent_rarityweighted_endemic_plant_richness" else 250 if stacked else 450 if x in ["ecoregion",'habitat_type'] else 350 if x == "manager_type" else 450 if x == "access_type" else 330
 
     return sort_options.get(x, "x"), angle, height, y_titles
 
@@ -358,7 +359,7 @@ def create_bar_chart(df, x, y, title, metric, color=None, stacked=False, colors=
     sort, angle, height, y_title = get_chart_settings(x, y, stacked, metric)
     label_transform = get_label_transform(x)
     y_format = "~s" if metric == "acres" else ",.1%"
-
+    
     # create base chart 
     chart = (
         alt.Chart(df)
@@ -371,7 +372,8 @@ def create_bar_chart(df, x, y, title, metric, color=None, stacked=False, colors=
 
             tooltip=[alt.Tooltip(x, type="nominal"), alt.Tooltip(y, type="quantitative")]
         )
-        .properties(width="container", height=height)  
+        # .properties(width="container", height=height)  
+        .properties(height=height)  
 
     )
 
@@ -389,7 +391,6 @@ def create_bar_chart(df, x, y, title, metric, color=None, stacked=False, colors=
         # build chart  
         chart = chart.encode(
             x=alt.X("xlabel:N", sort=sort, title=None, axis=alt.Axis(labels=False)),
-            # y=alt.Y(y, axis=alt.Axis(title=y_title, offset = -5),scale = alt.Scale(domain = [0,1])),
             y=y_axis_scale,
             color=alt.Color(color, sort=sort_order, scale=alt.Scale(domain=sort_order, range=color_hex)) ,
             order=alt.Order("stack_order:Q", sort="ascending"),
@@ -414,7 +415,9 @@ def create_bar_chart(df, x, y, title, metric, color=None, stacked=False, colors=
                     axis=alt.Axis(labelAngle=angle, title=None, labelLimit=200)),
                 color=alt.Color("color:N", scale=None),
             )
-            .properties(height=1, width="container")
+            # .properties(height=1, width="container")
+            .properties(height=1)
+
         )
         # append symbols below base chart
         final_chart = alt.vconcat(chart, symbol_layer, spacing=8).resolve_scale(x="shared")
