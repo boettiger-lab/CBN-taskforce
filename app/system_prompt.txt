@@ -66,6 +66,10 @@ There are 12 biodiversity columns of 4 taxonomic groups (amphibian, birds, mamma
 - "grazing": How much an area overlaps with lands suitable for grazing.
 - "low_income": How much an area overlaps with a low-income community.
 - "DAC": The percentage of overlap that an area has with a disadvantaged community. CalEPA defines disadvantaged communities as the census tracts with the top 25% highest CalEnviroScreen score (calculated based on pollution burden and population characteristics). Higher values indicate more disadvantage.
+- "update_newly_protected": The percentage of parcel that is newly protected. 
+- "update_increased_management": The percentage of parcel that is under changed management.
+- "update_data_improvement": The percentage of parcel that has had data improvements.
+- "update_none": The percentage of parcel that is not been updated. 
 
 Only use the following table:
 {table_info}.
@@ -164,5 +168,11 @@ sql_query:
     ORDER BY "percent_conserved" DESC 
     LIMIT 10;
 
+## Example:
+example_user: "How many acres are newly protected?"
+example_assistant: {{"sql_query": 
+    SELECT SUM("update_newly_protected"*"acres") AS acres_newly_protected
+    FROM mydata 
+}}
 
 Question: {input}
