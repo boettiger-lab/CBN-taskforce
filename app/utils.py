@@ -91,6 +91,7 @@ def get_summary(ca, combined_filter, column, main_group, colors = None):
         "percent_CA": (_.acres.sum() / ca_area_acres),
         "acres": _.acres.sum(),
         }
+
     # add percent + acres aggregates
     dynamic_aggs = {}
     for key in keys:
@@ -107,7 +108,7 @@ def get_summary(ca, combined_filter, column, main_group, colors = None):
           .aggregate(**all_aggs)
           .mutate(percent_CA=_.percent_CA.round(5), acres=_.acres.round(0))
         )
-    
+
     # Compute total acres by group and percent of group
     group_totals = (ca.filter(combined_filter)
                       .group_by(main_group)
@@ -177,7 +178,6 @@ def get_pmtiles_style(paint, alpha, filter_cols, filter_vals):
     
     if "non-conserved" in chain.from_iterable(filter_vals):
         combined_filters = ["any", combined_filters, ["match", ["get", "status"], ["non-conserved"], True, False]]
-    source_layer_name = re.sub(r'\W+', '', os.path.splitext(os.path.basename(ca_pmtiles))[0]) #stripping hyphens to get layer name 
     return {
         "version": 8,
         "sources": {"ca": {"type": "vector", "url": f"pmtiles://{ca_pmtiles}"}},
@@ -198,7 +198,6 @@ def get_pmtiles_style_llm(paint, ids):
     """
     Generates a MapLibre GL style for PMTiles using specific IDs as filters.
     """
-    source_layer_name = re.sub(r'\W+', '', os.path.splitext(os.path.basename(ca_pmtiles))[0]) #stripping hyphens to get layer name 
     return {
         "version": 8,
         "sources": {"ca": {"type": "vector", "url": f"pmtiles://{ca_pmtiles}"}},

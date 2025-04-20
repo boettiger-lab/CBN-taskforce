@@ -44,6 +44,7 @@ def h3_from_geom(con, name, cols, save_path, zoom):
         FROM {name}
     )
     ''')
+    
     con.sql(f'''
         SELECT {cols}, UNNEST(h{zoom}) AS h{zoom},
         ST_GeomFromText(h3_cell_to_boundary_wkt(UNNEST(h{zoom}))) AS geom
@@ -52,14 +53,29 @@ def h3_from_geom(con, name, cols, save_path, zoom):
 
 
 def compute_grouped(con, name, cols, zoom, group, path):
-    unique_groups = con.table(name).select(group).distinct().execute()[group].tolist()
+    groups = con.table(name).select(group).distinct().execute()[group].tolist()
+    chunk_size = 500
     # separate data by group
-    for sub in unique_groups:
+    for sub in groups:
         sub_name = f"{name}_{re.sub(r'\W+', '_', sub)}"
-        con.raw_sql(f"""
-            CREATE OR REPLACE TEMP TABLE {sub_name} AS
-            SELECT * FROM {name} WHERE {group} = '{sub}'
-        """)
-        save_path = f"s3://{path}/hex/zoom{zoom}/group_{group}/{sub.replace(' ', '')}.parquet"
-        h3_from_geom(con, sub_name, cols, save_path, zoom)
-    
+        offset = 0
+        i = 0
+        # chunk data within groups 
+        while True:
+            print(f'Processing group {sub_name} chunk {i} offset {offset}')
+            chunk_name = f"{sub_name}_chunk{i}"
+            con.raw_sql(f"""
+                CREATE OR REPLACE TEMP TABLE {chunk_name} AS
+                SELECT * FROM {name} 
+                WHERE {group} = '{sub}'
+                LIMIT {chunk_size} 
+                OFFSET {offset}
+            """)
+            if con.sql(f"SELECT 1 FROM {chunk_name} LIMIT 1").execute().empty:
+                break
+            save_path = f"s3://{path}/hex/zoom{zoom}/group_{group}/{sub_name}_chunk{i}.parquet"
+            h3_from_geom(con, chunk_name, cols, save_path, zoom)
+            offset += chunk_size
+            i += 1
+
+            
