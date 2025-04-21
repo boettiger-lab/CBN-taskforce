@@ -14,7 +14,6 @@ import sqlalchemy
 import pathlib
 from typing import Optional
 from functools import reduce
-
 from variables import *
 from utils import *
 
