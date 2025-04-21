@@ -277,7 +277,7 @@ else:
 # main display 
 main = st.container()
 with main:
-    map_col, stats_col = st.columns([2,1])
+    map_col, stats_col = st.columns([3,2])
 
     with map_col:
         m.to_streamlit(height=650) # adding map
