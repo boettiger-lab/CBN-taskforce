@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: inat-pod
+  labels:
+    k8s-app: cbn-app
+spec:
+  containers:
+  - name: shiny
+    image: ghcr.io/boettiger-lab/CBN-taskforce
+    imagePullPolicy: Always
+    env:
+    - name: NRP_API_KEY
+      valueFrom:
+        secretKeyRef:
+          name: nrp-api-key
+          key: NRP_API_KEY  
+    resources:
+      requests:
+        cpu: 2
+        memory: 4Gi
+      limits:
+        cpu: 2
+        memory: 4Gi
+
+
