@@ -162,3 +162,5 @@ cython_debug/
 #.idea/
 Untitled*
 
+k8s/secret-deployment.yaml
+*secret*

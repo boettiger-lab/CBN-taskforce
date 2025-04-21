@@ -1,0 +1,20 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: cbn-ingress
+spec:
+  ingressClassName: haproxy
+  rules:
+  - host: cbn-biodiversity.nrp-nautilus.io
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: cbn-svc
+            port:
+              number: 8080
+  tls:
+  - hosts:
+    - cbn-biodiversity.nrp-nautilus.io

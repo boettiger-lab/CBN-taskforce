@@ -1,0 +1,36 @@
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cbn-deployment
+  labels:
+    k8s-app: cbn-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      k8s-app: cbn-app
+  template:
+    metadata:
+      labels:
+        k8s-app: cbn-app
+    spec:
+      containers:
+      - name: streamlit
+        image: ghcr.io/boettiger-lab/cbn-taskforce:k8s
+        imagePullPolicy: Always
+        env:
+        - name: NRP_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: nrp-api-key
+              key: NRP_API_KEY  
+        resources:
+          requests:
+            cpu: 2
+            memory: 4Gi
+          limits:
+            cpu: 2
+            memory: 4Gi
+
+
