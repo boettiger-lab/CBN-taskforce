@@ -15,13 +15,12 @@ import re
 from variables import *
 
 ######################## UI FUNCTIONS 
-def get_buttons(style_options, style_choice, default_boxes=None):
+def get_buttons(style_options, style_choice):
     """
     Creates Streamlit checkboxes based on style options and returns the selected filters.
     """
     column = style_options[style_choice]['property']
     opts = [style[0] for style in style_options[style_choice]['stops']]
-    default_boxes = default_boxes or {}
 
     buttons = {}
     for name in opts:
@@ -92,7 +91,7 @@ def get_summary(ca, combined_filter, column, main_group, colors = None):
         "percent_CA": (_.acres.sum() / ca_area_acres),
         "acres": _.acres.sum(),
         }
-    
+
     # add percent + acres aggregates
     dynamic_aggs = {}
     for key in keys:
@@ -102,14 +101,14 @@ def get_summary(ca, combined_filter, column, main_group, colors = None):
     
     # join all aggregates
     all_aggs = {**base_aggs, **dynamic_aggs}
-    
+
     # group and aggregate
     df = (ca.filter(combined_filter)
           .group_by(*column)
           .aggregate(**all_aggs)
           .mutate(percent_CA=_.percent_CA.round(5), acres=_.acres.round(0))
         )
-    
+
     # Compute total acres by group and percent of group
     group_totals = (ca.filter(combined_filter)
                       .group_by(main_group)
@@ -117,8 +116,10 @@ def get_summary(ca, combined_filter, column, main_group, colors = None):
                     )
     
     df = (df.inner_join(group_totals, main_group)
-          .mutate(percent_group=( _.acres / _.total_acres).round(3))
+          # .mutate(percent_group=( _.acres / _.total_acres).round(3))
+          .mutate(percent_group=( _.acres / _.total_acres))
          )
+    
     # if colors is not None and not colors.empty:
     if colors is not None:
         df = df.inner_join(colors, column[-1])
@@ -155,6 +156,7 @@ def get_summary_table(ca, column, select_colors, color_choice, filter_cols, filt
 
     # df for stacked 30x30 status bar chart 
     df_bar_30x30 = None if column in ["status", "gap_code"] else get_summary(ca, combined_filter, [column, 'status'], column, color_table(select_colors, "30x30 Status", 'status'))
+
     return df, df_tab, df_percent, df_bar_30x30
 
 
@@ -176,7 +178,6 @@ def get_pmtiles_style(paint, alpha, filter_cols, filter_vals):
     
     if "non-conserved" in chain.from_iterable(filter_vals):
         combined_filters = ["any", combined_filters, ["match", ["get", "status"], ["non-conserved"], True, False]]
-    source_layer_name = re.sub(r'\W+', '', os.path.splitext(os.path.basename(ca_pmtiles))[0]) #stripping hyphens to get layer name 
     return {
         "version": 8,
         "sources": {"ca": {"type": "vector", "url": f"pmtiles://{ca_pmtiles}"}},
@@ -197,7 +198,6 @@ def get_pmtiles_style_llm(paint, ids):
     """
     Generates a MapLibre GL style for PMTiles using specific IDs as filters.
     """
-    source_layer_name = re.sub(r'\W+', '', os.path.splitext(os.path.basename(ca_pmtiles))[0]) #stripping hyphens to get layer name 
     return {
         "version": 8,
         "sources": {"ca": {"type": "vector", "url": f"pmtiles://{ca_pmtiles}"}},
