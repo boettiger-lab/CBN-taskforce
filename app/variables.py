@@ -1,13 +1,7 @@
 # urls for main layer 
-# ca_parquet = "https://huggingface.co/datasets/boettiger-lab/ca-30x30/resolve/da85dd9ca1c774d4ddf821555e3c3c9e13c9b857/ca-30x30.parquet"
-# ca_pmtiles = "https://huggingface.co/datasets/boettiger-lab/ca-30x30/resolve/896db6c9a37488ee7c53ee56df67b3ccfd44d150/ca-30x30.pmtiles"
-
-ca_parquet = 'https://minio.carlboettiger.info/public-ca30x30/ca-30x30-cbn.parquet'
-ca_pmtiles = 'https://minio.carlboettiger.info/public-ca30x30/ca-30x30-cbn.pmtiles'
-
-# ca_parquet = 'https://minio.carlboettiger.info/public-ca30x30/hex/zoom8/ca-30x30-cbn-newlyprotected.parquet'
-# ca_pmtiles = 'https://minio.carlboettiger.info/public-ca30x30/ca-30x30-cbn-newlyprotected.pmtiles'
-
+ca_parquet = 'https://minio.carlboettiger.info/public-ca30x30/ca30x30cbn_newlyprotected.parquet'
+ca_pmtiles = 'https://minio.carlboettiger.info/public-ca30x30/ca30x30cbn_newlyprotected.pmtiles'
+# 
 # computed by taking the sum of all the acres in this file:
 # https://minio.carlboettiger.info/public-ca30x30/CBN-data/Progress_data_new_protection/Land_Status_Zone_Ecoregion_Counties/all_regions_reGAP_county_eco.parquet
 ca_area_acres = 101523750.68856516 
@@ -29,7 +23,10 @@ def get_url(folder, file, base_folder = 'CBN'):
         path = os.path.join(bucket,base_folder,folder,file)
     url = minio+path
     return url
-    
+
+import re
+source_layer_name = re.sub(r'\W+', '', os.path.splitext(os.path.basename(ca_pmtiles))[0]) #stripping hyphens to get layer name 
+
 #vector data 
 url_ACE_rarerank_statewide = get_url('ACE_biodiversity/ACE_rarerank_statewide','ACE_rarerank_statewide.pmtiles')
 url_ACE_rarerank_ecoregion = get_url('ACE_biodiversity/ACE_rarerank_ecoregion','ACE_rarerank_ecoregion.pmtiles')
@@ -66,6 +63,7 @@ url_resilient_conn_network = get_url('Connectivity_resilience/Resilient_connecte
 
 # column names for all data layers 
 keys = [
+    "update_newly_protected", "update_increased_management", "update_data_improvement",
     "ACE_amphibian_richness", "ACE_reptile_richness", "ACE_bird_richness",
     "ACE_mammal_richness", "ACE_rare_amphibian_richness", "ACE_rare_reptile_richness",
     "ACE_rare_bird_richness", "ACE_rare_mammal_richness", "ACE_endemic_amphibian_richness",
@@ -78,43 +76,48 @@ chatbot_toggles = {key: False for key in keys}
 # data layers dict 
 layer_config = [
     #[(section, 'a_amph', [(col_name, full name, key, chatbot toggle key)])]
+    ('📈 Data Updates', 'a_new', [
+        ('update_newly_protected', 'Newly Protected', keys[0], chatbot_toggles[keys[0]]),
+        ('update_increased_management', 'Increased Management', keys[1], chatbot_toggles[keys[1]]),
+        ('update_data_improvement', 'Data Improvement', keys[2], chatbot_toggles[keys[2]]),
+    ]),
     ('🐸 Amphibian', 'a_amph', [
-        ('amphibian_richness', 'Amphibian Richness', keys[0], chatbot_toggles[keys[0]]),
-        ('rare_amphibian_richness', 'Rare Amphibian Richness', keys[1], chatbot_toggles[keys[1]]),
-        ('endemic_amphibian_richness', 'Endemic Amphibian Richness', keys[2], chatbot_toggles[keys[2]]),
+        ('amphibian_richness', 'Amphibian Richness', keys[3], chatbot_toggles[keys[3]]),
+        ('rare_amphibian_richness', 'Rare Amphibian Richness', keys[4], chatbot_toggles[keys[4]]),
+        ('endemic_amphibian_richness', 'Endemic Amphibian Richness', keys[5], chatbot_toggles[keys[5]]),
     ]),
     ('🐍 Reptile', 'a_rept', [
-        ('reptile_richness', 'Reptile Richness', keys[3], chatbot_toggles[keys[3]]),
-        ('rare_reptile_richness', 'Rare Reptile Richness', keys[4], chatbot_toggles[keys[4]]),
-        ('endemic_reptile_richness', 'Endemic Reptile Richness', keys[5], chatbot_toggles[keys[5]]),
+        ('reptile_richness', 'Reptile Richness', keys[6], chatbot_toggles[keys[6]]),
+        ('rare_reptile_richness', 'Rare Reptile Richness', keys[7], chatbot_toggles[keys[7]]),
+        ('endemic_reptile_richness', 'Endemic Reptile Richness', keys[8], chatbot_toggles[keys[8]]),
     ]),
     ('🦜 Bird', 'a_bird', [
-        ('bird_richness', 'Bird Richness', keys[6], chatbot_toggles[keys[6]]),
-        ('rare_bird_richness', 'Rare Bird Richness', keys[7], chatbot_toggles[keys[7]]),
-        ('endemic_bird_richness', 'Endemic Bird Richness', keys[8], chatbot_toggles[keys[8]]),
+        ('bird_richness', 'Bird Richness', keys[9], chatbot_toggles[keys[9]]),
+        ('rare_bird_richness', 'Rare Bird Richness', keys[10], chatbot_toggles[keys[10]]),
+        ('endemic_bird_richness', 'Endemic Bird Richness', keys[11], chatbot_toggles[keys[11]]),
     ]),
     ('🦌 Mammal', 'a_mammal', [
-        ('mammal_richness', 'Mammal Richness', keys[9], chatbot_toggles[keys[9]]),
-        ('rare_mammal_richness', 'Rare Mammal Richness', keys[10], chatbot_toggles[keys[10]]),
-        ('endemic_mammal_richness', 'Endemic Mammal Richness', keys[11], chatbot_toggles[keys[11]]),
+        ('mammal_richness', 'Mammal Richness', keys[12], chatbot_toggles[keys[12]]),
+        ('rare_mammal_richness', 'Rare Mammal Richness', keys[13], chatbot_toggles[keys[13]]),
+        ('endemic_mammal_richness', 'Endemic Mammal Richness', keys[14], chatbot_toggles[keys[14]]),
     ]),
     ('🌿 Plant', 'a_plant', [
-        ('plant_richness', 'Plant Richness', keys[12], chatbot_toggles[keys[12]]),
-        ('rarityweighted_endemic_plant_richness', 'Rarity-Weighted\nEndemic Plant Richness', keys[13], chatbot_toggles[keys[13]]),
+        ('plant_richness', 'Plant Richness', keys[15], chatbot_toggles[keys[15]]),
+        ('rarityweighted_endemic_plant_richness', 'Rarity-Weighted\nEndemic Plant Richness', keys[16], chatbot_toggles[keys[16]]),
     ]),
     ('💧 Freshwater Resources', 'freshwater', [
-        ('wetlands', 'Wetlands', keys[14], chatbot_toggles[keys[14]]),
+        ('wetlands', 'Wetlands', keys[17], chatbot_toggles[keys[17]]),
     ]),
     ('🚜 Agriculture', 'agriculture', [
-        ('farmland', 'Farmland', keys[15], chatbot_toggles[keys[15]]),
-        ('grazing', 'Lands Suitable for Grazing', keys[16], chatbot_toggles[keys[16]]),
+        ('farmland', 'Farmland', keys[18], chatbot_toggles[keys[18]]),
+        ('grazing', 'Lands Suitable for Grazing', keys[19], chatbot_toggles[keys[19]]),
     ]),
     ('👤 People', 'SVI', [
-        ('DAC', 'Disadvantaged Communities', keys[17], chatbot_toggles[keys[17]]),
-        ('low_income', 'Low-Income Communities', keys[18], chatbot_toggles[keys[18]]),
+        ('DAC', 'Disadvantaged Communities', keys[20], chatbot_toggles[keys[20]]),
+        ('low_income', 'Low-Income Communities', keys[21], chatbot_toggles[keys[21]]),
     ]),
     ('🔥 Climate Risks', 'calfire', [
-        ('fire', 'Historical Fire Perimeters', keys[19], chatbot_toggles[keys[19]]),
+        ('fire', 'Historical Fire Perimeters', keys[22], chatbot_toggles[keys[22]]),
     ])
 ]
 
@@ -135,8 +138,8 @@ county_color = "#DE3163" # magenta
 city_color = "#ADD8E6" #light blue
 hoa_color = "#A89BBC" # purple
 nonprofit_color =  "#D77031" #orange
-justice40_color =  "#00008B" #purple
-svi_color = "#1bc7c3" #cyan
+purple =  "#00008B" #purple
+cyan = "#1bc7c3" #cyan
 white =  "#FFFFFF" 
 
 
@@ -212,16 +215,6 @@ app_formatting =  """
         }
     </style>
     """
-
-# gap codes 3 and 4 are off by default. 
-default_boxes = {
-    0: False,
-    # 3: False,
-    # 4: False,
-    # "other-conserved":False,
-    # "unknown":False,
-    # "non-conserved":False
-}
 
 # Maplibre styles. (should these be functions?)
 manager = {
@@ -415,6 +408,30 @@ networks = {
     ],
     'default': white
 }
+
+update_type_style = {
+        "version": 8,
+        "sources": {"ca": {"type": "vector", "url": f"pmtiles://{ca_pmtiles}"}},
+        "layers": [
+            {
+                "id": "ca30x30",
+                "source": "ca",
+                "source-layer": source_layer_name,
+                "type": "fill",
+                "paint": {
+                    "fill-color": [
+                        "interpolate", ["linear"], ["get", "update_newly_protected"],
+                        0, white,
+                        1, purple
+                    ]
+                }
+            }
+        ]
+    }
+
+ 
+
+
 
 style_options = {
     "30x30 Status": status,

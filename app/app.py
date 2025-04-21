@@ -14,7 +14,6 @@ import sqlalchemy
 import pathlib
 from typing import Optional
 from functools import reduce
-
 from variables import *
 from utils import *
 
@@ -38,8 +37,8 @@ for col,val in style_options.items():
     for name in val['stops']:
         key = val['property']+str(name[0])
         if key not in st.session_state:
-            st.session_state[key] = default_boxes.get(name[0], True)
-
+            st.session_state[key] = True
+            
 #customizing style with CSS 
 st.markdown(app_formatting,unsafe_allow_html=True)
 
@@ -222,7 +221,7 @@ with st.sidebar:
     for label in style_options: # get selected filters (based on the buttons selected)
         with st.expander(label):  
             if label in ["GAP Code","30x30 Status"]: # gap code 1 and 2 are on by default
-                opts = get_buttons(style_options, label, default_boxes)
+                opts = get_buttons(style_options, label)
             else: # other buttons are not on by default.
                 opts = get_buttons(style_options, label) 
             filters.update(opts)
