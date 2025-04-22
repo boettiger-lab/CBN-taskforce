@@ -75,7 +75,7 @@ with chatbot_container:
             - What is a GAP code?
             - What percentage of 30x30 conserved land has been impacted by wildfire?
             - How many acres are newly protected easements?
-            - Which county has the most 30x30 conserved land?
+            - List 10 counties with the highest fractions of protected areas.
             '''
             
             st.info('If the map appears blank, queried data may be too small to see at the default zoom level. Check the table below the map, as query results will also be displayed there.', icon="ℹ️")
@@ -160,7 +160,7 @@ filters = {}
 with st.sidebar:
     with st.popover("ℹ️ Help"):
         '''
-        - ❌ Safari/iOS not yet supported.  
+        - ❌ Safari/iOS not yet supported. Firefox recommended. 
         - 📊 Use this sidebar to color-code the map by different attributes **(Group by)**, toggle on data layers and view summary charts **(Data Layers)**, or filter data **(Filters)**.
         - 💬 For a more tailored experience, query our dataset of protected areas and their precomputed mean values for each of the displayed layers, using the experimental chatbot. The language model tries to answer natural language questions by drawing only from curated datasets (listed below).
         '''
