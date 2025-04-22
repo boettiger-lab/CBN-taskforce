@@ -75,49 +75,49 @@ chatbot_toggles = {key: False for key in keys}
 
 # data layers dict 
 layer_config = [
-    #[(section, 'a_amph', [(col_name, full name, key, chatbot toggle key)])]
+    #[(section, 'a_amph', [(col_name, full name, key, chatbot toggle key, citation)])]
     ('📈 Data Updates', 'a_new', [
-        ('update_newly_protected', 'Newly Protected', keys[0], chatbot_toggles[keys[0]]),
-        ('update_increased_management', 'Increased Management', keys[1], chatbot_toggles[keys[1]]),
-        ('update_data_improvement', 'Data Improvement', keys[2], chatbot_toggles[keys[2]]),
+        ('update_newly_protected', 'Newly Protected', keys[0], chatbot_toggles[keys[0]],None),
+        ('update_increased_management', 'Increased Management', keys[1], chatbot_toggles[keys[1]],None),
+        ('update_data_improvement', 'Data Improvement', keys[2], chatbot_toggles[keys[2]], None),
     ]),
     ('🐸 Amphibian', 'a_amph', [
-        ('amphibian_richness', 'Amphibian Richness', keys[3], chatbot_toggles[keys[3]]),
-        ('rare_amphibian_richness', 'Rare Amphibian Richness', keys[4], chatbot_toggles[keys[4]]),
-        ('endemic_amphibian_richness', 'Endemic Amphibian Richness', keys[5], chatbot_toggles[keys[5]]),
+        ('amphibian_richness', 'Amphibian Richness', keys[3], chatbot_toggles[keys[3]], 'Ref #5'),
+        ('rare_amphibian_richness', 'Rare Amphibian Richness', keys[4], chatbot_toggles[keys[4]], 'Ref #5'),
+        ('endemic_amphibian_richness', 'Endemic Amphibian Richness', keys[5], chatbot_toggles[keys[5]], 'Ref #5'),
     ]),
     ('🐍 Reptile', 'a_rept', [
-        ('reptile_richness', 'Reptile Richness', keys[6], chatbot_toggles[keys[6]]),
-        ('rare_reptile_richness', 'Rare Reptile Richness', keys[7], chatbot_toggles[keys[7]]),
-        ('endemic_reptile_richness', 'Endemic Reptile Richness', keys[8], chatbot_toggles[keys[8]]),
+        ('reptile_richness', 'Reptile Richness', keys[6], chatbot_toggles[keys[6]], 'Ref #5'),
+        ('rare_reptile_richness', 'Rare Reptile Richness', keys[7], chatbot_toggles[keys[7]], 'Ref #5'),
+        ('endemic_reptile_richness', 'Endemic Reptile Richness', keys[8], chatbot_toggles[keys[8]], 'Ref #5'),
     ]),
     ('🦜 Bird', 'a_bird', [
-        ('bird_richness', 'Bird Richness', keys[9], chatbot_toggles[keys[9]]),
-        ('rare_bird_richness', 'Rare Bird Richness', keys[10], chatbot_toggles[keys[10]]),
-        ('endemic_bird_richness', 'Endemic Bird Richness', keys[11], chatbot_toggles[keys[11]]),
+        ('bird_richness', 'Bird Richness', keys[9], chatbot_toggles[keys[9]], 'Ref #5'),
+        ('rare_bird_richness', 'Rare Bird Richness', keys[10], chatbot_toggles[keys[10]], 'Ref #5'),
+        ('endemic_bird_richness', 'Endemic Bird Richness', keys[11], chatbot_toggles[keys[11]], 'Ref #5'),
     ]),
     ('🦌 Mammal', 'a_mammal', [
-        ('mammal_richness', 'Mammal Richness', keys[12], chatbot_toggles[keys[12]]),
-        ('rare_mammal_richness', 'Rare Mammal Richness', keys[13], chatbot_toggles[keys[13]]),
-        ('endemic_mammal_richness', 'Endemic Mammal Richness', keys[14], chatbot_toggles[keys[14]]),
+        ('mammal_richness', 'Mammal Richness', keys[12], chatbot_toggles[keys[12]], 'Ref #5'),
+        ('rare_mammal_richness', 'Rare Mammal Richness', keys[13], chatbot_toggles[keys[13]], 'Ref #5'),
+        ('endemic_mammal_richness', 'Endemic Mammal Richness', keys[14], chatbot_toggles[keys[14]], 'Ref #5'),
     ]),
     ('🌿 Plant', 'a_plant', [
-        ('plant_richness', 'Plant Richness', keys[15], chatbot_toggles[keys[15]]),
-        ('rarityweighted_endemic_plant_richness', 'Rarity-Weighted\nEndemic Plant Richness', keys[16], chatbot_toggles[keys[16]]),
+        ('plant_richness', 'Plant Richness', keys[15], chatbot_toggles[keys[15]], 'Ref #6'),
+        ('rarityweighted_endemic_plant_richness', 'Rarity-Weighted\nEndemic Plant Richness', keys[16], chatbot_toggles[keys[16]], 'Ref #6'),
     ]),
     ('💧 Freshwater Resources', 'freshwater', [
-        ('wetlands', 'Wetlands', keys[17], chatbot_toggles[keys[17]]),
+        ('wetlands', 'Wetlands', keys[17], chatbot_toggles[keys[17]], 'Ref #7'),
     ]),
     ('🚜 Agriculture', 'agriculture', [
-        ('farmland', 'Farmland', keys[18], chatbot_toggles[keys[18]]),
-        ('grazing', 'Lands Suitable for Grazing', keys[19], chatbot_toggles[keys[19]]),
+        ('farmland', 'Farmland', keys[18], chatbot_toggles[keys[18]], 'Ref #8'),
+        ('grazing', 'Lands Suitable for Grazing', keys[19], chatbot_toggles[keys[19]], 'Ref #8'),
     ]),
     ('👤 People', 'SVI', [
-        ('DAC', 'Disadvantaged Communities', keys[20], chatbot_toggles[keys[20]]),
-        ('low_income', 'Low-Income Communities', keys[21], chatbot_toggles[keys[21]]),
+        ('DAC', 'Disadvantaged Communities', keys[20], chatbot_toggles[keys[20]], 'Ref #9'),
+        ('low_income', 'Low-Income Communities', keys[21], chatbot_toggles[keys[21]], 'Ref #10'),
     ]),
     ('🔥 Climate Risks', 'calfire', [
-        ('fire', 'Historical Fire Perimeters', keys[22], chatbot_toggles[keys[22]]),
+        ('fire', 'Historical Fire Perimeters', keys[22], chatbot_toggles[keys[22]], 'Ref #11'),
     ])
 ]
 
@@ -153,7 +153,7 @@ github_html = f"""
             <path d='{github_logo}'></path>
         </svg>
         <span>Source Code:</span>
-        <a href='https://github.com/boettiger-lab/ca-30x30' target='_blank'>https://github.com/boettiger-lab/ca-30x30</a>
+        <a href='https://github.com/boettiger-lab/ca-30x30' target='_blank'>https://github.com/boettiger-lab/CBN-taskforce</a>
     </span>
 """
 

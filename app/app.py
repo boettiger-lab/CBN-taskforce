@@ -61,17 +61,20 @@ with chatbot_container:
     with llm_left_col:
         with st.popover("💬 Example Queries"):
             '''
-            Mapping queries:        
-            - Show me all 30x30 conserved lands managed by The Nature Conservancy.
+            Mapping queries: 
+            - Show me protected areas with any recent additions.
             - Show me amphibian biodiversity hotspots that aren't currently conserved.
-            - Show me protected areas with at least 80% overlap with regions of high endemic species richness.
+            - Show me protected areas in disadvantaged communities.
+            - Show me non-conserved areas where at least 80% of the land overlaps with regions of high endemic species richness.
+            - Show me all 30x30 conserved lands managed by The Nature Conservancy.
             '''
             
             '''
             Exploratory data queries:
+            - Which habitat types that are underrepresented across 30x30 conserved lands?
             - What is a GAP code?
             - What percentage of 30x30 conserved land has been impacted by wildfire?
-            - What is the total acreage of areas designated as easements?
+            - How many acres are newly protected easements?
             - Which county has the most 30x30 conserved land?
             '''
             
@@ -208,11 +211,11 @@ with st.sidebar:
         with st.expander(section):
             st.slider("transparency", 0.0, 1.0, 0.1 if slider_key != "calfire" else 0.15, key=slider_key)
             for item in items:
-                if len(item) == 4:
-                    _, label, toggle_key, default = item
-                    st.toggle(label, key=toggle_key, value=default)
+                if len(item) == 5:
+                    _, label, toggle_key, default, citation = item
+                    st.toggle(label, key=toggle_key, value=default, help = citation)
                 else:
-                    _, label, toggle_key = item
+                    _, label, toggle_key, citation = item
                     st.toggle(label, key=toggle_key)
     st.divider()
     
