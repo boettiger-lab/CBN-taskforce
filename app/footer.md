@@ -1,31 +1,35 @@
 ## Credits
-Authors: Cassie Buhler & Carl Boettiger, UC Berkeley
+Authors: **Cassie Buhler** ([CIRES](https://cires.colorado.edu/) \& [ESIIL](https://esiil.org/)) and **Carl Boettiger** (UC Berkeley \& [ESIIL](https://esiil.org/))
+
+Made in collaboration with the *California Biodiversity Network (CBN)*. 
+
 License: BSD-2-clause
+
 
 Data: https://data.carlboettiger.info/public-ca30x30
 
 ### Data sources
-- CA Nature Terrestrial 30x30 Conserved Areas map layer by CA Nature. Data: https://www.californianature.ca.gov/datasets/CAnature::30x30-conserved-areas-terrestrial-2024/about. License: Public Domain
+1. **CA Nature (2024)**. *30x30 Conserved Areas (Terrestrial)*. Data: https://www.californianature.ca.gov/datasets/CAnature::30x30-conserved-areas-terrestrial-2024/about. License: Public Domain
 
-- Climate Zones by Ackerly Lab; Kling. Data: https://github.com/matthewkling/climclust/tree/master/hclust
+2. **Ackerly Lab & Kling, M.** *Climate Zones*. Data: https://github.com/matthewkling/climclust/tree/master/hclust.
 
-- California Vegetation by Wildlife Habitat Relationship Type, CAL FIRE (2022). Data: https://www.fire.ca.gov/Home/What-We-Do/Fire-Resource-Assessment-Program/GIS-Mapping-and-Data-Analytics
+3. **CAL FIRE (2022)**. *California Vegetation by Wildlife Habitat Relationship Type*. Data: https://www.fire.ca.gov/Home/What-We-Do/Fire-Resource-Assessment-Program/GIS-Mapping-and-Data-Analytics
 
-- ACE Biodiversity by CDFW. Data: https://data.ca.gov/dataset/terrestrial-biodiversity-summary-ace-ds2739
+4. **The Nature Conservancy**. *Resilient and Connected Network*. Data: https://crcs.tnc.org/pages/data. Citation: Anderson et al. (2023). PNAS, https://doi.org/10.1073/pnas.2204434119.
 
-- Rarity-Weighted Endemic Plant Richness and Plant Richness. Citation: Kling et al. (2018) Philosophical Transactions of the Royal Society B, https://royalsocietypublishing.org/doi/full/10.1098/rstb.2017.0397.
+5. **California Department of Fish and Wildlife (CDFW)**. *Areas of Conservation Emphasis (ACE)*. Data: https://data.ca.gov/dataset/terrestrial-biodiversity-summary-ace-ds2739
 
-- Resilient Connected Network. Data: https://crcs.tnc.org/pages/data. Citation: Anderson et al. (2023) https://doi.org/10.1073/pnas.2204434119.
+6. **Kling et al. (2018)**. *Rarity-Weighted Endemic Plant Richness and Plant Richness*. Philosophical Transactions of the Royal Society B. https://doi.org/10.1098/rstb.2017.0397.
 
-- Wetlands (freshwater emergent wetland, freshwater forested/shrub wetland, or estuarine and marine wetland) from National Wetland Inventory, US Fish and Wildlife Service (2019). Data: https://www.fws.gov/program/national-wetlands-inventory/wetlands-data.
+7. **U.S. Fish and Wildlife Service (2019)**. *National Wetland Inventory – Wetlands Data (Freshwater and Estuarine/Marine)*. Data: https://www.fws.gov/program/national-wetlands-inventory/wetlands-data.
 
-- Farmland (prime, unique, of statewide or local importance) and Lands suitable for grazing by DOC FMMP (2018). Data: https://gis.conservation.ca.gov/portal/home/group.html?id=b1494c705cb34d01acf78f4927a75b8f#overview.
+8. **California Department of Conservation, FMMP (2018)**. *Farmland Mapping and Monitoring Program (FMMP): Farmland and Grazing Lands.* Data: https://gis.conservation.ca.gov/portal/home/group.html?id=b1494c705cb34d01acf78f4927a75b8f#overview.
 
-- Disadvantaged Communities by CalEPA. Data: https://calepa.ca.gov/envjustice/ghginvest/
+9. **California Environmental Protection Agency (CalEPA)**. *Disadvantaged Communities*. Data: https://calepa.ca.gov/envjustice/ghginvest/
 
-- Priority Populations (Low-Income Communities) from CalEnviroScreen 4.0. Data: https://oehha.ca.gov/calenviroscreen/report/calenviroscreen-40
+10. **Office of Environmental Health Hazard Assessment (OEHHA) (2021)**. *CalEnviroScreen 4.0: Priority Populations (Low-Income Communities)*. Data: https://oehha.ca.gov/calenviroscreen/report/calenviroscreen-40
 
-- Historic Fire Perimeters by CAL FIRE (2023). Data: https://www.fire.ca.gov/Home/What-We-Do/Fire-Resource-Assessment-Program/GIS-Mapping-and-Data-Analytics
+11. **CAL FIRE (2023)**. *Historic Fire Perimeters*. Data: https://www.fire.ca.gov/Home/What-We-Do/Fire-Resource-Assessment-Program/GIS-Mapping-and-Data-Analytics
 
 ### LLMs
 This app can use a selection of open-weights language models hosted on the National Research Platform, https://nrp.ai/documentation/userdocs/ai/llm-managed/.
