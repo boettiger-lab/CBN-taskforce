@@ -71,7 +71,7 @@ with chatbot_container:
             
             '''
             Exploratory data queries:
-            - Which habitat types that are underrepresented across 30x30 conserved lands?
+            - Which habitat types are underrepresented across 30x30 conserved lands?
             - What is a GAP code?
             - What percentage of 30x30 conserved land has been impacted by wildfire?
             - How many acres are newly protected easements?
