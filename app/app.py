@@ -14,6 +14,7 @@ import sqlalchemy
 import pathlib
 from typing import Optional
 from functools import reduce
+
 from variables import *
 from utils import *
 
@@ -37,7 +38,9 @@ for col,val in style_options.items():
     for name in val['stops']:
         key = val['property']+str(name[0])
         if key not in st.session_state:
-            st.session_state[key] = True
+            # st.session_state[key] = True
+            st.session_state[key] = default_boxes.get(name[0], True)
+
             
 #customizing style with CSS 
 st.markdown(app_formatting,unsafe_allow_html=True)
@@ -163,7 +166,10 @@ with st.sidebar:
         - 📊 Use this sidebar to color-code the map by different attributes **(Group by)**, toggle on data layers and view summary charts **(Data Layers)**, or filter data **(Filters)**.
         - 💬 For a more tailored experience, query our dataset of protected areas and their precomputed mean values for each of the displayed layers, using the experimental chatbot. The language model tries to answer natural language questions by drawing only from curated datasets (listed below).
         '''
+    if st.button("🧹 Clear Filters", type="secondary", help = 'Reset all the filters to their default state.'):
+        st.rerun()
     st.divider()
+
     color_choice = st.radio("Group by:", style_options, key = "color", help = "Select a category to change map colors and chart groupings.")   
     colorby_vals = get_color_vals(style_options, color_choice) #get options for selected color_by column 
     alpha = 0.8
@@ -200,31 +206,17 @@ with st.container():
             st.warning("Please try again with a different query", icon="⚠️")
             st.write(error_message)
             st.stop()
-
-#### Data layers 
-with st.sidebar:  
-    st.markdown('<p class = "medium-font-sidebar"> Data Layers:</p>', help = "Select data layers to visualize on the map. Summary charts will update based on the displayed layers.", unsafe_allow_html= True)
-    
-    #display toggles to turn on data layers            
-    for section, slider_key, items in layer_config:
-        with st.expander(section):
-            st.slider("transparency", 0.0, 1.0, 0.1 if slider_key != "calfire" else 0.15, key=slider_key)
-            for item in items:
-                if len(item) == 5:
-                    _, label, toggle_key, default, citation = item
-                    st.toggle(label, key=toggle_key, value=default, help = citation)
-                else:
-                    _, label, toggle_key, citation = item
-                    st.toggle(label, key=toggle_key)
-    st.divider()
-    
+with st.sidebar: 
 #### Filters
+
     st.markdown('<p class = "medium-font-sidebar"> Filters:</p>', help = "Apply filters to adjust what data is shown on the map.", unsafe_allow_html= True)
+
 
     for label in style_options: # get selected filters (based on the buttons selected)
         with st.expander(label):  
             if label in ["GAP Code","30x30 Status"]: # gap code 1 and 2 are on by default
-                opts = get_buttons(style_options, label)
+                # opts = get_buttons(style_options, label)
+                opts = get_buttons(style_options, label, default_boxes)
             else: # other buttons are not on by default.
                 opts = get_buttons(style_options, label) 
             filters.update(opts)
@@ -239,18 +231,25 @@ with st.sidebar:
 
     st.divider()
     
+#### Data layers 
+    st.markdown('<p class = "medium-font-sidebar"> Data Layers:</p>', help = "Select data layers to visualize on the map. Summary charts will update based on the displayed layers.", unsafe_allow_html= True)
+    
+    #display toggles to turn on data layers            
+    for section, slider_key, items in layer_config:
+        with st.expander(section):
+            st.slider("transparency", 0.0, 1.0, 0.1 if slider_key != "calfire" else 0.15, key=slider_key)
+            for item in items:
+                if len(item) == 5:
+                    _, label, toggle_key, default, citation = item
+                    st.toggle(label, key=toggle_key, value=default, help = citation)
+                else:
+                    _, label, toggle_key, citation = item
+                    st.toggle(label, key=toggle_key)
+    st.divider()    
     # adding github logo 
     st.markdown(f"<div class='spacer'>{github_html}</div>", unsafe_allow_html=True)
     st.markdown(":left_speech_bubble: [Get in touch or report an issue](https://github.com/boettiger-lab/CBN-taskforce/issues)")
 
-
-# Display CA 30x30 Data
-if 'out' not in locals():
-    style = get_pmtiles_style(style_options[color_choice], alpha, filter_cols, filter_vals)
-    legend, position, bg_color, fontsize = get_legend(style_options, color_choice)
-    m.add_legend(legend_dict = legend, position = position, bg_color = bg_color, fontsize = fontsize)
-    m.add_pmtiles(ca_pmtiles, style=style, name="CA", tooltip=True, fit_bounds=True)
-    
 column = select_column[color_choice]
 colors = color_table(select_colors, color_choice, column)
 
@@ -258,10 +257,17 @@ colors = color_table(select_colors, color_choice, column)
 # df - charts; df_tab - printed table (omits colors) 
 if 'out' not in locals():
     df, df_tab, df_percent, df_bar_30x30 = get_summary_table(ca, column, select_colors, color_choice, filter_cols, filter_vals,colorby_vals)
-    total_percent = (100*df_percent.percent_CA.sum()).round(2)
 else:
     df = get_summary_table_sql(ca, column, colors, ids)
-    total_percent = (100*df.percent_CA.sum()).round(2)
+
+# Display CA 30x30 Data
+if 'out' not in locals():
+    style = get_pmtiles_style(style_options[color_choice], alpha, filter_cols, filter_vals)
+    legend, position, bg_color, fontsize = get_legend(style_options, color_choice, df, column)
+    m.add_legend(legend_dict = legend, position = position, bg_color = bg_color, fontsize = fontsize)
+    m.add_pmtiles(ca_pmtiles, style=style, name="CA", tooltip=True, fit_bounds=True)
+    
+
 
 # check if any layer toggle is active
 any_chart_toggled = any(
@@ -292,12 +298,11 @@ with main:
 
     with stats_col:
         with st.container():
-            # donut chart 
-            st.markdown(f"{total_percent}% CA Protected", help = "Total percentage of 30x30 conserved lands, updates based on displayed data")
-            st.altair_chart(area_chart(df, column), use_container_width=True)
-            
-            # display the pill selection if we will use any barcharts
+            st.markdown('')
+            st.altair_chart(area_chart(df, column, color_choice), use_container_width=True)
+            st.markdown('<p class="caption-shift-up">*Chart updates based on filters.</p>', unsafe_allow_html=True)
 
+            # display the pill selection if we will use any barcharts
             if any_chart_toggled or show_stacked or show_chatbot_chart:
                 option_map = {
                     'percent': "%",
@@ -316,8 +321,13 @@ with main:
                     y = 'percent_group' if chart_choice == 'percent' else 'acres'
                     if color_choice == 'Resilient & Connected Network': # line break, this title is long 
                          color_choice = 'Resilient &\n Connected Network'
-                    chart = stacked_bar(df = df_bar_30x30, x = column, y = y, metric = chart_choice, title = color_choice + '\nby 30x30 Status', colors = colors)
-                    st.altair_chart(chart, use_container_width=True)  
+                    chart = stacked_bar(df = df_bar_30x30, x = column, y = y, metric = chart_choice, title = color_choice + '\n by 30x30 Status', colors = colors)
+                    st.altair_chart(chart, use_container_width=True) 
+                    # st.markdown('')
+                    if chart_choice == 'percent':
+                        st.markdown(f'<p class="caption">*Percent of {color_choice} within each 30x30 conservation status.</p>', unsafe_allow_html=True)
+                    else:
+                        st.markdown(f'<p class="caption">*Acres of {color_choice} within each 30x30 conservation status.</p>', unsafe_allow_html=True)
 
                 # data layer summary charts   
                 for _, _, items in layer_config:
@@ -327,12 +337,14 @@ with main:
                             st.altair_chart(bar_chart(df, column, y_col, label, metric=chart_choice), use_container_width=True)
             else:
                 st.warning("Please select a metric to display bar chart.")
-
-st.caption("***The label 'established' is inferred from the California Protected Areas Database, which may introduce artifacts. For details on our methodology, please refer to our <a href='https://github.com/boettiger-lab/CBN-taskforce' target='_blank'>our source code</a>.", unsafe_allow_html=True)
-
-st.caption("***Under California’s 30x30 framework, only GAP codes 1 and 2 are counted toward the conservation goal.") 
+with main:
+    with map_col:
+        st.caption("***The label 'established' is inferred from the California Protected Areas Database, which may introduce artifacts. For details on our methodology, please refer to our <a href='https://github.com/boettiger-lab/CBN-taskforce' target='_blank'>our source code</a>.", unsafe_allow_html=True)
+        
+        st.caption("***Under California’s 30x30 framework, only GAP codes 1 and 2 are counted toward the conservation goal.") 
 
 st.divider()
+
 
 with open('app/footer.md', 'r') as file:
     footer = file.read()

@@ -40,7 +40,7 @@ Ensure the response contains only this JSON object, with no additional text, for
     GAP 2: Permanently protected but may allow some uses or management practices that degrade natural communities or suppress natural disturbances.
     GAP 3: Permanently protected from major land cover conversion but allows some extractive uses (e.g., logging, mining) and protects federally listed species.
     GAP 4: No protection mandates; land may be converted to unnatural habitat types or its management intent is unknown.
-- "status": The conservation status. GAP 1 and 2 lands have the highest biodiversity protections and count towards the 30x30 goal, thus are "30x30-conserved". GAP 3 and 4 lands are grouped into "other-conserved", as their biodiversity protections are lower. Areas that aren't protected--that is, they're not GAP 1, 2, 3, or 4--are designed "non-conserved". 
+- "status": The conservation status. GAP 1 and 2 lands have the highest biodiversity protections and count towards the 30x30 goal, thus are "30x30-conserved". GAP 3 lands are grouped into "other-conserved", as their biodiversity protections are lower. GAP 4 lands are public lands or lands with unknown status denoted as 'public-or-unknown'. Areas that aren't protected--that is, they're not GAP 1, 2, 3, or 4--are designed "non-conserved". 
 - "name": The name of the protected area. The names of the largest parks are {names}.
 - "access_type": Level of access to the land: "Unknown Access","Restricted Access","No Public Access" and "Open Access". 
 - "manager": The land manager's name, also known as the agency name. These are the manager names: {managers}. 
