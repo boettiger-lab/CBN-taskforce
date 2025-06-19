@@ -13,14 +13,17 @@ from functools import reduce
 from itertools import chain
 import re
 from variables import *
+from pandas.api.types import CategoricalDtype
+from math import pi
 
 ######################## UI FUNCTIONS 
-def get_buttons(style_options, style_choice):
+def get_buttons(style_options, style_choice, default_boxes = None):
     """
     Creates Streamlit checkboxes based on style options and returns the selected filters.
     """
     column = style_options[style_choice]['property']
     opts = [style[0] for style in style_options[style_choice]['stops']]
+    default_boxes = default_boxes or {}
 
     buttons = {}
     for name in opts:
@@ -114,7 +117,6 @@ def get_summary(ca, combined_filter, column, main_group, colors = None):
                       .group_by(main_group)
                       .aggregate(total_acres=_.acres.sum())
                     )
-    
     df = (df.inner_join(group_totals, main_group)
           # .mutate(percent_group=( _.acres / _.total_acres).round(3))
           .mutate(percent_group=( _.acres / _.total_acres))
@@ -233,13 +235,21 @@ def get_pmtiles_layer(layer,url):
         ],
     }
 
-def get_legend(style_options, color_choice):
+def get_legend(style_options, color_choice, df = None, column = None):
     """
     Generates a legend dictionary with color mapping and formatting adjustments.
     """
     legend = {cat: color for cat, color in style_options[color_choice]['stops']}
+    if df is not None:
+        if ~df.empty:
+            categories = df[column].to_list() #if we filter out categories, don't show them on the legend 
+            legend = {cat: color for cat, color in legend.items() if str(cat) in categories}
+       
     position, fontsize, bg_color = 'bottom-left', 15, 'white'
-    
+    if color_choice == "Easement":
+        legend = {key.replace("True", "Easement"): value for key, value in legend.items()} 
+        legend = {key.replace("False", "Non-easement"): value for key, value in legend.items()} 
+
     # shorten legend for ecoregions 
     if color_choice == "Ecoregion":
         legend = {key.replace("Northern California", "NorCal"): value for key, value in legend.items()} 
@@ -254,24 +264,47 @@ def get_legend(style_options, color_choice):
 
 
 ######################## CHART FUNCTIONS 
-def area_chart(df, column):
+def area_chart(df, column, color_choice):
     """
     Generates an Altair pie chart representing the percentage of protected areas.
     """
-    base = alt.Chart(df).encode(alt.Theta("percent_CA:Q").stack(True))
+    sort, _, _, _ = get_chart_setting = get_chart_settings(column)
+    unique_labels = sorted(df[column].unique())
+    height = 300
+    if sort == 'x':
+        labels_sorted = unique_labels
+    elif sort == '-x':
+        labels_sorted = unique_labels[::-1]
+    else:
+        labels_sorted = sort 
+    df[column] = df[column].apply(lambda x: get_label_transform(column, x))
+
+    # need to sort the slices, so computing an index 
+    cat_dtype = CategoricalDtype(categories=labels_sorted, ordered=True)
+    df["order_index"] = df[column].astype(cat_dtype).cat.codes  
     pie = (
-        base.mark_arc(innerRadius=40, outerRadius=100, stroke="black", strokeWidth=0.1)
+        alt.Chart(df)
+        .mark_arc(innerRadius=50, outerRadius=120, stroke="black", strokeWidth=0.1)
         .encode(
-            alt.Color("color:N").scale(None).legend(None),
+            alt.Theta("percent_CA:Q", scale=alt.Scale(type="linear",rangeMax=pi/2, rangeMin=-pi/2)),
+            alt.Order("order_index:O"),
+            alt.Color(
+                f'{column}:N',
+                scale=alt.Scale(domain=df[column].tolist(), range=df["color"].tolist()),
+                legend = None),
             tooltip=[
                 alt.Tooltip(column, type="nominal"),
                 alt.Tooltip("percent_CA", type="quantitative", format=",.1%"),
                 alt.Tooltip("acres", type="quantitative", format=",.0f"),
             ]
         )
+        .properties(title = f"Percent of California\nby {color_choice}".split("\n"),
+                   height=height)
+        .configure_title(
+                    fontSize=16, align="center", anchor="middle", offset = 15
+        )
     )
-    # return pie.properties(width="container", height=290)
-    return pie.properties(height=290)
+    return pie
 
 
 def bar_chart(df, x, y, title, metric = "percent"):
@@ -283,7 +316,7 @@ def stacked_bar(df, x, y, metric, title, colors, color = "status"):
     return create_bar_chart(df, x, y, title, metric, color=color, stacked=True, colors=colors)
 
 
-def get_chart_settings(x, y, stacked, metric):
+def get_chart_settings(x, y = None, stacked = None, metric = None):
     """
     Returns sorting, axis settings, and y-axis title mappings.
     """
@@ -293,23 +326,31 @@ def get_chart_settings(x, y, stacked, metric):
         "easement": ["True", "False"],
         "manager_type": ["Federal", "Tribal", "State", "Special District", "County", "City",
                          "HOA", "Joint", "Non Profit", "Private", "Unknown"],
-        "status": ["30x30-conserved", "other-conserved", "unknown", "non-conserved"],
+        "status": ["30x30-conserved", "other-conserved", "public-or-unknown", "non-conserved"],
         "ecoregion": ['SE. Great Basin', 'Mojave Desert', 'Sonoran Desert', 'Sierra Nevada',
                       'SoCal Mountains & Valleys', 'Mono', 'Central CA Coast', 'Klamath Mountains',
                       'NorCal Coast', 'NorCal Coast Ranges', 'NW. Basin & Range', 'Colorado Desert',
                       'Central Valley Coast Ranges', 'SoCal Coast', 'Sierra Nevada Foothills',
                       'Southern Cascades', 'Modoc Plateau', 'Great Valley (North)',
-                      'NorCal Interior Coast Ranges', 'Great Valley (South)']
+                      'NorCal Interior Coast Ranges', 'Great Valley (South)'],
+        "climate_zone": ["Zone 1", "Zone 2", "Zone 3","Zone 4", "Zone 5",
+                         "Zone 6","Zone 7", "Zone 8", "Zone 9", "Zone 10"],
+
     }        
     if metric == 'percent':
         y_titles = "Percent"
         
     elif metric == "acres":
         y_titles = "Acres"
+        
+    else:
+        y_titles = None
 
-    angle = 270 if x in ["manager_type", "ecoregion", "status", "habitat_type", "resilient_connected_network","access_type"] else 0
-    height = 470 if y == "percent_rarityweighted_endemic_plant_richness" else 250 if stacked else 450 if x in ["ecoregion",'habitat_type'] else 350 if x == "manager_type" else 450 if x == "access_type" else 330
-
+    angle = 270 if x in ["manager_type", "ecoregion", "status", "habitat_type", "resilient_connected_network","access_type", "climate_zone", "easement"] else 0
+    if not y:
+        y = ''
+        
+    height = 470 if y == "percent_rarityweighted_endemic_plant_richness" else 250 if stacked else 450 if x in ["ecoregion",'habitat_type'] else 350 if x == "manager_type" else 450 if x == "access_type" else 330  
     return sort_options.get(x, "x"), angle, height, y_titles
 
     
@@ -318,6 +359,8 @@ def get_label_transform(x, label=None):
     Returns label transformation logic for Altair expressions and manual label conversion.
     """
     transformations = {
+        "gap_code": ("'Gap ' + toString(datum.gap_code)", lambda lbl: f"Gap {lbl}"),
+        "climate_zone": ("'Zone ' + toString(floor(datum.climate_zone))", lambda lbl: f"Zone {int(float(lbl))}"),
         "access_type": ("replace(datum.access_type, ' Access', '')", lambda lbl: lbl.replace(" Access", "")),
         "ecoregion": (
             "replace(replace(replace(replace(replace("
@@ -333,7 +376,15 @@ def get_label_transform(x, label=None):
                          .replace("Northwestern", "NW.")
                          .replace("and", "&")
                          .replace("California", "CA"))
+        ),
+        "easement": ("replace("
+            "replace(datum.easement, 'True', 'Easement'),"
+            "'False', 'Non-easement')",
+            lambda lbl: (lbl.replace("True", "Easement")
+                         .replace("False", "Non-easement")
+            )
         )
+
     }
     if label is not None:
         return transformations.get(x, (None, lambda lbl: lbl))[1](label)
@@ -359,7 +410,6 @@ def create_bar_chart(df, x, y, title, metric, color=None, stacked=False, colors=
     sort, angle, height, y_title = get_chart_settings(x, y, stacked, metric)
     label_transform = get_label_transform(x)
     y_format = "~s" if metric == "acres" else ",.1%"
-    
     # create base chart 
     chart = (
         alt.Chart(df)
@@ -373,13 +423,12 @@ def create_bar_chart(df, x, y, title, metric, color=None, stacked=False, colors=
             tooltip=[alt.Tooltip(x, type="nominal"), alt.Tooltip(y, type="quantitative")]
         )
         # .properties(width="container", height=height)  
-        .properties(height=height)  
-
+        .properties(height=height)
     )
 
     if stacked:
         # order stacks 
-        order = ["30x30-conserved", "other-conserved", "unknown", "non-conserved"]
+        order = ["30x30-conserved", "other-conserved", "public-or-unknown", "non-conserved"]
         sort_order ,color_hex = get_hex(df[[color, "color"]], color, order)
 
         df["stack_order"] = df[color].apply(lambda val: sort_order.index(val) if val in sort_order else len(sort_order))
@@ -436,7 +485,7 @@ def create_bar_chart(df, x, y, title, metric, color=None, stacked=False, colors=
         columns=2, title=None, labelOffset=2, offset=5,
         symbolType="square", labelFontSize=13,
     ).configure_title(
-        fontSize=18, align="center", anchor="middle", offset = 10
+        fontSize=16, align="center", anchor="middle", offset = 10
     )
 
     return final_chart

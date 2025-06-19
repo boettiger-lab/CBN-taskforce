@@ -1,6 +1,6 @@
 # urls for main layer 
-ca_parquet = 'https://minio.carlboettiger.info/public-ca30x30/ca30x30cbn_newlyprotected.parquet'
-ca_pmtiles = 'https://minio.carlboettiger.info/public-ca30x30/ca30x30cbn_newlyprotected.pmtiles'
+ca_parquet = 'https://minio.carlboettiger.info/public-ca30x30/ca30x30cbn_newlyprotected_v2.parquet'
+ca_pmtiles = 'https://minio.carlboettiger.info/public-ca30x30/ca30x30cbn_newlyprotected_v2.pmtiles'
 # 
 # computed by taking the sum of all the acres in this file:
 # https://minio.carlboettiger.info/public-ca30x30/CBN-data/Progress_data_new_protection/Land_Status_Zone_Ecoregion_Counties/all_regions_reGAP_county_eco.parquet
@@ -213,8 +213,28 @@ app_formatting =  """
         [data-testid="stSidebar"] > div:first-child { /* reduce whitespace at the top of the sidebar */
             padding-top: 0rem !important; 
         }
+        .caption-shift-up {
+            font-size: 13px !important;
+            margin-top: -9rem !important;
+            margin-bottom: 0rem !important;
+            text-align: right !important;
+            font-style: italic !important;
+            color: gray; /* optional: caption-like color */
+
+        }
+        .caption {
+            font-size: 13px !important;
+            margin-top: -2rem !important;
+            margin-bottom: 0rem !important;
+            text-align: right !important;
+            font-style: italic !important;
+            color: gray; /* optional: caption-like color */
+        }
     </style>
     """
+
+            # margin-top: -5rem !important;
+
 
 # Maplibre styles. (should these be functions?)
 manager = {
@@ -286,7 +306,7 @@ status = {
     'stops': [
         ['30x30-conserved', "#56711f"],
         ['other-conserved', "#b6ce7a"],
-        ['unknown', "#e5efdb"],
+        ['public-or-unknown', "#e5efdb"],
         ['non-conserved', "#e1e1e1"]
         # ['non-conserved', white]
 
@@ -473,23 +493,28 @@ select_colors = {
 
 }
 
+# non-conserved areas, off by default
+default_boxes = {
+    'non-conserved': False,
+    # 3: False,
+    # 4: False,
+    # "other-conserved":False,
+    # "unknown":False,
+    # "non-conserved":False
+}
+
+
 from langchain_openai import ChatOpenAI
 import streamlit as st
 # from langchain_openai.chat_models.base import BaseChatOpenAI
 
-## dockerized streamlit app wants to read from os.getenv(), otherwise use st.secrets
-import os
-api_key = os.getenv("NRP_API_KEY")
-if api_key is None:
-    api_key = st.secrets["NRP_API_KEY"]
-
 llm_options = {
     # "llama-3.3-quantized": ChatOpenAI(model = "cirrus", api_key=st.secrets['CIRRUS_LLM_API_KEY'], base_url = "https://llm.cirrus.carlboettiger.info/v1",  temperature=0),
-    "llama3.3": ChatOpenAI(model = "llama3-sdsc", api_key=api_key, base_url = "https://llm.nrp-nautilus.io/",  temperature=0),
-    "gemma3": ChatOpenAI(model = "gemma3", api_key=api_key, base_url = "https://llm.nrp-nautilus.io/",  temperature=0),
-    # "DeepSeek-R1-Distill-Qwen-32B": BaseChatOpenAI(model = "DeepSeek-R1-Distill-Qwen-32B", api_key=api_key, base_url = "https://llm.nrp-nautilus.io/",  temperature=0),
-    "watt": ChatOpenAI(model = "watt", api_key=api_key, base_url = "https://llm.nrp-nautilus.io/",  temperature=0),
-    # "phi3": ChatOpenAI(model = "phi3", api_key=api_key, base_url = "https://llm.nrp-nautilus.io/",  temperature=0),
+    "llama3.3": ChatOpenAI(model = "llama3-sdsc", api_key=st.secrets['NRP_API_KEY'], base_url = "https://llm.nrp-nautilus.io/",  temperature=0),
+    "gemma3": ChatOpenAI(model = "gemma3", api_key=st.secrets['NRP_API_KEY'], base_url = "https://llm.nrp-nautilus.io/",  temperature=0),
+    # "DeepSeek-R1-Distill-Qwen-32B": BaseChatOpenAI(model = "DeepSeek-R1-Distill-Qwen-32B", api_key=st.secrets['NRP_API_KEY'], base_url = "https://llm.nrp-nautilus.io/",  temperature=0),
+    "watt": ChatOpenAI(model = "watt", api_key=st.secrets['NRP_API_KEY'], base_url = "https://llm.nrp-nautilus.io/",  temperature=0),
+    # "phi3": ChatOpenAI(model = "phi3", api_key=st.secrets['NRP_API_KEY'], base_url = "https://llm.nrp-nautilus.io/",  temperature=0),
 }
 
 
