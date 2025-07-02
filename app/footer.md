@@ -23,13 +23,15 @@ Data: https://data.carlboettiger.info/public-ca30x30
 
 7. **U.S. Fish and Wildlife Service (2019)**. *National Wetland Inventory – Wetlands Data (Freshwater and Estuarine/Marine)*. Data: https://www.fws.gov/program/national-wetlands-inventory/wetlands-data.
 
-8. **California Department of Conservation, FMMP (2018)**. *Farmland Mapping and Monitoring Program (FMMP): Farmland and Grazing Lands.* Data: https://gis.conservation.ca.gov/portal/home/group.html?id=b1494c705cb34d01acf78f4927a75b8f#overview.
+8. **Howard et al. (2016)**. *California Freshwater Species Database*. Data: https://filelib.wildlife.ca.gov/Public/BDB/GIS/BIOS/Public_Datasets/1100_1199/ds1197.zip.
 
-9. **California Environmental Protection Agency (CalEPA)**. *Disadvantaged Communities*. Data: https://calepa.ca.gov/envjustice/ghginvest/
+9. **California Department of Conservation, FMMP (2018)**. *Farmland Mapping and Monitoring Program (FMMP): Farmland and Grazing Lands.* Data: https://gis.conservation.ca.gov/portal/home/group.html?id=b1494c705cb34d01acf78f4927a75b8f#overview.
 
-10. **Office of Environmental Health Hazard Assessment (OEHHA) (2021)**. *CalEnviroScreen 4.0: Priority Populations (Low-Income Communities)*. Data: https://oehha.ca.gov/calenviroscreen/report/calenviroscreen-40
+10. **California Environmental Protection Agency (CalEPA)**. *Disadvantaged Communities*. Data: https://calepa.ca.gov/envjustice/ghginvest/
 
-11. **CAL FIRE (2023)**. *Historic Fire Perimeters*. Data: https://www.fire.ca.gov/Home/What-We-Do/Fire-Resource-Assessment-Program/GIS-Mapping-and-Data-Analytics
+11. **Office of Environmental Health Hazard Assessment (OEHHA) (2021)**. *CalEnviroScreen 4.0: Priority Populations (Low-Income Communities)*. Data: https://oehha.ca.gov/calenviroscreen/report/calenviroscreen-40
+
+12. **CAL FIRE (2023)**. *Historic Fire Perimeters*. Data: https://www.fire.ca.gov/Home/What-We-Do/Fire-Resource-Assessment-Program/GIS-Mapping-and-Data-Analytics
 
 ### LLMs
 This app can use a selection of open-weights language models hosted on the National Research Platform, https://nrp.ai/documentation/userdocs/ai/llm-managed/.

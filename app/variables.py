@@ -1,6 +1,6 @@
 # urls for main layer 
-ca_parquet = 'https://minio.carlboettiger.info/public-ca30x30/ca30x30cbn_newlyprotected.parquet'
-ca_pmtiles = 'https://minio.carlboettiger.info/public-ca30x30/ca30x30cbn_newlyprotected.pmtiles'
+ca_parquet = 'https://minio.carlboettiger.info/public-ca30x30/ca30x30cbn_newlyprotected_v3.parquet'
+ca_pmtiles = 'https://minio.carlboettiger.info/public-ca30x30/ca30x30cbn_newlyprotected_v3.pmtiles'
 # 
 # computed by taking the sum of all the acres in this file:
 # https://minio.carlboettiger.info/public-ca30x30/CBN-data/Progress_data_new_protection/Land_Status_Zone_Ecoregion_Counties/all_regions_reGAP_county_eco.parquet
@@ -25,7 +25,8 @@ def get_url(folder, file, base_folder = 'CBN'):
     return url
 
 import re
-source_layer_name = re.sub(r'\W+', '', os.path.splitext(os.path.basename(ca_pmtiles))[0]) #stripping hyphens to get layer name 
+source_layer_name = re.sub(r'\W+', '', os.path.splitext(os.path.basename(ca_pmtiles))[0])
+#stripping hyphens to get layer name 
 
 #vector data 
 url_ACE_rarerank_statewide = get_url('ACE_biodiversity/ACE_rarerank_statewide','ACE_rarerank_statewide.pmtiles')
@@ -47,6 +48,8 @@ url_ACE_end_bird_richness = get_url('ACE_biodiversity/ACE_endemic_bird_richness'
 url_ACE_end_mammal_richness = get_url('ACE_biodiversity/ACE_endemic_mammal_richness','ACE_endemic_mammal_richness.pmtiles')
 
 url_wetlands = get_url('Freshwater_resources/Wetlands','CA_wetlands.pmtiles')
+url_freshwater_richness = get_url('Freshwater_resources/Freshwater_species_richness','freshwater_species_richness_ds1197.pmtiles')
+
 url_fire = get_url('Climate_risks/Historical_fire_perimeters','calfire_2023.pmtiles')
 url_farmland = get_url('NBS_agriculture/Farmland_all/Farmland','Farmland_2018.pmtiles')
 url_grazing = get_url('NBS_agriculture/Farmland_all/Lands_suitable_grazing','Grazing_land_2018.pmtiles')
@@ -68,8 +71,8 @@ keys = [
     "ACE_mammal_richness", "ACE_rare_amphibian_richness", "ACE_rare_reptile_richness",
     "ACE_rare_bird_richness", "ACE_rare_mammal_richness", "ACE_endemic_amphibian_richness",
     "ACE_endemic_reptile_richness", "ACE_endemic_bird_richness", "ACE_endemic_mammal_richness",
-    "plant_richness", "rarityweighted_endemic_plant_richness", "wetlands", "farmland", "grazing",
-    "DAC", "low_income", "fire"]
+    "plant_richness", "rarityweighted_endemic_plant_richness", "wetlands", "freshwater_richness",
+    "farmland", "grazing","DAC", "low_income", "fire"]
 
 chatbot_toggles = {key: False for key in keys}
 
@@ -77,47 +80,48 @@ chatbot_toggles = {key: False for key in keys}
 layer_config = [
     #[(section, 'a_amph', [(col_name, full name, key, chatbot toggle key, citation)])]
     ('📈 Data Updates', 'a_new', [
-        ('update_newly_protected', 'Newly Protected', keys[0], chatbot_toggles[keys[0]],None),
-        ('update_increased_management', 'Increased Management', keys[1], chatbot_toggles[keys[1]],None),
-        ('update_data_improvement', 'Data Improvement', keys[2], chatbot_toggles[keys[2]], None),
+        ('update_newly_protected', 'Newly Protected', keys[0], chatbot_toggles[keys[0]],'Lands that were privately-owned and unprotected and moved into conservation ownership and management'),
+        ('update_increased_management', 'Increased Management', keys[1], chatbot_toggles[keys[1]],'Lands that were newly counted towards 30x30 due to increased management or durability of protection and/or retirement of extractive uses (previously GAP 3 or 4)'),
+        ('update_data_improvement', 'Data Improvement', keys[2], chatbot_toggles[keys[2]],'Lands that are newly counted towards 30x30 due to additional GAP information but for which no on the ground conservation actions, policies, or management changes took place')
     ]),
     ('🐸 Amphibian', 'a_amph', [
-        ('amphibian_richness', 'Amphibian Richness', keys[3], chatbot_toggles[keys[3]], 'Ref #5'),
-        ('rare_amphibian_richness', 'Rare Amphibian Richness', keys[4], chatbot_toggles[keys[4]], 'Ref #5'),
-        ('endemic_amphibian_richness', 'Endemic Amphibian Richness', keys[5], chatbot_toggles[keys[5]], 'Ref #5'),
+        ('amphibian_richness', 'Amphibian Richness', keys[3], chatbot_toggles[keys[3]], 'Areas with the top 20% of amphibian richness (Reference #5)'),
+        ('rare_amphibian_richness', 'Rare Amphibian Richness', keys[4], chatbot_toggles[keys[4]], 'Areas with rare amphibian richness (Reference #5)'),
+        ('endemic_amphibian_richness', 'Endemic Amphibian Richness', keys[5], chatbot_toggles[keys[5]], 'Areas with endemic amphibian richness (Reference #5)'),
     ]),
     ('🐍 Reptile', 'a_rept', [
-        ('reptile_richness', 'Reptile Richness', keys[6], chatbot_toggles[keys[6]], 'Ref #5'),
-        ('rare_reptile_richness', 'Rare Reptile Richness', keys[7], chatbot_toggles[keys[7]], 'Ref #5'),
-        ('endemic_reptile_richness', 'Endemic Reptile Richness', keys[8], chatbot_toggles[keys[8]], 'Ref #5'),
+        ('reptile_richness', 'Reptile Richness', keys[6], chatbot_toggles[keys[6]], 'Areas with the top 20% of reptile richness (Reference #5)'),
+        ('rare_reptile_richness', 'Rare Reptile Richness', keys[7], chatbot_toggles[keys[7]], 'Areas with rare reptile richness (Reference #5)'),
+        ('endemic_reptile_richness', 'Endemic Reptile Richness', keys[8], chatbot_toggles[keys[8]], 'Areas with endemic reptile richness (Reference #5)'),
     ]),
     ('🦜 Bird', 'a_bird', [
-        ('bird_richness', 'Bird Richness', keys[9], chatbot_toggles[keys[9]], 'Ref #5'),
-        ('rare_bird_richness', 'Rare Bird Richness', keys[10], chatbot_toggles[keys[10]], 'Ref #5'),
-        ('endemic_bird_richness', 'Endemic Bird Richness', keys[11], chatbot_toggles[keys[11]], 'Ref #5'),
+        ('bird_richness', 'Bird Richness', keys[9], chatbot_toggles[keys[9]], 'Areas with the top 20% of bird richness (Reference #5)'),
+        ('rare_bird_richness', 'Rare Bird Richness', keys[10], chatbot_toggles[keys[10]], 'Areas with rare bird richness (Reference #5)'),
+        ('endemic_bird_richness', 'Endemic Bird Richness', keys[11], chatbot_toggles[keys[11]], 'Areas with endemic bird richness (Reference #5)'),
     ]),
     ('🦌 Mammal', 'a_mammal', [
-        ('mammal_richness', 'Mammal Richness', keys[12], chatbot_toggles[keys[12]], 'Ref #5'),
-        ('rare_mammal_richness', 'Rare Mammal Richness', keys[13], chatbot_toggles[keys[13]], 'Ref #5'),
-        ('endemic_mammal_richness', 'Endemic Mammal Richness', keys[14], chatbot_toggles[keys[14]], 'Ref #5'),
+        ('mammal_richness', 'Mammal Richness', keys[12], chatbot_toggles[keys[12]], 'Areas with the top 20% of mammal richness (Reference #5)'),
+        ('rare_mammal_richness', 'Rare Mammal Richness', keys[13], chatbot_toggles[keys[13]], 'Areas with rare mammal richness (Reference #5)'),
+        ('endemic_mammal_richness', 'Endemic Mammal Richness', keys[14], chatbot_toggles[keys[14]], 'Areas with endemic mammal richness (Reference #5)'),
     ]),
     ('🌿 Plant', 'a_plant', [
-        ('plant_richness', 'Plant Richness', keys[15], chatbot_toggles[keys[15]], 'Ref #6'),
-        ('rarityweighted_endemic_plant_richness', 'Rarity-Weighted\nEndemic Plant Richness', keys[16], chatbot_toggles[keys[16]], 'Ref #6'),
+        ('plant_richness', 'Plant Richness', keys[15], chatbot_toggles[keys[15]], 'Areas with the top 20% of plant richness (Reference #6)'),
+        ('rarityweighted_endemic_plant_richness', 'Rarity-Weighted\nEndemic Plant Richness', keys[16], chatbot_toggles[keys[16]], 'Areas with the top 20% of rarity-weighted endemic plant richness (Reference #6)'),
     ]),
     ('💧 Freshwater Resources', 'freshwater', [
-        ('wetlands', 'Wetlands', keys[17], chatbot_toggles[keys[17]], 'Ref #7'),
+        ('wetlands', 'Wetlands', keys[17], chatbot_toggles[keys[17]], 'Areas that are freshwater emergent, freshwater forested/shrub, or estuarine and marine wetlands (Reference #7)'),
+        ('freshwater_richness', 'Freshwater Species Richness', keys[18], chatbot_toggles[keys[18]], 'Areas with the top 20% of freshwater species richness (Reference #8)'),
     ]),
     ('🚜 Agriculture', 'agriculture', [
-        ('farmland', 'Farmland', keys[18], chatbot_toggles[keys[18]], 'Ref #8'),
-        ('grazing', 'Lands Suitable for Grazing', keys[19], chatbot_toggles[keys[19]], 'Ref #8'),
+        ('farmland', 'Farmland', keys[19], chatbot_toggles[keys[19]], 'Farmlands with prime, unique, or of statewide or local importance (Reference #9)'),
+        ('grazing', 'Lands Suitable for Grazing', keys[20], chatbot_toggles[keys[20]], 'Lands suitable for grazing (Reference #9)'),
     ]),
     ('👤 People', 'SVI', [
-        ('DAC', 'Disadvantaged Communities', keys[20], chatbot_toggles[keys[20]], 'Ref #9'),
-        ('low_income', 'Low-Income Communities', keys[21], chatbot_toggles[keys[21]], 'Ref #10'),
+        ('DAC', 'Disadvantaged Communities', keys[21], chatbot_toggles[keys[21]], 'Areas in disadvantaged communities (Reference #10)'),
+        ('low_income', 'Low-Income Communities', keys[22], chatbot_toggles[keys[22]], 'Areas in low-income communities (Reference #11)'),
     ]),
     ('🔥 Climate Risks', 'calfire', [
-        ('fire', 'Historical Fire Perimeters', keys[22], chatbot_toggles[keys[22]], 'Ref #11'),
+        ('fire', 'Historical Fire Perimeters', keys[23], chatbot_toggles[keys[23]], 'Areas burned in the last 10 years (Reference #12)'),
     ])
 ]
 
@@ -157,6 +161,16 @@ github_html = f"""
     </span>
 """
 
+question_icon = """
+<svg xmlns='http://www.w3.org/2000/svg' height='1em' viewBox='0 0 24 24' width='1em' 
+     style='fill:currentColor;vertical-align:-0.125em;'>
+  <path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 
+           10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm1.07-7.75l-.9.92C12.45 
+           12.9 12 13.5 12 15h-2v-.5c0-.8.45-1.5 1.17-2.08l1.24-1.26c.37-.36.59-.86.59-1.41 
+           0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 
+           1.79 4 4c0 .88-.36 1.68-.93 2.25z'/>
+</svg>
+"""
 
 ## customize formatting
 app_formatting =  """
@@ -213,8 +227,28 @@ app_formatting =  """
         [data-testid="stSidebar"] > div:first-child { /* reduce whitespace at the top of the sidebar */
             padding-top: 0rem !important; 
         }
+        .caption-shift-up {
+            font-size: 13px !important;
+            margin-top: -9rem !important;
+            margin-bottom: 0rem !important;
+            text-align: right !important;
+            font-style: italic !important;
+            color: gray; /* optional: caption-like color */
+
+        }
+        .caption {
+            font-size: 13px !important;
+            margin-top: -2rem !important;
+            margin-bottom: 0rem !important;
+            text-align: right !important;
+            font-style: italic !important;
+            color: gray; /* optional: caption-like color */
+        }
     </style>
     """
+
+            # margin-top: -5rem !important;
+
 
 # Maplibre styles. (should these be functions?)
 manager = {
@@ -236,12 +270,12 @@ manager = {
     'default': white
 }
 
-easement = {
-    'property': 'easement',
+land_tenure = {
+    'property': 'land_tenure',
     'type': 'categorical',
     'stops': [
-        ['True', private_access_color],
-        ['False', public_access_color],
+        ['easement', private_access_color],
+        ['non-easement', public_access_color],
     ],
     'default': white
 }
@@ -286,7 +320,7 @@ status = {
     'stops': [
         ['30x30-conserved', "#56711f"],
         ['other-conserved', "#b6ce7a"],
-        ['unknown', "#e5efdb"],
+        ['public-or-unknown', "#e5efdb"],
         ['non-conserved', "#e1e1e1"]
         # ['non-conserved', white]
 
@@ -392,19 +426,19 @@ networks = {
     'property': 'resilient_connected_network',
     'type': 'categorical',
     'stops': [
-        [110, "#54a0f7"],
-        [103, "#72b3fd"],
-        [1010, "#6b9ad3"],
-        [1100, "#a2b0d5"],
-        [1110, "#bfd1ff"],
-        [10000, "#a87001"],
-        [10010, "#d09514"],
-        [20000, "#ffa807"],
-        [20010, "#fed087"],
-        [30000, "#88cc6a"],
-        [30010, "#257202"],
-        [40000, "#e377c2"],
-        [0, "#ffffff"],
+        [110.0, "#257202"],
+        [103.0, "#1667f6"],
+        [1010.0, "#6b9ad3"],
+        [1100.0, "#a2b0d5"],
+        [1110.0, "#bfd1ff"],
+        [10000.0, "#9acb73"],
+        [10010.0, "#72b3fd"],
+        [20000.0, "#d09514"],
+        [20010.0, "#ffa807"],
+        [30000.0, "#7d7121"],
+        [30010.0, "#a87001"],
+        [40000.0, "#e377c2"],
+        [0.0, "#ffffff"],
     ],
     'default': white
 }
@@ -429,8 +463,6 @@ update_type_style = {
         ]
     }
 
- 
-
 
 
 style_options = {
@@ -441,7 +473,7 @@ style_options = {
     "Habitat Type": habitat_type,
     "Resilient & Connected Network": networks,
     "Manager Type": manager,
-    "Easement": easement,
+    "Land Tenure": land_tenure,
     # "Year": year,
     "Access Type": access,
 }
@@ -454,7 +486,7 @@ select_column = {
     "Habitat Type":  "habitat_type",
     "Resilient & Connected Network": "resilient_connected_network",
     "Manager Type": "manager_type",
-    "Easement": "easement",
+    "Land Tenure": "land_tenure",
     # "Year": "established",
     "Access Type": "access_type",
 }
@@ -467,11 +499,22 @@ select_colors = {
     "Climate Zone": climate_zone["stops"],
     "Habitat Type": habitat_type["stops"],
     "Manager Type": manager["stops"],
-    "Easement": easement["stops"],
+    "Land Tenure": land_tenure["stops"],
     "Access Type": access["stops"],
     "Resilient & Connected Network": networks["stops"],
 
 }
+
+# non-conserved areas, off by default
+default_boxes = {
+    'non-conserved': False,
+    # 3: False,
+    # 4: False,
+    # "other-conserved":False,
+    # "unknown":False,
+    # "non-conserved":False
+}
+
 
 from langchain_openai import ChatOpenAI
 import streamlit as st
@@ -485,11 +528,12 @@ if api_key is None:
 
 llm_options = {
     # "llama-3.3-quantized": ChatOpenAI(model = "cirrus", api_key=st.secrets['CIRRUS_LLM_API_KEY'], base_url = "https://llm.cirrus.carlboettiger.info/v1",  temperature=0),
-    "llama3.3": ChatOpenAI(model = "llama3-sdsc", api_key=api_key, base_url = "https://llm.nrp-nautilus.io/",  temperature=0),
     "gemma3": ChatOpenAI(model = "gemma3", api_key=api_key, base_url = "https://llm.nrp-nautilus.io/",  temperature=0),
+    "llama3.3": ChatOpenAI(model = "llama3-sdsc", api_key=api_key, base_url = "https://llm.nrp-nautilus.io/",  temperature=0),
     # "DeepSeek-R1-Distill-Qwen-32B": BaseChatOpenAI(model = "DeepSeek-R1-Distill-Qwen-32B", api_key=api_key, base_url = "https://llm.nrp-nautilus.io/",  temperature=0),
     "watt": ChatOpenAI(model = "watt", api_key=api_key, base_url = "https://llm.nrp-nautilus.io/",  temperature=0),
     # "phi3": ChatOpenAI(model = "phi3", api_key=api_key, base_url = "https://llm.nrp-nautilus.io/",  temperature=0),
 }
+
 
 
