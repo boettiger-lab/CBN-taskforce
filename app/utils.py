@@ -155,7 +155,7 @@ def get_summary_table(ca, column, select_colors, color_choice, filter_cols, filt
     df = get_summary(ca, combined_filter, [column], column, colors)
 
     # df for stacked 30x30 status bar chart 
-    df_bar_30x30 = None if column in ["status", "gap_code"] else get_summary(ca, combined_filter, [column, 'status'], column, color_table(select_colors, "30x30 Status", 'status'))
+    df_bar_30x30 = None if column in ["status", "gap_code"] else get_summary(ca, combined_filter | (_.status.isin(['non-conserved'])), [column, 'status'], column, color_table(select_colors, "30x30 Status", 'status'))
 
     return df, df_tab, df_bar_30x30
 
@@ -244,9 +244,6 @@ def get_legend(style_options, color_choice, df = None, column = None):
             legend = {cat: color for cat, color in legend.items() if str(cat) in categories}
        
     position, fontsize, bg_color = 'bottom-left', 15, 'white'
-    # if color_choice == "Land Tenure":
-    #     legend = {key.replace("True", "Easement"): value for key, value in legend.items()} 
-    #     legend = {key.replace("False", "Non-easement"): value for key, value in legend.items()} 
 
     # shorten legend for ecoregions 
     if color_choice == "Ecoregion":
@@ -376,6 +373,8 @@ def get_label_transform(x, label=None):
                          .replace("California", "CA"))
         ),
     }
+
+
     if label is not None:
         return transformations.get(x, (None, lambda lbl: lbl))[1](label)
     

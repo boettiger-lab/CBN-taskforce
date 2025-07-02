@@ -25,7 +25,7 @@ current_tables = con.list_tables()
 if "mydata" not in set(current_tables):
     tbl = con.read_parquet(ca_parquet)
     con.create_table("mydata", tbl)
-    
+
 ca = con.table("mydata")
 
 st.set_page_config(layout="wide", page_title="CA Protected Areas Explorer", page_icon=":globe:")
@@ -55,6 +55,7 @@ st.markdown('<p class = "medium-font"> This is an interactive cloud-native geosp
 st.divider()
 
 m = leafmap.Map(style="positron")
+basemaps = leafmap.basemaps.keys()
 #############
 
 chatbot_container = st.container()
@@ -125,7 +126,6 @@ def run_sql(query,color_choice):
     if not sql_query: # if the chatbot can't generate a SQL query.
         st.success(explanation)
         return pd.DataFrame({'id' : []})
-        
     result = ca.sql(sql_query).execute()
     if result.empty :
         explanation = "This query did not return any results. Please try again with a different query."
@@ -136,23 +136,13 @@ def run_sql(query,color_choice):
             return result.drop('geom',axis = 1)
         else: 
             return result
-    
-    elif ("id" and "geom" in result.columns): 
-        style = get_pmtiles_style_llm(style_options[color_choice], result["id"].tolist())
-        legend, position, bg_color, fontsize = get_legend(style_options,color_choice)
-
-        m.add_legend(legend_dict = legend, position = position, bg_color = bg_color, fontsize = fontsize)
-        m.add_pmtiles(ca_pmtiles, style=style, opacity=alpha, tooltip=True, fit_bounds=True)
-        m.fit_bounds(result.total_bounds.tolist())    
-        result = result.drop('geom',axis = 1) #printing to streamlit so I need to drop geom
-    else:   
+    elif ("id" and "geom" not in result.columns): 
         st.write(result)  # if we aren't mapping, just print out the data  
 
     with st.popover("Explanation"):
         st.write(explanation)
         st.caption("SQL Query:")
         st.code(sql_query,language = "sql") 
-        
     return result
 
 #############
@@ -177,6 +167,9 @@ with st.sidebar:
     alpha = 0.8
     st.divider()
 
+column = select_column[color_choice]
+colors = color_table(select_colors, color_choice, column)
+
 ##### Chatbot 
 with chatbot_container:
     with llm_left_col:
@@ -191,10 +184,11 @@ with st.container():
             with st.chat_message("assistant"):
                 with st.spinner("Invoking query..."):
 
-                    out = run_sql(prompt,color_choice)
-                    if ("id" in out.columns) and (not out.empty):
-                        ids = out['id'].tolist()
-                        cols = out.columns.tolist()
+                    llm_output = run_sql(prompt,color_choice)
+                    if ("id" in llm_output.columns) and (not llm_output.empty):
+                        ids = llm_output['id'].tolist()
+                        cols = llm_output.columns.tolist()
+                        bounds = llm_output.total_bounds.tolist()
                         chatbot_toggles = {
                                 key: (True if key in cols else value) 
                                 for key, value in chatbot_toggles.items()
@@ -217,7 +211,6 @@ with st.sidebar:
     for label in style_options: # get selected filters (based on the buttons selected)
         with st.expander(label):  
             if label in ["GAP Code","30x30 Status"]: # gap code 1 and 2 are on by default
-                # opts = get_buttons(style_options, label)
                 opts = get_buttons(style_options, label, default_boxes)
             else: # other buttons are not on by default.
                 opts = get_buttons(style_options, label) 
@@ -247,29 +240,31 @@ with st.sidebar:
                 else:
                     _, label, toggle_key, citation = item
                     st.toggle(label, key=toggle_key)
-    st.divider()    
+    st.divider() 
+    #basemap choices
+    b = st.selectbox("Basemap", basemaps)
+    m.add_basemap(b)
+    st.divider()
     # adding github logo 
     st.markdown(f"<div class='spacer'>{github_html}</div>", unsafe_allow_html=True)
     st.markdown(":left_speech_bubble: [Get in touch or report an issue](https://github.com/boettiger-lab/CBN-taskforce/issues)")
 
-column = select_column[color_choice]
-colors = color_table(select_colors, color_choice, column)
-
-# get summary tables used for charts + printed table 
-# df - charts; df_tab - printed table (omits colors) 
-if 'out' not in locals():
+## parameters for mapping the data (if we didn't use llm)
+if 'llm_output' not in locals():
     df, df_tab, df_bar_30x30 = get_summary_table(ca, column, select_colors, color_choice, filter_cols, filter_vals,colorby_vals)
+    style = get_pmtiles_style(style_options[color_choice], alpha, filter_cols, filter_vals)
+    bounds = [-124.42174575, 32.53428607, -114.13077782, 42.00950367]
 else:
+    style = get_pmtiles_style_llm(style_options[color_choice], ids)
     df = get_summary_table_sql(ca, column, colors, ids)
 
-# Display CA 30x30 Data
-if 'out' not in locals():
-    style = get_pmtiles_style(style_options[color_choice], alpha, filter_cols, filter_vals)
-    legend, position, bg_color, fontsize = get_legend(style_options, color_choice, df, column)
-    m.add_legend(legend_dict = legend, position = position, bg_color = bg_color, fontsize = fontsize)
-    m.add_pmtiles(ca_pmtiles, style=style, name="CA", tooltip=True, fit_bounds=True)
-    
+## mapping data 
+legend, position, bg_color, fontsize = get_legend(style_options, color_choice, df, column)
+m.add_legend(legend_dict = legend, position = position, bg_color = bg_color, fontsize = fontsize)
+m.add_pmtiles(ca_pmtiles, style=style, name="CA", tooltip=True, fit_bounds=True)
 
+if 'bounds' in locals(): 
+    m.fit_bounds(bounds)
 
 # check if any layer toggle is active
 any_chart_toggled = any(
@@ -281,8 +276,8 @@ any_chart_toggled = any(
 # check if using stacked bar chart 
 show_stacked = (column not in ["status", "gap_code"]) and ('df_bar_30x30' in locals())
 
-if 'out' in locals():
-    show_chatbot_chart = out.columns.any() in keys
+if 'llm_output' in locals():
+    show_chatbot_chart = llm_output.columns.any() in keys
 else:
     show_chatbot_chart = False
 # main display 
@@ -293,10 +288,12 @@ with main:
     with map_col:
         m.to_streamlit(height=650) # adding map
         with st.expander("🔍 View/download data"): # adding data table  
-            if 'out' not in locals():
+            if 'llm_output' not in locals():
                 st.dataframe(df_tab, use_container_width = True)  
             else:
-                st.dataframe(out, use_container_width = True)
+                if 'geom' in llm_output.columns:
+                    llm_output = llm_output.drop('geom',axis = 1)
+                st.dataframe(llm_output, use_container_width = True)
 
     with stats_col:
         with st.container():
