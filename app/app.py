@@ -25,7 +25,7 @@ current_tables = con.list_tables()
 if "mydata" not in set(current_tables):
     tbl = con.read_parquet(ca_parquet)
     con.create_table("mydata", tbl)
-
+    
 ca = con.table("mydata")
 
 st.set_page_config(layout="wide", page_title="CA Protected Areas Explorer", page_icon=":globe:")
@@ -170,7 +170,9 @@ with st.sidebar:
         st.rerun()
     st.divider()
 
-    color_choice = st.radio("Group by:", style_options, key = "color", help = "Select a category to change map colors and chart groupings.")   
+    color_choice = st.radio("Group by:", style_options, key = "color", help = "Select a category to change map colors and chart groupings.", captions = ['','Degree of biodiversity protection [(what is this?)](https://www.protectedlands.net/uses-of-pad-us/#conservation-of-biodiversity-2)','', '', '', '', '', '', ''])
+
+
     colorby_vals = get_color_vals(style_options, color_choice) #get options for selected color_by column 
     alpha = 0.8
     st.divider()
@@ -256,7 +258,7 @@ colors = color_table(select_colors, color_choice, column)
 # get summary tables used for charts + printed table 
 # df - charts; df_tab - printed table (omits colors) 
 if 'out' not in locals():
-    df, df_tab, df_percent, df_bar_30x30 = get_summary_table(ca, column, select_colors, color_choice, filter_cols, filter_vals,colorby_vals)
+    df, df_tab, df_bar_30x30 = get_summary_table(ca, column, select_colors, color_choice, filter_cols, filter_vals,colorby_vals)
 else:
     df = get_summary_table_sql(ca, column, colors, ids)
 

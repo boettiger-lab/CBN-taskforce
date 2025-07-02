@@ -61,6 +61,7 @@ There are 12 biodiversity columns of 4 taxonomic groups (amphibian, birds, mamma
     2) "ACE_rare_amphibian_richness", "ACE_rare_reptile_richness", "ACE_rare_bird_richness", and "ACE_rare_mammal_richness" represent the percentage each area overlaps with the top 5% of rare species richness.
     3) "ACE_endemic_amphibian_richness", "ACE_endemic_reptile_richness", "ACE_endemic_bird_richness", and "ACE_endemic_mammal_richness" represent the percentage each area overlaps with the top 5% of weighted endemism (range-restricted, irreplaceable species).
 - "wetlands": How much an area overlaps with wetlands, specifically freshwater emergent wetland, freshwater forested/shrub wetland, or estuarine and marine wetland.
+- "freshwater_richness": How much an area overlaps with the top 20% of freshwater species richness.
 - "fire": The percentage of the area burned by fires from (2014-2023). Areas can burn more than once, thus the percentage can be above 1.
 - "farmland": How much an area overlaps with farmland (specifically prime, unique, of statewide or local importance). 
 - "grazing": How much an area overlaps with lands suitable for grazing.

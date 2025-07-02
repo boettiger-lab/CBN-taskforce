@@ -135,7 +135,6 @@ def get_summary_table(ca, column, select_colors, color_choice, filter_cols, filt
     
     #if a filter is selected, add to list of filters 
     filters = [getattr(_, col).isin(vals) for col, vals in zip(filter_cols, filter_vals) if vals]
-    
     #show color_by column in table by adding it as a filter (if it's not already a filter)
     if column not in filter_cols:
         filter_cols.append(column)
@@ -147,7 +146,6 @@ def get_summary_table(ca, column, select_colors, color_choice, filter_cols, filt
 
     # df used for percentage, excludes non-conserved. 
     df_percent = get_summary(ca, only_conserved, [column], column, colors)
-
     #df used for printed table
     df_tab = get_summary(ca, combined_filter, filter_cols, column, colors=None)
     if "non-conserved" in chain.from_iterable(filter_vals):
@@ -159,7 +157,7 @@ def get_summary_table(ca, column, select_colors, color_choice, filter_cols, filt
     # df for stacked 30x30 status bar chart 
     df_bar_30x30 = None if column in ["status", "gap_code"] else get_summary(ca, combined_filter, [column, 'status'], column, color_table(select_colors, "30x30 Status", 'status'))
 
-    return df, df_tab, df_percent, df_bar_30x30
+    return df, df_tab, df_bar_30x30
 
 
 def get_summary_table_sql(ca, column, colors, ids):
@@ -246,9 +244,9 @@ def get_legend(style_options, color_choice, df = None, column = None):
             legend = {cat: color for cat, color in legend.items() if str(cat) in categories}
        
     position, fontsize, bg_color = 'bottom-left', 15, 'white'
-    if color_choice == "Easement":
-        legend = {key.replace("True", "Easement"): value for key, value in legend.items()} 
-        legend = {key.replace("False", "Non-easement"): value for key, value in legend.items()} 
+    # if color_choice == "Land Tenure":
+    #     legend = {key.replace("True", "Easement"): value for key, value in legend.items()} 
+    #     legend = {key.replace("False", "Non-easement"): value for key, value in legend.items()} 
 
     # shorten legend for ecoregions 
     if color_choice == "Ecoregion":
@@ -323,7 +321,7 @@ def get_chart_settings(x, y = None, stacked = None, metric = None):
     sort_options = {
         "established": "-x",
         "access_type": ["Open", "Restricted", "No Public", "Unknown"],
-        "easement": ["True", "False"],
+        "land_tenure": ["easement", "non-easement"],
         "manager_type": ["Federal", "Tribal", "State", "Special District", "County", "City",
                          "HOA", "Joint", "Non Profit", "Private", "Unknown"],
         "status": ["30x30-conserved", "other-conserved", "public-or-unknown", "non-conserved"],
@@ -346,7 +344,7 @@ def get_chart_settings(x, y = None, stacked = None, metric = None):
     else:
         y_titles = None
 
-    angle = 270 if x in ["manager_type", "ecoregion", "status", "habitat_type", "resilient_connected_network","access_type", "climate_zone", "easement"] else 0
+    angle = 270 if x in ["manager_type", "ecoregion", "status", "habitat_type", "resilient_connected_network","access_type", "climate_zone", "land_tenure"] else 0
     if not y:
         y = ''
         
@@ -377,14 +375,6 @@ def get_label_transform(x, label=None):
                          .replace("and", "&")
                          .replace("California", "CA"))
         ),
-        "easement": ("replace("
-            "replace(datum.easement, 'True', 'Easement'),"
-            "'False', 'Non-easement')",
-            lambda lbl: (lbl.replace("True", "Easement")
-                         .replace("False", "Non-easement")
-            )
-        )
-
     }
     if label is not None:
         return transformations.get(x, (None, lambda lbl: lbl))[1](label)
