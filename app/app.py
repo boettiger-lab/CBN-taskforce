@@ -8,7 +8,6 @@ from ibis import _
 import ibis.selectors as s
 import os
 import pandas as pd 
-import geopandas as gpd
 from shapely import wkb  
 import sqlalchemy
 import pathlib
@@ -26,8 +25,6 @@ if "mydata" not in set(current_tables):
     tbl = con.read_parquet(ca_parquet)
     con.create_table("mydata", tbl)
 
-tbl = con.read_parquet(ca_parquet)
-con.create_table("mydata", tbl, overwrite = True)
 ca = con.table("mydata")
 
 st.set_page_config(layout="wide", page_title="CA Protected Areas Explorer", page_icon=":globe:")
