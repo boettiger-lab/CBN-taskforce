@@ -1,7 +1,7 @@
 import streamlit as st
 import streamlit.components.v1 as components
 import pandas as pd
-import leafmap.maplibregl as leafmap
+import leafmap.foliumap as leafmap
 import altair as alt
 import ibis
 from ibis import _
@@ -13,14 +13,17 @@ from functools import reduce
 from itertools import chain
 import re
 from variables import *
+from pandas.api.types import CategoricalDtype
+from math import pi
 
 ######################## UI FUNCTIONS 
-def get_buttons(style_options, style_choice):
+def get_buttons(style_options, style_choice, default_boxes = None):
     """
     Creates Streamlit checkboxes based on style options and returns the selected filters.
     """
     column = style_options[style_choice]['property']
     opts = [style[0] for style in style_options[style_choice]['stops']]
+    default_boxes = default_boxes or {}
 
     buttons = {}
     for name in opts:
@@ -33,37 +36,37 @@ def sync_checkboxes(source):
     """
     Synchronizes checkbox selections in Streamlit based on 30x30 status and GAP codes. 
     """
-    # gap 1 and gap 2 on -> 30x30-conserved on
-    if source in ["gap_code1", "gap_code2"]:
-        st.session_state['status30x30-conserved'] = st.session_state.gap_code1 and st.session_state.gap_code2
+    # gap 1 and gap 2 on -> 30x30 Conservation Area on
+    if source in ["gap_codeGAP 1", "gap_codeGAP 2"]:
+        st.session_state['status30x30-conserved'] = st.session_state["gap_codeGAP 1"] and st.session_state['gap_codeGAP 2']
 
     # 30x30-conserved on -> gap 1 and gap 2 on
     elif source == "status30x30-conserved":
-        st.session_state.gap_code1 = st.session_state['status30x30-conserved']
-        st.session_state.gap_code2 = st.session_state['status30x30-conserved']
+        st.session_state['gap_codeGAP 1'] = st.session_state['status30x30-conserved']
+        st.session_state['gap_codeGAP 2'] = st.session_state['status30x30-conserved']
 
     # other-conserved on <-> gap 3 on
-    elif source == "gap_code3":
-        st.session_state["statusother-conserved"] = st.session_state.gap_code3
-    elif source == "statusother-conserved":
-        if "gap_code3" in st.session_state and st.session_state["statusother-conserved"] != st.session_state.gap_code3:
-            st.session_state.gap_code3 = st.session_state["statusother-conserved"]
+    elif source == "gap_codeGAP 3":
+        st.session_state["statusOther Conservation Area"] = st.session_state['gap_codeGAP 3']
+    elif source == "statusOther Conservation Area":
+        if "gap_codeGAP 3" in st.session_state and st.session_state["statusOther Conservation Area"] != st.session_state['gap_codeGAP 3']:
+            st.session_state['gap_codeGAP 3'] = st.session_state["statusOther Conservation Area"]
 
     # unknown on <-> gap 4 on
-    elif source == "gap_code4":
-        st.session_state.statusunknown = st.session_state.gap_code4
+    elif source == "gap_codeGAP 4":
+        st.session_state['statusPublic or Unknown Conservation Area'] = st.session_state['gap_codeGAP 4']
 
-    elif source == "statusunknown":
-        if "gap_code4" in st.session_state and st.session_state.statusunknown != st.session_state.gap_code4:
-            st.session_state.gap_code4 = st.session_state.statusunknown
+    elif source == "statusPublic or Unknown Conservation Area":
+        if "gap_codeGAP 4" in st.session_state and st.session_state['statusPublic or Unknown Conservation Area'] != st.session_state['gap_codeGAP 4']:
+            st.session_state['gap_codeGAP 4'] = st.session_state['statusPublic or Unknown Conservation Area']
 
     # non-conserved on <-> gap 0 
-    elif source == "gap_code0":
-        st.session_state['statusnon-conserved'] = st.session_state.gap_code0
+    elif source == "gapNon-Conservation Area":
+        st.session_state['statusNon-Conservation Area'] = st.session_state['gapNon-Conservation Area']
 
-    elif source == "statusnon-conserved":
-        if "gap_code0" in st.session_state and st.session_state['statusnon-conserved'] != st.session_state.gap_code0:
-            st.session_state.gap_code0 = st.session_state['statusnon-conserved']
+    elif source == "statusNon-Conservation Area":
+        if "gapNon-Conservation Area" in st.session_state and st.session_state['statusNon-Conservation Area'] != st.session_state['gapNon-Conservation Area']:
+            st.session_state['gapNon-Conservation Area'] = st.session_state['statusNon-Conservation Area']
 
 
 def color_table(select_colors, color_choice, column):
@@ -114,7 +117,6 @@ def get_summary(ca, combined_filter, column, main_group, colors = None):
                       .group_by(main_group)
                       .aggregate(total_acres=_.acres.sum())
                     )
-    
     df = (df.inner_join(group_totals, main_group)
           # .mutate(percent_group=( _.acres / _.total_acres).round(3))
           .mutate(percent_group=( _.acres / _.total_acres))
@@ -133,7 +135,6 @@ def get_summary_table(ca, column, select_colors, color_choice, filter_cols, filt
     
     #if a filter is selected, add to list of filters 
     filters = [getattr(_, col).isin(vals) for col, vals in zip(filter_cols, filter_vals) if vals]
-    
     #show color_by column in table by adding it as a filter (if it's not already a filter)
     if column not in filter_cols:
         filter_cols.append(column)
@@ -141,23 +142,21 @@ def get_summary_table(ca, column, select_colors, color_choice, filter_cols, filt
 
     #combining all the filters into ibis filter expression 
     combined_filter = reduce(lambda x, y: x & y, filters)
-    only_conserved = combined_filter & (_.status.isin(['30x30-conserved']))
+    # only_conserved = combined_filter & (_.status.isin(['30x30 Conservation Area']))
 
     # df used for percentage, excludes non-conserved. 
-    df_percent = get_summary(ca, only_conserved, [column], column, colors)
-
+    # df_percent = get_summary(ca, only_conserved, [column], column, colors)
     #df used for printed table
     df_tab = get_summary(ca, combined_filter, filter_cols, column, colors=None)
-    if "non-conserved" in chain.from_iterable(filter_vals):
-        combined_filter = combined_filter | (_.status.isin(['non-conserved']))
+    if "Non-Conservation Area" in chain.from_iterable(filter_vals):
+        combined_filter = combined_filter | (_.status.isin(['Non-Conservation Area']))
 
     # df used for charts 
     df = get_summary(ca, combined_filter, [column], column, colors)
-
+    
     # df for stacked 30x30 status bar chart 
-    df_bar_30x30 = None if column in ["status", "gap_code"] else get_summary(ca, combined_filter, [column, 'status'], column, color_table(select_colors, "30x30 Status", 'status'))
-
-    return df, df_tab, df_percent, df_bar_30x30
+    df_bar_30x30 = None if column in ["status", "gap_code"] else get_summary(ca, combined_filter | (_.status.isin(['Non-Conservation Area'])), [column, 'status'], column, color_table(select_colors, "30x30 Status", 'status'))
+    return df, df_tab, df_bar_30x30
 
 
 def get_summary_table_sql(ca, column, colors, ids):
@@ -166,6 +165,11 @@ def get_summary_table_sql(ca, column, colors, ids):
     """
     combined_filter = _.id.isin(ids)
     return get_summary(ca, combined_filter, [column], column, colors)
+
+def extract_columns(sql_query):
+    # Find all substrings inside double quotes
+    columns = list(dict.fromkeys(re.findall(r'"(.*?)"', sql_query)))
+    return columns
 
 
 ######################## MAP STYLING FUNCTIONS 
@@ -176,8 +180,8 @@ def get_pmtiles_style(paint, alpha, filter_cols, filter_vals):
     filters = [["match", ["get", col], val, True, False] for col, val in zip(filter_cols, filter_vals)]
     combined_filters = ["all", *filters]
     
-    if "non-conserved" in chain.from_iterable(filter_vals):
-        combined_filters = ["any", combined_filters, ["match", ["get", "status"], ["non-conserved"], True, False]]
+    if "Non-Conservation Area" in chain.from_iterable(filter_vals):
+        combined_filters = ["any", combined_filters, ["match", ["get", "status"], ["Non-Conservation Area"], True, False]]
     return {
         "version": 8,
         "sources": {"ca": {"type": "vector", "url": f"pmtiles://{ca_pmtiles}"}},
@@ -233,13 +237,18 @@ def get_pmtiles_layer(layer,url):
         ],
     }
 
-def get_legend(style_options, color_choice):
+def get_legend(style_options, color_choice, df = None, column = None):
     """
     Generates a legend dictionary with color mapping and formatting adjustments.
     """
     legend = {cat: color for cat, color in style_options[color_choice]['stops']}
-    position, fontsize, bg_color = 'bottom-left', 15, 'white'
-    
+    if df is not None:
+        if ~df.empty:
+            categories = df[column].to_list() #if we filter out categories, don't show them on the legend 
+            legend = {cat: color for cat, color in legend.items() if str(cat) in categories}
+       
+    position, fontsize, bg_color = 'bottomleft', 15, 'white'
+
     # shorten legend for ecoregions 
     if color_choice == "Ecoregion":
         legend = {key.replace("Northern California", "NorCal"): value for key, value in legend.items()} 
@@ -254,24 +263,47 @@ def get_legend(style_options, color_choice):
 
 
 ######################## CHART FUNCTIONS 
-def area_chart(df, column):
+def area_chart(df, column, color_choice):
     """
     Generates an Altair pie chart representing the percentage of protected areas.
     """
-    base = alt.Chart(df).encode(alt.Theta("percent_CA:Q").stack(True))
+    sort, _, _, _,_,_= get_chart_settings(column,color_choice)
+    unique_labels = sorted(df[column].unique())
+    height = 300
+    if sort == 'x':
+        labels_sorted = unique_labels
+    elif sort == '-x':
+        labels_sorted = unique_labels[::-1]
+    else:
+        labels_sorted = sort 
+    df[column] = df[column].apply(lambda x: get_label_transform(column, x))
+
+    # need to sort the slices, so computing an index 
+    cat_dtype = CategoricalDtype(categories=labels_sorted, ordered=True)
+    df["order_index"] = df[column].astype(cat_dtype).cat.codes  
     pie = (
-        base.mark_arc(innerRadius=40, outerRadius=100, stroke="black", strokeWidth=0.1)
+        alt.Chart(df)
+        .mark_arc(innerRadius=50, outerRadius=120, stroke="black", strokeWidth=0.1)
         .encode(
-            alt.Color("color:N").scale(None).legend(None),
+            alt.Theta("percent_CA:Q", scale=alt.Scale(type="linear",rangeMax=pi/2, rangeMin=-pi/2)),
+            alt.Order("order_index:O"),
+            alt.Color(
+                f'{column}:N',
+                scale=alt.Scale(domain=df[column].tolist(), range=df["color"].tolist()),
+                legend = None),
             tooltip=[
                 alt.Tooltip(column, type="nominal"),
                 alt.Tooltip("percent_CA", type="quantitative", format=",.1%"),
                 alt.Tooltip("acres", type="quantitative", format=",.0f"),
             ]
         )
+        .properties(title = f"Percent of California\nby {color_choice}".split("\n"),
+                   height=height)
+        .configure_title(
+                    fontSize=16, align="center", anchor="middle", offset = 15
+        )
     )
-    # return pie.properties(width="container", height=290)
-    return pie.properties(height=290)
+    return pie
 
 
 def bar_chart(df, x, y, title, metric = "percent"):
@@ -283,34 +315,53 @@ def stacked_bar(df, x, y, metric, title, colors, color = "status"):
     return create_bar_chart(df, x, y, title, metric, color=color, stacked=True, colors=colors)
 
 
-def get_chart_settings(x, y, stacked, metric):
+def get_chart_settings(x, y_name, y = None, stacked = None, metric = None):
     """
     Returns sorting, axis settings, and y-axis title mappings.
     """
     sort_options = {
         "established": "-x",
         "access_type": ["Open", "Restricted", "No Public", "Unknown"],
-        "easement": ["True", "False"],
+        "land_tenure": ["Easement", "Non-Easement"],
         "manager_type": ["Federal", "Tribal", "State", "Special District", "County", "City",
                          "HOA", "Joint", "Non Profit", "Private", "Unknown"],
-        "status": ["30x30-conserved", "other-conserved", "unknown", "non-conserved"],
+        "status": ["30x30-conserved", "Other Conservation Area", "Public or Unknown Conservation Area", "Non-Conservation Area"],
         "ecoregion": ['SE. Great Basin', 'Mojave Desert', 'Sonoran Desert', 'Sierra Nevada',
                       'SoCal Mountains & Valleys', 'Mono', 'Central CA Coast', 'Klamath Mountains',
                       'NorCal Coast', 'NorCal Coast Ranges', 'NW. Basin & Range', 'Colorado Desert',
                       'Central Valley Coast Ranges', 'SoCal Coast', 'Sierra Nevada Foothills',
                       'Southern Cascades', 'Modoc Plateau', 'Great Valley (North)',
-                      'NorCal Interior Coast Ranges', 'Great Valley (South)']
+                      'NorCal Interior Coast Ranges', 'Great Valley (South)'],
+        "climate_zone": ["Zone 1", "Zone 2", "Zone 3","Zone 4", "Zone 5",
+                         "Zone 6","Zone 7", "Zone 8", "Zone 9", "Zone 10"],
+
     }        
     if metric == 'percent':
-        y_titles = "Percent"
-        
+        y_title = "Percent" 
     elif metric == "acres":
-        y_titles = "Acres"
+        y_title = "Acres"
+    else:
+        y_title = None
 
-    angle = 270 if x in ["manager_type", "ecoregion", "status", "habitat_type", "resilient_connected_network","access_type"] else 0
-    height = 470 if y == "percent_rarityweighted_endemic_plant_richness" else 250 if stacked else 450 if x in ["ecoregion",'habitat_type'] else 350 if x == "manager_type" else 450 if x == "access_type" else 330
+    x_title = next(k for k, v in select_column.items() if v == x)
 
-    return sort_options.get(x, "x"), angle, height, y_titles
+    angle = 270 if x in ["manager_type", "ecoregion", "status", "habitat_type", "resilient_connected_network","access_type", "climate_zone", "land_tenure"] else 0
+    if not y:
+        y = ''
+
+    if "richness" in x:
+        chart_title = f'{y_title} of Areas with\n High {y_name}\n by {x_title}'
+    else:
+        # if metric == "acres":
+        chart_title = f'{y_title} of Area in\n {y_name}\n by {x_title}'
+        # else:
+            # chart_title = f'{y_title} of Area in\n {y_name}\n by {x_title}'
+
+    if stacked:
+        chart_title = f'{x_title}\n by 30x30 Status'
+        
+    height = 470 if y == "percent_rarityweighted_endemic_plant_richness" else 250 if stacked else 450 if x in ["ecoregion",'habitat_type'] else 350 if x == "manager_type" else 450 if x == "access_type" else 330  
+    return sort_options.get(x, "x"), angle, height, y_title, x_title, chart_title
 
     
 def get_label_transform(x, label=None):
@@ -318,6 +369,8 @@ def get_label_transform(x, label=None):
     Returns label transformation logic for Altair expressions and manual label conversion.
     """
     transformations = {
+        # "gap_code": ("'Gap ' + toString(datum.gap_code)", lambda lbl: f"Gap {lbl}"),
+        # "climate_zone": ("'Zone ' + toString(floor(datum.climate_zone))", lambda lbl: f"Zone {int(float(lbl))}"),
         "access_type": ("replace(datum.access_type, ' Access', '')", lambda lbl: lbl.replace(" Access", "")),
         "ecoregion": (
             "replace(replace(replace(replace(replace("
@@ -333,8 +386,10 @@ def get_label_transform(x, label=None):
                          .replace("Northwestern", "NW.")
                          .replace("and", "&")
                          .replace("California", "CA"))
-        )
+        ),
     }
+
+
     if label is not None:
         return transformations.get(x, (None, lambda lbl: lbl))[1](label)
     
@@ -351,15 +406,14 @@ def get_hex(df, color, order):
                 .reset_index()).T.values.tolist()
 
 
-def create_bar_chart(df, x, y, title, metric, color=None, stacked=False, colors=None):
+def create_bar_chart(df, x, y, y_name, metric, color=None, stacked=False, colors=None):
     """
     Generalized function to create a bar chart, supporting both standard and stacked bars.
     """
     # helper functions 
-    sort, angle, height, y_title = get_chart_settings(x, y, stacked, metric)
+    sort, angle, height, y_title, x_title, chart_title = get_chart_settings(x, y_name,  y, stacked, metric)
     label_transform = get_label_transform(x)
     y_format = "~s" if metric == "acres" else ",.1%"
-    
     # create base chart 
     chart = (
         alt.Chart(df)
@@ -367,19 +421,18 @@ def create_bar_chart(df, x, y, title, metric, color=None, stacked=False, colors=
         .transform_calculate(xlabel=label_transform)  
         .encode(
             x=alt.X("xlabel:N", sort=sort,
-                    axis=alt.Axis(labelAngle=angle, title=None, labelLimit=200)),
+                    axis=alt.Axis(labelAngle=angle, title=x_title, labelLimit=200)),
             y=alt.Y(y, axis=alt.Axis(title=y_title, offset = -5, format=y_format)),
 
             tooltip=[alt.Tooltip(x, type="nominal"), alt.Tooltip(y, type="quantitative")]
         )
         # .properties(width="container", height=height)  
-        .properties(height=height)  
-
+        .properties(height=height)
     )
 
     if stacked:
         # order stacks 
-        order = ["30x30-conserved", "other-conserved", "unknown", "non-conserved"]
+        order = ["30x30 Conservation Area", "Other Conservation Area", "Public or Unknown Conservation Area", "Non-Conservation Area"]
         sort_order ,color_hex = get_hex(df[[color, "color"]], color, order)
 
         df["stack_order"] = df[color].apply(lambda val: sort_order.index(val) if val in sort_order else len(sort_order))
@@ -388,6 +441,7 @@ def create_bar_chart(df, x, y, title, metric, color=None, stacked=False, colors=
         else:
             y_axis_scale =alt.Y(y, axis=alt.Axis(title=y_title, offset = -5, format=y_format))
 
+        
         # build chart  
         chart = chart.encode(
             x=alt.X("xlabel:N", sort=sort, title=None, axis=alt.Axis(labels=False)),
@@ -427,16 +481,16 @@ def create_bar_chart(df, x, y, title, metric, color=None, stacked=False, colors=
         final_chart = chart.encode(
             color=alt.Color("color").scale(None)
         )
-
+        
     # customize chart
     final_chart = final_chart.properties(
-        title=title.split("\n") if "\n" in title else title
+        title=chart_title.split("\n") if "\n" in chart_title else chart_title
     ).configure_legend(
         symbolStrokeWidth=0.1, direction="horizontal", orient="top",
         columns=2, title=None, labelOffset=2, offset=5,
         symbolType="square", labelFontSize=13,
     ).configure_title(
-        fontSize=18, align="center", anchor="middle", offset = 10
+        fontSize=16, align="center", anchor="middle", offset = 10
     )
 
     return final_chart
