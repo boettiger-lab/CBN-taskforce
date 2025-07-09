@@ -291,7 +291,7 @@ legend, position, bg_color, fontsize = get_legend(style_options, color_choice, d
 # m.add_legend(legend_dict = legend, position = position, bg_color = bg_color, fontsize = fontsize)
 m.add_legend(legend_dict = legend, position = position)
 
-m.add_pmtiles(ca_pmtiles, style=style, name="CA", tooltip=True, zoom_to_layer=True)
+m.add_pmtiles(ca_pmtiles, style=style, name="CA", tooltip=False, zoom_to_layer=True)
 
 if 'bounds' in locals(): 
     m.zoom_to_bounds(bounds)
