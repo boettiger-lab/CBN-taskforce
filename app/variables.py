@@ -1,6 +1,6 @@
 # urls for main layer 
-ca_parquet = 'https://minio.carlboettiger.info/public-ca30x30/ca30x30cbn_newlyprotected_v3.parquet'
-ca_pmtiles = 'https://minio.carlboettiger.info/public-ca30x30/ca30x30cbn_newlyprotected_v3.pmtiles'
+ca_parquet = 'https://minio.carlboettiger.info/public-ca30x30/ca30x30cbn_newlyprotected_v4.parquet'
+ca_pmtiles = 'https://minio.carlboettiger.info/public-ca30x30/ca30x30cbn_newlyprotected_v4.pmtiles'
 # 
 # computed by taking the sum of all the acres in this file:
 # https://minio.carlboettiger.info/public-ca30x30/CBN-data/Progress_data_new_protection/Land_Status_Zone_Ecoregion_Counties/all_regions_reGAP_county_eco.parquet
@@ -274,8 +274,8 @@ land_tenure = {
     'property': 'land_tenure',
     'type': 'categorical',
     'stops': [
-        ['easement', private_access_color],
-        ['non-easement', public_access_color],
+        ['Easement', private_access_color],
+        ['Non-Easement', public_access_color],
     ],
     'default': white
 }
@@ -306,10 +306,10 @@ gap = {
     'property': 'gap_code',
     'type': 'categorical',
     'stops': [
-        [1, "#26633d"],
-        [2, "#879647"],
-        [3, "#bdcf72"],
-        [4, "#6d6e6d"]
+        ['GAP 1', "#26633d"],
+        ['GAP 2', "#879647"],
+        ['GAP 3', "#bdcf72"],
+        ['GAP 4', "#6d6e6d"]
     ],
     'default': white
 }
@@ -318,10 +318,10 @@ status = {
     'property': 'status',
     'type': 'categorical',
     'stops': [
-        ['30x30-conserved', "#56711f"],
-        ['other-conserved', "#b6ce7a"],
-        ['public-or-unknown', "#e5efdb"],
-        ['non-conserved', "#e1e1e1"]
+        ['30x30 Conservation Area', "#56711f"],
+        ['Other Conservation Area', "#b6ce7a"],
+        ['Public or Unknown Conservation Area', "#e5efdb"],
+        ['Non-Conservation Area', "#e1e1e1"]
         # ['non-conserved', white]
 
     ],
@@ -359,16 +359,16 @@ climate_zone = {
     'property': 'climate_zone',
     'type': 'categorical',
     'stops': [
-        [1.0, "#2ca02c"],
-        [2.0, "#98df8a"],
-        [3.0, "#9467bd"],
-        [4.0, "#17becf"],
-        [5.0, "#d62728"],
-        [6.0, "#ff9896"],
-        [7.0, "#dbdb8d"],
-        [8.0, "#bcbd22"],
-        [9.0, "#c5b0d5"],
-        [10.0, "#e377c2"],
+        ['Zone 1', "#2ca02c"],
+        ['Zone 2', "#98df8a"],
+        ['Zone 3', "#9467bd"],
+        ['Zone 4', "#17becf"],
+        ['Zone 5', "#d62728"],
+        ['Zone 6', "#ff9896"],
+        ['Zone 7', "#dbdb8d"],
+        ['Zone 8', "#bcbd22"],
+        ['Zone 9', "#c5b0d5"],
+        ['Zone 10', "#e377c2"],
     ],
     'default': white
 }
@@ -405,19 +405,19 @@ habitat_type = {
     'property': 'habitat_type',
     'type': 'categorical',
     'stops': [
-        ['Agriculture', "#2ca02c"],
-        ['Conifer Forest', "#98df8a"],
-        ['Conifer Woodland', "#9467bd"],
-        ['Desert Shrub', "#bcbd22"],
-        ['Desert Woodland', "#d62728"],
-        ['Hardwood Forest', "#ff9896"],
-        ['Hardwood Woodland', "#8c564b"],
-        ['Herbaceous', "#f7b6d2"],
-        ['Barren/Other', "#c7c7c7"],
-        ['Shrub', "#aec7e8"],
-        ['Wetland', "#9edae5"],
-        ['Water', "#17becf"],
-        ['Urban', "#ffbb78"],
+        ['Agriculture', "#CCCCCC"],
+        ['Barren/Other', "#FFFFFF"],
+        ['Conifer Forest', "#267300"],
+        ['Conifer Woodland', "#ABCD66"],
+        ['Desert Shrub', "#FFEBBE"],
+        ['Desert Woodland', "#D7C29E"],
+        ['Hardwood Forest', "#002673"],
+        ['Hardwood Woodland', "#6699CD"],
+        ['Herbaceous', "#A87000"],
+        ['Shrub', "#F5CA7A"],
+        ['Urban', "#686868"],
+        ['Water', "#BEFFE8"],
+        ['Wetland', "#00A884"],
     ],
     'default': white
 }
@@ -507,7 +507,7 @@ select_colors = {
 
 # non-conserved areas, off by default
 default_boxes = {
-    'non-conserved': False,
+    # 'non-conserved': False,
     # 3: False,
     # 4: False,
     # "other-conserved":False,

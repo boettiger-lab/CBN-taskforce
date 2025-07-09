@@ -1,7 +1,7 @@
 import streamlit as st
 import streamlit.components.v1 as components
 import base64
-import leafmap.maplibregl as leafmap
+import leafmap.foliumap as leafmap
 import altair as alt
 import ibis
 from ibis import _
@@ -26,6 +26,8 @@ if "mydata" not in set(current_tables):
     tbl = con.read_parquet(ca_parquet)
     con.create_table("mydata", tbl)
 
+tbl = con.read_parquet(ca_parquet)
+con.create_table("mydata", tbl, overwrite = True)
 ca = con.table("mydata")
 
 st.set_page_config(layout="wide", page_title="CA Protected Areas Explorer", page_icon=":globe:")
@@ -50,11 +52,13 @@ st.markdown("<h2>CA 30x30 Planning & Assessment Prototype</h2>", unsafe_allow_ht
 st.markdown('<p class="medium-font"> In October 2020, Governor Newsom issued <a href="https://www.gov.ca.gov/wp-content/uploads/2020/10/10.07.2020-EO-N-82-20-.pdf" target="_blank">Executive Order N-82-20</a>, which establishes a state goal of conserving 30% of California’s lands and coastal waters by 2030 – known as <a href="https://www.californianature.ca.gov/" target="_blank">CA 30x30</a>. </p>',
 unsafe_allow_html=True)
 
-st.markdown('<p class = "medium-font"> This is an interactive cloud-native geospatial tool for exploring and visualizing California\'s protected lands. </p>', unsafe_allow_html = True)
+st.markdown('<p class = "medium-font"> With this tool, you can explore habitats and features that support biodiversity within California’s 30x30 conservation areas, other conservation areas, and non-conserved lands. This tool can provide insight into what we have conserved, what is lacking protection, and opportunities to fill these gaps. </p>', unsafe_allow_html = True)
 
 st.divider()
 
-m = leafmap.Map(style="positron")
+# m = leafmap.Map(style="positron")
+m = leafmap.Map(center=[35, -100], zoom=5, layers_control=True, fullscreen_control=True)
+
 basemaps = leafmap.basemaps.keys()
 #############
 
@@ -112,13 +116,13 @@ chatbot_toggles = {key: False for key in keys}
 structured_llm = llm.with_structured_output(SQLResponse)
 few_shot_structured_llm = prompt | structured_llm
 
-def run_sql(query,color_choice):
+@st.cache_data
+def run_sql(query):
     """
     Filter data based on an LLM-generated SQL query and return matching IDs.
 
     Args:
         query (str): The natural language query to filter the data.
-        color_choice (str): The column used for plotting.
     """
     output = few_shot_structured_llm.invoke(query)
     sql_query = output.sql_query
@@ -133,9 +137,9 @@ def run_sql(query,color_choice):
         st.caption("SQL Query:")
         st.code(sql_query,language = "sql") 
         if 'geom' in result.columns:
-            return result.drop('geom',axis = 1)
+            return result.drop('geom',axis = 1), sql_query
         else: 
-            return result
+            return result, sql_query
     elif ("id" and "geom" not in result.columns): 
         st.write(result)  # if we aren't mapping, just print out the data  
 
@@ -143,7 +147,7 @@ def run_sql(query,color_choice):
         st.write(explanation)
         st.caption("SQL Query:")
         st.code(sql_query,language = "sql") 
-    return result
+    return result, sql_query
 
 #############
 
@@ -160,15 +164,6 @@ with st.sidebar:
         st.rerun()
     st.divider()
 
-    color_choice = st.radio("Group by:", style_options, key = "color", help = "Select a category to change map colors and chart groupings.", captions = ['','Degree of biodiversity protection [(what is this?)](https://www.protectedlands.net/uses-of-pad-us/#conservation-of-biodiversity-2)','', '', '', '', '', '', ''])
-
-
-    colorby_vals = get_color_vals(style_options, color_choice) #get options for selected color_by column 
-    alpha = 0.8
-    st.divider()
-
-column = select_column[color_choice]
-colors = color_table(select_colors, color_choice, column)
 
 ##### Chatbot 
 with chatbot_container:
@@ -176,25 +171,43 @@ with chatbot_container:
         example_query = "👋 Input query here"
         prompt = st.chat_input(example_query, key="chain", max_chars=300)
 
-# new container for output so it doesn't mess with the alignment of llm options 
+# Try to update the st.radio session state before the widget is rendered --
+if prompt:
+    try:
+        llm_output, sql_query = run_sql(prompt)
+        if ("id" in llm_output.columns) and (not llm_output.empty):
+            cols = extract_columns(sql_query)
+            for x in cols:
+                group_by_name, group_by = next(((k, v) for k, v in select_column.items() if v == x), (None, None))
+                if group_by and st.session_state.get("color") != group_by_name:
+                    st.session_state["color"] = group_by_name
+                    st.experimental_rerun()
+    except Exception:
+        pass  # errors handled in main block later
+
 with st.container():
     if prompt: 
         st.chat_message("user").write(prompt)
         try:
             with st.chat_message("assistant"):
                 with st.spinner("Invoking query..."):
-
-                    llm_output = run_sql(prompt,color_choice)
+                    llm_output, sql_query = run_sql(prompt)
                     if ("id" in llm_output.columns) and (not llm_output.empty):
                         ids = llm_output['id'].tolist()
-                        cols = llm_output.columns.tolist()
+                        cols = extract_columns(sql_query)
                         bounds = llm_output.total_bounds.tolist()
                         chatbot_toggles = {
-                                key: (True if key in cols else value) 
-                                for key, value in chatbot_toggles.items()
-                            }
+                            key: (True if key in cols else value) 
+                            for key, value in chatbot_toggles.items()
+                        }
+                        for x in cols:
+                            group_by_name, group_by = next(((k, v) for k, v in select_column.items() if v == x), (None, None))
+                            if group_by:
+                                column = group_by
+                                color_choice = group_by_name
+                                colors = color_table(select_colors, color_choice, column)
                         for key, value in chatbot_toggles.items():
-                            st.session_state[key] = value  # Update session state
+                            st.session_state[key] = value
                     else:
                         ids = []
         except Exception as e:
@@ -202,8 +215,21 @@ with st.container():
             st.warning("Please try again with a different query", icon="⚠️")
             st.write(error_message)
             st.stop()
+
+
+# Sidebar widgets
 with st.sidebar: 
-#### Filters
+    color_choice = st.radio(
+        "Group by:",
+        style_options,
+        key="color",
+        help="Select a category to change map colors and chart groupings.",
+        captions=['','Degree of biodiversity protection [(what is this?)](https://www.protectedlands.net/uses-of-pad-us/#conservation-of-biodiversity-2)','', '', '', '', '', '', '']
+    )
+    colorby_vals = get_color_vals(style_options, color_choice)
+    alpha = 0.8
+    st.divider()
+
 
     st.markdown('<p class = "medium-font-sidebar"> Filters:</p>', help = "Apply filters to adjust what data is shown on the map.", unsafe_allow_html= True)
 
@@ -225,14 +251,14 @@ with st.sidebar:
             filter_vals = []
 
     st.divider()
-    
+
 #### Data layers 
     st.markdown('<p class = "medium-font-sidebar"> Data Layers:</p>', help = "Select data layers to visualize on the map. Summary charts will update based on the displayed layers.", unsafe_allow_html= True)
     
     #display toggles to turn on data layers            
     for section, slider_key, items in layer_config:
         with st.expander(section):
-            st.slider("transparency", 0.0, 1.0, 0.1 if slider_key != "calfire" else 0.15, key=slider_key)
+            # st.slider("transparency", 0.0, 1.0, 0.1 if slider_key != "calfire" else 0.15, key=slider_key)
             for item in items:
                 if len(item) == 5:
                     _, label, toggle_key, default, citation = item
@@ -242,12 +268,17 @@ with st.sidebar:
                     st.toggle(label, key=toggle_key)
     st.divider() 
     #basemap choices
-    b = st.selectbox("Basemap", basemaps)
+    b = st.selectbox("Basemap", basemaps,index= 40)
     m.add_basemap(b)
     st.divider()
     # adding github logo 
     st.markdown(f"<div class='spacer'>{github_html}</div>", unsafe_allow_html=True)
     st.markdown(":left_speech_bubble: [Get in touch or report an issue](https://github.com/boettiger-lab/CBN-taskforce/issues)")
+
+
+
+column = select_column[color_choice]
+colors = color_table(select_colors, color_choice, column)
 
 ## parameters for mapping the data (if we didn't use llm)
 if 'llm_output' not in locals():
@@ -260,11 +291,13 @@ else:
 
 ## mapping data 
 legend, position, bg_color, fontsize = get_legend(style_options, color_choice, df, column)
-m.add_legend(legend_dict = legend, position = position, bg_color = bg_color, fontsize = fontsize)
-m.add_pmtiles(ca_pmtiles, style=style, name="CA", tooltip=True, fit_bounds=True)
+# m.add_legend(legend_dict = legend, position = position, bg_color = bg_color, fontsize = fontsize)
+m.add_legend(legend_dict = legend, position = position)
+
+m.add_pmtiles(ca_pmtiles, style=style, name="CA", tooltip=True, zoom_to_layer=True)
 
 if 'bounds' in locals(): 
-    m.fit_bounds(bounds)
+    m.zoom_to_bounds(bounds)
 
 # check if any layer toggle is active
 any_chart_toggled = any(
@@ -343,7 +376,6 @@ with main:
         st.caption("***Under California’s 30x30 framework, only GAP codes 1 and 2 are counted toward the conservation goal.") 
 
 st.divider()
-
 
 with open('app/footer.md', 'r') as file:
     footer = file.read()
