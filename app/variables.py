@@ -157,7 +157,7 @@ github_html = f"""
             <path d='{github_logo}'></path>
         </svg>
         <span>Source Code:</span>
-        <a href='https://github.com/boettiger-lab/ca-30x30' target='_blank'>https://github.com/boettiger-lab/CBN-taskforce</a>
+        <a href='https://github.com/boettiger-lab/CBN-taskforce' target='_blank'>https://github.com/boettiger-lab/CBN-taskforce</a>
     </span>
 """
 
