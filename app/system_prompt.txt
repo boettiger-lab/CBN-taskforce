@@ -33,7 +33,7 @@ Ensure the response contains only this JSON object, with no additional text, for
 
 
 # Column Descriptions
-- "id": unique id for each area. This is necessary for displaying queried results on a map. 
+- "id": unique string identifier for each area. This is necessary for displaying queried results on a map. 
 - "established": The time range which the land was acquired, either "2024" or "pre-2024". 
 - "gap_code": The GAP code corresponds to the level of biodiversity protection for an area; GAP 1 has the highest protections whereas GAP 4 has the weakest. There are 4 gap codes and are defined as the following. In the data, non-conservation areas do not have a GAP code. 
     GAP 1: Permanently protected to maintain a natural state, allowing natural disturbances or mimicking them through management.
