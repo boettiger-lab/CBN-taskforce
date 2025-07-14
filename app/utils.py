@@ -363,12 +363,14 @@ def get_chart_settings(x, feature_name, y = None, stacked = None, metric = None,
     if percent_type == "Network":
             chart_title = f'{feature_name} Within Each {x_title}'
             y_title = f"% of Area with {feature_name}"
-            subtitle = f"Acres of {feature_name.replace('\n','')} in each {x_title},\ndivided by total acres of each {x_title}"
+            feature_name = feature_name.replace('\n','')
+            subtitle = f"Acres of {feature_name} in each {x_title},\ndivided by total acres of each {x_title}"
 
     elif percent_type == "Feature":
             chart_title = f'Where {feature_name} Occurs by {x_title}' 
             y_title = f"% of Total {feature_name}"
-            subtitle = f"Acres of {feature_name.replace('\n','')} in each {x_title},\ndivided by total acres of {feature_name.replace('\n','')}"
+            feature_name = feature_name.replace('\n','')
+            subtitle = f"Acres of {feature_name} in each {x_title},\ndivided by total acres of {feature_name}"
 
     if stacked:
         chart_title = f'{x_title}\n by 30x30 Status'
