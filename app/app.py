@@ -17,6 +17,7 @@ from functools import reduce
 from variables import *
 from utils import *
 
+
 ## Create the table from remote parquet only if it doesn't already exist on disk
 con = ibis.duckdb.connect("duck.db", extensions=["spatial"])
 current_tables = con.list_tables()
@@ -326,6 +327,15 @@ legend, position, bg_color, fontsize = get_legend(style_options, color_choice, d
 m.add_legend(legend_dict = legend, position = position)
 
 m.add_pmtiles(ca_pmtiles, style=style, name="CA", tooltip=False, zoom_to_layer=True)
+
+
+# add custom tooltip to pmtiles layer
+for layer in m._children.values():
+    if isinstance(layer, leafmap.PMTilesLayer):
+        pmtiles_layer = layer
+        break
+
+pmtiles_layer.add_child(CustomTooltip())
 
 if 'bounds' in locals(): 
     m.zoom_to_bounds(bounds)

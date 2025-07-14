@@ -270,6 +270,47 @@ def get_legend(style_options, color_choice, df = None, column = None):
     return legend, position, bg_color, fontsize
 
 
+### tooltip for pmtiles
+from leafmap.foliumap import PMTilesMapLibreTooltip
+from branca.element import Template
+
+class CustomTooltip(PMTilesMapLibreTooltip):
+    _template = Template("""
+    {% macro script(this, kwargs) -%}
+    var maplibre = {{ this._parent.get_name() }}.getMaplibreMap();
+    const popup = new maplibregl.Popup({ closeButton: false, closeOnClick: false });
+
+    maplibre.on('mousemove', function(e) {
+        const features = maplibre.queryRenderedFeatures(e.point);
+        const filtered = features.filter(f => f.properties && f.properties.id);
+
+        if (filtered.length) {
+            const props = filtered[0].properties;
+            const html = `
+              <div><strong>ID:</strong> ${props.id || 'N/A'}</div>
+              <div><strong>Name:</strong> ${props.name || 'N/A'}</div>
+              <div><strong>Manager:</strong> ${props.manager || 'N/A'}</div>
+              <div><strong>County:</strong> ${props.county || 'N/A'}</div>
+              <div><strong>Status:</strong> ${props.status || 'N/A'}</div>
+              <div><strong>GAP Code:</strong> ${props.gap_code || 'N/A'}</div>
+              <div><strong>Habitat Type:</strong> ${props.habitat_type || 'N/A'}</div>
+              <div><strong>Climate Zone:</strong> ${props.climate_zone || 'N/A'}</div>
+              <div><strong>Land Tenure:</strong> ${props.land_tenure || 'N/A'}</div>
+              <div><strong>Ecoregion:</strong> ${props.ecoregion || 'N/A'}</div>
+              <div><strong>Acres:</strong> ${props.acres || 'N/A'}</div>
+            `;
+            popup.setLngLat(e.lngLat).setHTML(html).addTo(maplibre);
+            if (popup._container) {
+                popup._container.style.zIndex = 9999;
+            }
+        } else {
+            popup.remove();
+        }
+    });
+    {% endmacro %}
+    """)
+
+
 ######################## CHART FUNCTIONS 
 def area_chart(df, column, color_choice):
     """
@@ -526,3 +567,4 @@ def create_bar_chart(df, x, y, feature_name, metric, percent_type = None, color=
     )
 
     return final_chart
+
