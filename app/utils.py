@@ -38,12 +38,12 @@ def sync_checkboxes(source):
     """
     # gap 1 and gap 2 on -> 30x30 Conservation Area on
     if source in ["gap_codeGAP 1", "gap_codeGAP 2"]:
-        st.session_state['status30x30-conserved'] = st.session_state["gap_codeGAP 1"] and st.session_state['gap_codeGAP 2']
+        st.session_state['status30x30 Conservation Area'] = st.session_state["gap_codeGAP 1"] and st.session_state['gap_codeGAP 2']
 
     # 30x30-conserved on -> gap 1 and gap 2 on
-    elif source == "status30x30-conserved":
-        st.session_state['gap_codeGAP 1'] = st.session_state['status30x30-conserved']
-        st.session_state['gap_codeGAP 2'] = st.session_state['status30x30-conserved']
+    elif source == "status30x30 Conservation Area":
+        st.session_state['gap_codeGAP 1'] = st.session_state['status30x30 Conservation Area']
+        st.session_state['gap_codeGAP 2'] = st.session_state['status30x30 Conservation Area']
 
     # other-conserved on <-> gap 3 on
     elif source == "gap_codeGAP 3":
@@ -85,10 +85,18 @@ def get_color_vals(style_options, style_choice):
 
 
 ######################## SUMMARY & DATA FUNCTIONS 
-def get_summary(ca, combined_filter, column, main_group, colors = None):
+def get_summary(ca, combined_filter, column, main_group, feature_col, colors = None, feature = False):
     """
     Computes summary statistics for the filtered dataset.
     """    
+    # precompute total_feature values across full table
+    total_features = {
+        key: (getattr(_, key) * _.acres).sum().name(f"total_feature_{key}")
+        for key in keys
+    }
+    
+    totals = ca.aggregate(**total_features).execute().iloc[0].to_dict()
+
     # base columns
     base_aggs = {
         "percent_CA": (_.acres.sum() / ca_area_acres),
@@ -98,12 +106,15 @@ def get_summary(ca, combined_filter, column, main_group, colors = None):
     # add percent + acres aggregates
     dynamic_aggs = {}
     for key in keys:
-        suffix = key.replace("ACE_", "").replace("-", "_")
-        dynamic_aggs[f"percent_{suffix}"] = (getattr(_, key) * _.acres).sum() / _.acres.sum()
+        suffix = key.replace("pct_", "").replace("-", "_")
+        dynamic_aggs[f"pct_network_{suffix}"] = (getattr(_, key) * _.acres).sum() / _.acres.sum()
         dynamic_aggs[f"acres_{suffix}"] = (getattr(_, key) * _.acres).sum()
+        dynamic_aggs[f"pct_feature_{suffix}"] = (getattr(_, key) * _.acres).sum() / totals[key]  
+
     
     # join all aggregates
     all_aggs = {**base_aggs, **dynamic_aggs}
+
 
     # group and aggregate
     df = (ca.filter(combined_filter)
@@ -112,27 +123,27 @@ def get_summary(ca, combined_filter, column, main_group, colors = None):
           .mutate(percent_CA=_.percent_CA.round(5), acres=_.acres.round(0))
         )
 
-    # Compute total acres by group and percent of group
+     # Compute total acres by group and percent of group
     group_totals = (ca.filter(combined_filter)
-                      .group_by(main_group)
-                      .aggregate(total_acres=_.acres.sum())
-                    )
+                  .group_by(main_group)
+                  .aggregate(total_acres=_.acres.sum())
+                )
+    
     df = (df.inner_join(group_totals, main_group)
-          # .mutate(percent_group=( _.acres / _.total_acres).round(3))
           .mutate(percent_group=( _.acres / _.total_acres))
          )
-    
+
     # if colors is not None and not colors.empty:
     if colors is not None:
         df = df.inner_join(colors, column[-1])
     return df.cast({col: "string" for col in column}).execute()
 
-def get_summary_table(ca, column, select_colors, color_choice, filter_cols, filter_vals, colorby_vals):
+def get_summary_table(ca, column, select_colors, color_choice, filter_cols, filter_vals, colorby_vals, feature_col = None):
     """
     Generates summary tables for visualization and reporting.
     """
     colors = color_table(select_colors, color_choice, column)
-    
+
     #if a filter is selected, add to list of filters 
     filters = [getattr(_, col).isin(vals) for col, vals in zip(filter_cols, filter_vals) if vals]
     #show color_by column in table by adding it as a filter (if it's not already a filter)
@@ -144,27 +155,26 @@ def get_summary_table(ca, column, select_colors, color_choice, filter_cols, filt
     combined_filter = reduce(lambda x, y: x & y, filters)
     # only_conserved = combined_filter & (_.status.isin(['30x30 Conservation Area']))
 
-    # df used for percentage, excludes non-conserved. 
-    # df_percent = get_summary(ca, only_conserved, [column], column, colors)
     #df used for printed table
-    df_tab = get_summary(ca, combined_filter, filter_cols, column, colors=None)
+    df_tab = get_summary(ca, combined_filter, filter_cols, column, feature_col, colors=None)
     if "Non-Conservation Area" in chain.from_iterable(filter_vals):
         combined_filter = combined_filter | (_.status.isin(['Non-Conservation Area']))
 
-    # df used for charts 
-    df = get_summary(ca, combined_filter, [column], column, colors)
-    
+    df_feature = None if feature_col is None else get_summary(ca, combined_filter, [column], column, feature_col, colors, feature = True)
+    df_network = None if df_feature is not None else get_summary(ca, combined_filter, [column], column, feature_col, colors)        
     # df for stacked 30x30 status bar chart 
-    df_bar_30x30 = None if column in ["status", "gap_code"] else get_summary(ca, combined_filter | (_.status.isin(['Non-Conservation Area'])), [column, 'status'], column, color_table(select_colors, "30x30 Status", 'status'))
-    return df, df_tab, df_bar_30x30
+    df_bar_30x30 = None if column in ["status", "gap_code"] else get_summary(ca, combined_filter | (_.status.isin(['Non-Conservation Area'])), [column, 'status'], column, feature_col, color_table(select_colors, "30x30 Status", 'status'))
+    return df_network, df_feature, df_tab, df_bar_30x30
 
 
-def get_summary_table_sql(ca, column, colors, ids):
+def get_summary_table_sql(ca, column, colors, ids, feature_col = None):
     """
     Generates a summary table using specific IDs as filters.
     """
     combined_filter = _.id.isin(ids)
-    return get_summary(ca, combined_filter, [column], column, colors)
+    df_network = get_summary(ca, combined_filter, [column], column, feature_col, colors)
+    df_feature = get_summary(ca, combined_filter, [column], column, feature_col, colors, feature = True)
+    return df_network, df_feature
 
 def extract_columns(sql_query):
     # Find all substrings inside double quotes
@@ -189,7 +199,6 @@ def get_pmtiles_style(paint, alpha, filter_cols, filter_vals):
             {
                 "id": "ca30x30",
                 "source": "ca",
-                # "source-layer": "ca30x30",
                 "source-layer": source_layer_name,
                 "type": "fill",
                 "filter": combined_filters,
@@ -209,7 +218,6 @@ def get_pmtiles_style_llm(paint, ids):
             {
                 "id": "ca30x30",
                 "source": "ca",
-                # "source-layer": "ca30x30",
                  "source-layer": source_layer_name,
                 "type": "fill",
                 "filter": ["in", ["get", "id"], ["literal", ids]],
@@ -267,7 +275,7 @@ def area_chart(df, column, color_choice):
     """
     Generates an Altair pie chart representing the percentage of protected areas.
     """
-    sort, _, _, _,_,_= get_chart_settings(column,color_choice)
+    sort, _, _, _,_,_,_= get_chart_settings(column,color_choice)
     unique_labels = sorted(df[column].unique())
     height = 300
     if sort == 'x':
@@ -278,6 +286,7 @@ def area_chart(df, column, color_choice):
         labels_sorted = sort 
     df[column] = df[column].apply(lambda x: get_label_transform(column, x))
 
+    
     # need to sort the slices, so computing an index 
     cat_dtype = CategoricalDtype(categories=labels_sorted, ordered=True)
     df["order_index"] = df[column].astype(cat_dtype).cat.codes  
@@ -306,16 +315,16 @@ def area_chart(df, column, color_choice):
     return pie
 
 
-def bar_chart(df, x, y, title, metric = "percent"):
+def bar_chart(df, x, y, title, metric = "percent", percent_type = None):
     """Creates a simple bar chart."""
-    return create_bar_chart(df, x, y, title, metric)
+    return create_bar_chart(df, x, y, title, metric, percent_type)
 
 def stacked_bar(df, x, y, metric, title, colors, color = "status"):
     """Creates a stacked bar chart."""
     return create_bar_chart(df, x, y, title, metric, color=color, stacked=True, colors=colors)
 
 
-def get_chart_settings(x, y_name, y = None, stacked = None, metric = None):
+def get_chart_settings(x, feature_name, y = None, stacked = None, metric = None, percent_type = None):
     """
     Returns sorting, axis settings, and y-axis title mappings.
     """
@@ -325,7 +334,7 @@ def get_chart_settings(x, y_name, y = None, stacked = None, metric = None):
         "land_tenure": ["Easement", "Non-Easement"],
         "manager_type": ["Federal", "Tribal", "State", "Special District", "County", "City",
                          "HOA", "Joint", "Non Profit", "Private", "Unknown"],
-        "status": ["30x30-conserved", "Other Conservation Area", "Public or Unknown Conservation Area", "Non-Conservation Area"],
+        "status": ["30x30 Conservation Area", "Other Conservation Area", "Public or Unknown Conservation Area", "Non-Conservation Area"],
         "ecoregion": ['SE. Great Basin', 'Mojave Desert', 'Sonoran Desert', 'Sierra Nevada',
                       'SoCal Mountains & Valleys', 'Mono', 'Central CA Coast', 'Klamath Mountains',
                       'NorCal Coast', 'NorCal Coast Ranges', 'NW. Basin & Range', 'Colorado Desert',
@@ -348,20 +357,35 @@ def get_chart_settings(x, y_name, y = None, stacked = None, metric = None):
     angle = 270 if x in ["manager_type", "ecoregion", "status", "habitat_type", "resilient_connected_network","access_type", "climate_zone", "land_tenure"] else 0
     if not y:
         y = ''
+    chart_title = ''
+    subtitle = ''
 
-    if "richness" in x:
-        chart_title = f'{y_title} of Areas with\n High {y_name}\n by {x_title}'
-    else:
-        # if metric == "acres":
-        chart_title = f'{y_title} of Area in\n {y_name}\n by {x_title}'
-        # else:
-            # chart_title = f'{y_title} of Area in\n {y_name}\n by {x_title}'
+    if percent_type == "Network":
+            chart_title = f'{feature_name} Within Each {x_title}'
+            y_title = f"% of Area with {feature_name}"
+            subtitle = f"Acres of {feature_name.replace('\n','')} in each {x_title},\ndivided by total acres of each {x_title}"
+
+    elif percent_type == "Feature":
+            chart_title = f'Where {feature_name} Occurs by {x_title}' 
+            y_title = f"% of Total {feature_name}"
+            subtitle = f"Acres of {feature_name.replace('\n','')} in each {x_title},\ndivided by total acres of {feature_name.replace('\n','')}"
 
     if stacked:
         chart_title = f'{x_title}\n by 30x30 Status'
-        
-    height = 470 if y == "percent_rarityweighted_endemic_plant_richness" else 250 if stacked else 450 if x in ["ecoregion",'habitat_type'] else 350 if x == "manager_type" else 450 if x == "access_type" else 330  
-    return sort_options.get(x, "x"), angle, height, y_title, x_title, chart_title
+
+    if metric == "acres":
+        chart_title = f'Acres of {feature_name} Within Each {x_title}'
+
+    height = (
+        700 if "rarityweighted" in y
+        else 350 if stacked
+        else 550 if x in ["ecoregion", "habitat_type"]
+        else 450 if x == "manager_type"
+        else 550 if x == "access_type"
+        else 550
+    )
+    
+    return sort_options.get(x, "x"), angle, height, y_title, x_title, chart_title, subtitle
 
     
 def get_label_transform(x, label=None):
@@ -406,14 +430,19 @@ def get_hex(df, color, order):
                 .reset_index()).T.values.tolist()
 
 
-def create_bar_chart(df, x, y, y_name, metric, color=None, stacked=False, colors=None):
+def create_bar_chart(df, x, y, feature_name, metric, percent_type = None, color=None, stacked=False, colors=None):
     """
     Generalized function to create a bar chart, supporting both standard and stacked bars.
     """
     # helper functions 
-    sort, angle, height, y_title, x_title, chart_title = get_chart_settings(x, y_name,  y, stacked, metric)
+    sort, angle, height, y_title, x_title, chart_title,subtitle = get_chart_settings(x, feature_name,  y, stacked, metric, percent_type)
     label_transform = get_label_transform(x)
     y_format = "~s" if metric == "acres" else ",.1%"
+    if metric == "percent":
+        tooltip_y =alt.Tooltip(y, type="quantitative", format=",.1%")
+    else:
+        tooltip_y =alt.Tooltip(y, type="quantitative")
+
     # create base chart 
     chart = (
         alt.Chart(df)
@@ -424,7 +453,7 @@ def create_bar_chart(df, x, y, y_name, metric, color=None, stacked=False, colors
                     axis=alt.Axis(labelAngle=angle, title=x_title, labelLimit=200)),
             y=alt.Y(y, axis=alt.Axis(title=y_title, offset = -5, format=y_format)),
 
-            tooltip=[alt.Tooltip(x, type="nominal"), alt.Tooltip(y, type="quantitative")]
+            tooltip=[alt.Tooltip(x, type="nominal"), tooltip_y]
         )
         # .properties(width="container", height=height)  
         .properties(height=height)
@@ -481,16 +510,17 @@ def create_bar_chart(df, x, y, y_name, metric, color=None, stacked=False, colors
         final_chart = chart.encode(
             color=alt.Color("color").scale(None)
         )
-        
+
     # customize chart
     final_chart = final_chart.properties(
-        title=chart_title.split("\n") if "\n" in chart_title else chart_title
-    ).configure_legend(
+    title={"text": chart_title.split("\n") if "\n" in chart_title else chart_title,
+        "subtitle": subtitle.split("\n") if "\n" in subtitle else subtitle,
+    }).configure_legend(
         symbolStrokeWidth=0.1, direction="horizontal", orient="top",
         columns=2, title=None, labelOffset=2, offset=5,
         symbolType="square", labelFontSize=13,
     ).configure_title(
-        fontSize=16, align="center", anchor="middle", offset = 10
+        fontSize=16, align="center", anchor="middle", offset = 10,subtitleColor = "gray"
     )
 
     return final_chart

@@ -126,9 +126,9 @@ def run_sql(query):
     explanation =output.explanation
     if not sql_query: # if the chatbot can't generate a SQL query.
         st.success(explanation)
-        return pd.DataFrame({'id' : []})
+        return pd.DataFrame({'id' : []}),''
     result = ca.sql(sql_query).execute()
-    if result.empty :
+    if result.empty:
         explanation = "This query did not return any results. Please try again with a different query."
         st.warning(explanation, icon="⚠️")
         st.caption("SQL Query:")
@@ -208,10 +208,40 @@ with st.container():
                     else:
                         ids = []
         except Exception as e:
-            error_message = f"ERROR: An unexpected error has occured with the following query:\n\n*{prompt}*\n\n which raised the following error:\n\n{type(e)}: {e}\n"
-            st.warning("Please try again with a different query", icon="⚠️")
-            st.write(error_message)
+            import traceback
+            import openai
+        
+            if isinstance(e, openai.BadRequestError):
+                st.warning(
+                    "ERROR: The LLM you selected is not working (400 error). Please select a different model.",
+                    icon="⚠️"
+                )
+                st.stop()
+            elif isinstance(e, openai.InternalServerError):
+                st.warning(
+                    "ERROR: The LLM you selected is temporarily down (500 error). Please select a different model or try again later.",
+                    icon="⚠️"
+                )
+
+            elif isinstance(e, ValueError):
+                st.error(f"{type(e).__name__}: {e}")
+                st.warning(
+                    "BUG: There's a problem in the application code. "
+                    "Please help us fix it by reporting this issue on our GitHub:\n\n"
+                    "[📄 Report on GitHub](https://github.com/boettiger-lab/CBN-taskforce/issues)",
+
+                    icon="🐞"
+                )
+
+
+
+            else:
+                error_message = f"ERROR: An unexpected error has occured with the following query:\n\n*{prompt}*\n\n which raised the following error:\n\n{type(e)}: {e}\n"
+                st.warning("Please try again with a different query", icon="⚠️")
+                st.write(error_message)
             st.stop()
+
+            
 
 
 # Sidebar widgets
@@ -276,18 +306,22 @@ with st.sidebar:
 
 column = select_column[color_choice]
 colors = color_table(select_colors, color_choice, column)
+main = st.container()
+with main:
+    map_col, stats_col = st.columns([3,2])
+
 
 ## parameters for mapping the data (if we didn't use llm)
 if 'llm_output' not in locals():
-    df, df_tab, df_bar_30x30 = get_summary_table(ca, column, select_colors, color_choice, filter_cols, filter_vals,colorby_vals)
+    df_network, _, df_tab, df_bar_30x30 = get_summary_table(ca, column, select_colors, color_choice, filter_cols, filter_vals,colorby_vals)
     style = get_pmtiles_style(style_options[color_choice], alpha, filter_cols, filter_vals)
     bounds = [-124.42174575, 32.53428607, -114.13077782, 42.00950367]
 else:
     style = get_pmtiles_style_llm(style_options[color_choice], ids)
-    df = get_summary_table_sql(ca, column, colors, ids)
+    df_network, _ = get_summary_table_sql(ca, column, colors, ids)
 
 ## mapping data 
-legend, position, bg_color, fontsize = get_legend(style_options, color_choice, df, column)
+legend, position, bg_color, fontsize = get_legend(style_options, color_choice, df_network, column)
 # m.add_legend(legend_dict = legend, position = position, bg_color = bg_color, fontsize = fontsize)
 m.add_legend(legend_dict = legend, position = position)
 
@@ -311,7 +345,6 @@ if 'llm_output' in locals():
 else:
     show_chatbot_chart = False
 # main display 
-main = st.container()
 with main:
     map_col, stats_col = st.columns([3,2])
 
@@ -328,7 +361,7 @@ with main:
     with stats_col:
         with st.container():
             st.markdown('')
-            st.altair_chart(area_chart(df, column, color_choice), use_container_width=True)
+            st.altair_chart(area_chart(df_network, column, color_choice), use_container_width=True)
             st.markdown('<p class="caption-shift-up">*Chart updates based on filters.</p>', unsafe_allow_html=True)
 
             # display the pill selection if we will use any barcharts
@@ -362,8 +395,26 @@ with main:
                 for _, _, items in layer_config:
                     for suffix, label, toggle_key, *_ in items:
                         if st.session_state.get(toggle_key, False):
-                            y_col = f"{chart_choice}_{suffix}"
-                            st.altair_chart(bar_chart(df, column, y_col, label, metric=chart_choice), use_container_width=True)
+                            suffix = suffix.replace("pct_", "").replace("-", "_")
+                            if ('Richness' in label) & ('Endemic' not in label) & ('Rare' not in label): 
+                                label = f"Top {label}"
+                            if ("Richness" in label) | ("Land" in label) | ("Communities" in label):
+                                label = f"{label}\n"
+                            if chart_choice == 'percent':
+                                # % of NETWORK
+                                feature_col = f"pct_network_{suffix}"
+                                st.altair_chart(bar_chart(df_network, column, feature_col, label, metric=chart_choice, percent_type = "Network"), use_container_width=True)
+    
+                                # % of FEATURE
+                                feature_col = f"pct_feature_{suffix}"
+                                _, df_feature,_,_ = get_summary_table(ca, column, select_colors, color_choice, filter_cols, filter_vals,colorby_vals, feature_col)
+                                st.altair_chart(bar_chart(df_feature, column, feature_col, label, metric=chart_choice,percent_type = "Feature"), use_container_width=True)
+
+                            else: # acres chart 
+                                feature_col = f"acres_{suffix}"
+                                st.altair_chart(bar_chart(df_network, column, feature_col, label, metric=chart_choice), use_container_width=True)
+
+
             else:
                 st.warning("Please select a metric to display bar chart.")
 with main:
