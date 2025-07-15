@@ -404,30 +404,37 @@ def get_chart_settings(x, feature_name, y = None, stacked = None, metric = None,
     subtitle = ''
 
     if percent_type == "Network":
-            chart_title = f'{feature_name} Within Each {x_title}'
-            y_title = f"% of Area with {feature_name}"
-            feature_name = feature_name.replace('\n','')
-            subtitle = f"Acres of {feature_name} in each {x_title},\ndivided by total acres of each {x_title}"
+        chart_title = f'{feature_name} Within Each {x_title}'
+        y_title = f"% of Area with {feature_name}"
+        # feature_name = feature_name.replace('\n','')
+        subtitle = f"Acres of {feature_name} in each {x_title},\ndivided by total acres of each {x_title}"
 
     elif percent_type == "Feature":
-            chart_title = f'Where {feature_name} Occurs by {x_title}' 
-            y_title = f"% of Total {feature_name}"
-            feature_name = feature_name.replace('\n','')
-            subtitle = f"Acres of {feature_name} in each {x_title},\ndivided by total acres of {feature_name}"
+        chart_title = f'Distribution of\n {feature_name} by {x_title}' 
+        y_title = f"% of Total {feature_name}"
+        # feature_name = feature_name.replace('\n','')
+        subtitle = f"Acres of {feature_name} in each {x_title},\ndivided by total acres of {feature_name}"
 
     if stacked:
         chart_title = f'{x_title}\n by 30x30 Status'
 
     if metric == "acres":
-        chart_title = f'Acres of {feature_name} Within Each {x_title}'
+        if not stacked:
+            feature_name = feature_name.rstrip('\n')
+
+            chart_title = f'Acres of {feature_name}\n Within Each {x_title}'
 
     height = (
-        700 if "rarityweighted" in y
+        720 if "rarityweighted" in y
         else 350 if stacked
+        else 620 if "freshwater" in y
+        else 720 if ("increased" in y) & (percent_type == 'Feature')
+        else 700 if ("increased" in y)
         else 550 if x in ["ecoregion", "habitat_type"]
         else 450 if x == "manager_type"
         else 550 if x == "access_type"
-        else 550
+        else 600 if percent_type
+        else 540
     )
     
     return sort_options.get(x, "x"), angle, height, y_title, x_title, chart_title, subtitle
@@ -482,12 +489,12 @@ def create_bar_chart(df, x, y, feature_name, metric, percent_type = None, color=
     # helper functions 
     sort, angle, height, y_title, x_title, chart_title,subtitle = get_chart_settings(x, feature_name,  y, stacked, metric, percent_type)
     label_transform = get_label_transform(x)
-    y_format = "~s" if metric == "acres" else ",.1%"
+    y_format = "~s" if metric == "acres" else ",.2%"
     if metric == "percent":
-        tooltip_y =alt.Tooltip(y, type="quantitative", format=",.1%")
+        tooltip_y =alt.Tooltip(y, type="quantitative", format=",.2%")
     else:
-        tooltip_y =alt.Tooltip(y, type="quantitative")
-
+        tooltip_y =alt.Tooltip(y, type="quantitative", format=",.0f")
+        
     # create base chart 
     chart = (
         alt.Chart(df)
@@ -525,7 +532,7 @@ def create_bar_chart(df, x, y, feature_name, metric, percent_type = None, color=
             tooltip=[
                 alt.Tooltip(x, type="nominal"),
                 alt.Tooltip(color, type="nominal"),
-                alt.Tooltip("percent_group", type="quantitative", format=",.1%"),
+                alt.Tooltip("percent_group", type="quantitative", format=",.2%"),
                 alt.Tooltip("acres", type="quantitative", format=",.0f"),
             ],
         )
