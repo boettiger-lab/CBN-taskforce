@@ -81,11 +81,6 @@ chatbot_toggles = {key: False for key in keys}
 # data layers dict 
 layer_config = [
     #[(section, 'a_amph', [(col_name, full name, key, chatbot toggle key, citation)])]
-    ('📈 Data Updates', 'a_new', [
-        ('pct_newly_protected', 'Newly Protected Land', keys[0], chatbot_toggles[keys[0]],'Lands that were privately-owned and unprotected and moved into conservation ownership and management'),
-        ('pct_increased_management', 'Land with Increased Management', keys[1], chatbot_toggles[keys[1]],'Lands that were newly counted towards 30x30 due to increased management or durability of protection and/or retirement of extractive uses (previously GAP 3 or 4)'),
-        ('pct_data_improvement', 'Land with Data Improvement', keys[2], chatbot_toggles[keys[2]],'Lands that are newly counted towards 30x30 due to additional GAP information but for which no on the ground conservation actions, policies, or management changes took place')
-    ]),
     ('🐸 Amphibian', 'a_amph', [
         ('pct_top_amphibian_richness', 'Amphibian Richness', keys[3], chatbot_toggles[keys[3]], 'Areas with the top 20% of amphibian richness (Reference #5)'),
         ('pct_rare_amphibian_richness', 'Rare Amphibian Richness', keys[4], chatbot_toggles[keys[4]], 'Areas with rare amphibian richness (Reference #5)'),
@@ -108,7 +103,7 @@ layer_config = [
     ]),
     ('🌿 Plant', 'a_plant', [
         ('pct_top_plant_richness', 'Plant Richness', keys[15], chatbot_toggles[keys[15]], 'Areas with the top 20% of plant richness (Reference #6)'),
-        ('pct_rarityweighted_endemic_plant_richness', 'Rarity-Weighted Endemic Plant Richness', keys[16], chatbot_toggles[keys[16]], 'Areas with the top 20% of rarity-weighted endemic plant richness (Reference #6)'),
+        ('pct_rarityweighted_endemic_plant_richness', 'Rarity-Weighted Endemic\n Plant Richness', keys[16], chatbot_toggles[keys[16]], 'Areas with the top 20% of rarity-weighted endemic plant richness (Reference #6)'),
     ]),
     ('💧 Freshwater Resources', 'freshwater', [
         ('pct_wetlands', 'Wetlands', keys[17], chatbot_toggles[keys[17]], 'Areas that are freshwater emergent, freshwater forested/shrub, or estuarine and marine wetlands (Reference #7)'),
@@ -123,7 +118,12 @@ layer_config = [
         ('pct_low_income', 'Low-Income Communities', keys[22], chatbot_toggles[keys[22]], 'Areas in low-income communities (Reference #11)'),
     ]),
     ('🔥 Climate Risks', 'calfire', [
-        ('pct_fire', 'Historical Fire Perimeters', keys[23], chatbot_toggles[keys[23]], 'Areas burned in the last 10 years (Reference #12)'),
+        ('pct_fire', 'Wildfires', keys[23], chatbot_toggles[keys[23]], 'Areas burned in the last 10 years (Reference #12)'),
+    ]),
+    ('📈 Data Updates', 'a_new', [
+        ('pct_newly_protected', 'Newly Protected Land', keys[0], chatbot_toggles[keys[0]],'Lands that were privately-owned and unprotected and moved into conservation ownership and management'),
+        ('pct_increased_management', 'Land with Increased Management', keys[1], chatbot_toggles[keys[1]],'Lands that were newly counted towards 30x30 due to increased management or durability of protection and/or retirement of extractive uses (previously GAP 3 or 4)'),
+        ('pct_data_improvement', 'Land with Data Improvement', keys[2], chatbot_toggles[keys[2]],'Lands that are newly counted towards 30x30 due to additional GAP information but for which no on the ground conservation actions, policies, or management changes took place')
     ])
 ]
 
@@ -151,17 +151,7 @@ white =  "#FFFFFF"
 
 # github logo 
 github_logo = 'M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.012 8.012 0 0 0 16 8c0-4.42-3.58-8-8-8z'
-# github_html = f"""
-#     <span class='medium-font-sidebar'>
-#         <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' class='bi bi-github ' 
-#             style='height:1em;width:1em;fill:currentColor;vertical-align:-0.125em;margin-right:4px;'  
-#             aria-hidden='true' role='img'>
-#             <path d='{github_logo}'></path>
-#         </svg>
-#         <span>Source Code:</span>
-#         <a href='https://github.com/boettiger-lab/CBN-taskforce' target='_blank'>https://github.com/boettiger-lab/CBN-taskforce</a>
-#     </span>
-# """
+
 github_html = f"""
     <span style='font-size:15px;'>
         <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' class='bi bi-github ' 
@@ -488,7 +478,7 @@ style_options = {
     "Habitat Type": habitat_type,
     "Resilient & Connected Network": networks,
     "Manager Type": manager,
-    "Land Tenure": land_tenure,
+    "Land Tenure Type": land_tenure,
     # "Year": year,
     "Access Type": access,
 }
@@ -501,7 +491,7 @@ select_column = {
     "Habitat Type":  "habitat_type",
     "Resilient & Connected Network": "resilient_connected_network",
     "Manager Type": "manager_type",
-    "Land Tenure": "land_tenure",
+    "Land Tenure Type": "land_tenure",
     # "Year": "established",
     "Access Type": "access_type",
 }
@@ -514,7 +504,7 @@ select_colors = {
     "Climate Zone": climate_zone["stops"],
     "Habitat Type": habitat_type["stops"],
     "Manager Type": manager["stops"],
-    "Land Tenure": land_tenure["stops"],
+    "Land Tenure Type": land_tenure["stops"],
     "Access Type": access["stops"],
     "Resilient & Connected Network": networks["stops"],
 
@@ -542,13 +532,13 @@ if api_key is None:
     api_key = st.secrets["NRP_API_KEY"]
 
 llm_options = {
-    # "llama-3.3-quantized": ChatOpenAI(model = "cirrus", api_key=st.secrets['CIRRUS_LLM_API_KEY'], base_url = "https://llm.cirrus.carlboettiger.info/v1",  temperature=0),
     "llama3.3": ChatOpenAI(model = "llama3-sdsc", api_key=api_key, base_url = "https://llm.nrp-nautilus.io/",  temperature=0),
+    "deepseek-r1": BaseChatOpenAI(model = "deepseek-r1", api_key=api_key, base_url = "https://llm.nrp-nautilus.io/",  temperature=0),
     "gemma3": ChatOpenAI(model = "gemma3", api_key=api_key, base_url = "https://llm.nrp-nautilus.io/",  temperature=0),
-    "DeepSeek-R1-Distill-Qwen-32B": BaseChatOpenAI(model = "DeepSeek-R1-Distill-Qwen-32B", api_key=api_key, base_url = "https://llm.nrp-nautilus.io/",  temperature=0),
     "watt": ChatOpenAI(model = "watt", api_key=api_key, base_url = "https://llm.nrp-nautilus.io/",  temperature=0),
     # "phi3": ChatOpenAI(model = "phi3", api_key=api_key, base_url = "https://llm.nrp-nautilus.io/",  temperature=0),
 }
+
 
 
 

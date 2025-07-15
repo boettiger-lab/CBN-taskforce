@@ -79,7 +79,7 @@ with chatbot_container:
             - What is a GAP code?
             - What percentage of 30x30 conserved land has been impacted by wildfire?
             - How many acres are newly protected easements?
-            - List 10 counties with the highest fractions of protected areas.
+            - Which county has the highest percentage of wetlands?
             '''
             
             st.info('If the map appears blank, queried data may be too small to see at the default zoom level. Check the table below the map, as query results will also be displayed there.', icon="ℹ️")
@@ -113,7 +113,7 @@ chatbot_toggles = {key: False for key in keys}
 structured_llm = llm.with_structured_output(SQLResponse)
 few_shot_structured_llm = prompt | structured_llm
 
-@st.cache_data
+@st.cache_data(show_spinner = 'Invoking query...')
 def run_sql(query):
     """
     Filter data based on an LLM-generated SQL query and return matching IDs.
@@ -125,26 +125,15 @@ def run_sql(query):
     sql_query = output.sql_query
     explanation =output.explanation
     if not sql_query: # if the chatbot can't generate a SQL query.
-        st.success(explanation)
-        return pd.DataFrame({'id' : []}),''
+        return pd.DataFrame({'id' : []}),'', explanation
     result = ca.sql(sql_query).execute()
     if result.empty:
         explanation = "This query did not return any results. Please try again with a different query."
-        st.warning(explanation, icon="⚠️")
-        st.caption("SQL Query:")
-        st.code(sql_query,language = "sql") 
         if 'geom' in result.columns:
-            return result.drop('geom',axis = 1), sql_query
+            return result.drop('geom',axis = 1), sql_query, explanation 
         else: 
-            return result, sql_query
-    elif ("id" and "geom" not in result.columns): 
-        st.write(result)  # if we aren't mapping, just print out the data  
-
-    with st.popover("Explanation"):
-        st.write(explanation)
-        st.caption("SQL Query:")
-        st.code(sql_query,language = "sql") 
-    return result, sql_query
+            return result, sql_query, explanation 
+    return result, sql_query, explanation
 
 #############
 
@@ -171,7 +160,7 @@ with chatbot_container:
 # Try to update the st.radio session state before the widget is rendered --
 if prompt:
     try:
-        llm_output, sql_query = run_sql(prompt)
+        llm_output, sql_query, llm_explanation = run_sql(prompt)
         if ("id" in llm_output.columns) and (not llm_output.empty):
             cols = extract_columns(sql_query)
             for x in cols:
@@ -188,7 +177,26 @@ with st.container():
         try:
             with st.chat_message("assistant"):
                 with st.spinner("Invoking query..."):
-                    llm_output, sql_query = run_sql(prompt)
+                    llm_output, sql_query, llm_explanation = run_sql(prompt)
+                    if sql_query =='':
+                        st.success(llm_explanation)# if the chatbot can't generate a SQL query.
+                        not_mapping = True
+
+                        
+                    elif llm_output.empty:
+                        st.warning(llm_explanation, icon="⚠️")
+                        st.caption("SQL Query:")
+                        st.code(sql_query,language = "sql")
+                        
+                    elif ("id" and "geom" not in llm_output.columns): 
+                        st.write(llm_output)  # if we aren't mapping, just print out the data 
+                        not_mapping = True
+                    else:
+                        with st.popover("Explanation"):
+                            st.write(llm_explanation)
+                            st.caption("SQL Query:")
+                            st.code(sql_query,language = "sql") 
+                                
                     if ("id" in llm_output.columns) and (not llm_output.empty):
                         ids = llm_output['id'].tolist()
                         cols = extract_columns(sql_query)
@@ -212,36 +220,44 @@ with st.container():
             import openai
         
             if isinstance(e, openai.BadRequestError):
-                st.warning(
-                    "ERROR: The LLM you selected is not working (400 error). Please select a different model.",
-                    icon="⚠️"
-                )
-                st.stop()
+                st.error(f"""
+                    **Error Code 400 – LLM Unavailable** 
+                    
+                    *The LLM you selected `{llm_choice}` is no longer available. Please select a different model.*
+                    """,icon="🚨")
+
             elif isinstance(e, openai.InternalServerError):
-                st.warning(
-                    "ERROR: The LLM you selected is temporarily down (500 error). Please select a different model or try again later.",
-                    icon="⚠️"
-                )
-
-            elif isinstance(e, ValueError):
-                st.error(f"{type(e).__name__}: {e}")
-                st.warning(
-                    "BUG: There's a problem in the application code. "
-                    "Please help us fix it by reporting this issue on our GitHub:\n\n"
-                    "[📄 Report on GitHub](https://github.com/boettiger-lab/CBN-taskforce/issues)",
-
-                    icon="🐞"
-                )
-
-
+                st.error(f"""
+                **Error Code 500 – LLM Temporarily Unavailable**
+                
+                The LLM you selected `{llm_choice}` is currently down due to maintenance or provider outages. It may remain offline for several hours.
+                
+                **Please select a different model or try again later.**
+                """,icon="🚨")
 
             else:
-                error_message = f"ERROR: An unexpected error has occured with the following query:\n\n*{prompt}*\n\n which raised the following error:\n\n{type(e)}: {e}\n"
-                st.warning("Please try again with a different query", icon="⚠️")
-                st.write(error_message)
+                prompt = prompt.replace('\n','')
+                st.error(f"""
+                    🐞 **BUG: Unexpected Error in Application**
+                    
+                    An error occurred while processing your query:
+                    
+                    > "{prompt}"
+                    
+                    **Error Details:**
+                    `{type(e)}: {e}`
+                    
+                    ---
+                    
+                    🚨 **Help Us Improve!**
+                    
+                    Please help us fix this issue by reporting it on GitHub:
+                    [📄 Report this issue](https://github.com/boettiger-lab/CBN-taskforce/issues)
+                    
+                    Include the query you ran and any other relevant details. Thanks!
+                    """,
+                    )
             st.stop()
-
-            
 
 
 # Sidebar widgets
@@ -301,8 +317,8 @@ with st.sidebar:
     # adding github logo 
     st.markdown(f"<div class='spacer'>{github_html}</div>", unsafe_allow_html=True)
     st.markdown(":left_speech_bubble: [Get in touch or report an issue](https://github.com/boettiger-lab/CBN-taskforce/issues)")
-
-
+    if st.button("🤖 Clear Chatbot Cache", on_click=run_sql.clear, help = 'Reset the chatbot’s cache (useful if it behaves unexpectedly)'):
+        run_sql.clear()
 
 column = select_column[color_choice]
 colors = color_table(select_colors, color_choice, column)
@@ -323,21 +339,22 @@ else:
 ## mapping data 
 legend, position, bg_color, fontsize = get_legend(style_options, color_choice, df_network, column)
 # m.add_legend(legend_dict = legend, position = position, bg_color = bg_color, fontsize = fontsize)
-m.add_legend(legend_dict = legend, position = position)
 
-m.add_pmtiles(ca_pmtiles, style=style, name="CA", tooltip=False, zoom_to_layer=True)
+if 'not_mapping' not in locals():        
+    m.add_legend(legend_dict = legend, position = position)
+    m.add_pmtiles(ca_pmtiles, style=style, name="CA", tooltip=False, zoom_to_layer=True)
 
 
-# add custom tooltip to pmtiles layer
-for layer in m._children.values():
-    if isinstance(layer, leafmap.PMTilesLayer):
-        pmtiles_layer = layer
-        break
+    # add custom tooltip to pmtiles layer
+    for layer in m._children.values():
+        if isinstance(layer, leafmap.PMTilesLayer):
+            pmtiles_layer = layer
+            break
+    
+    pmtiles_layer.add_child(CustomTooltip())
 
-pmtiles_layer.add_child(CustomTooltip())
-
-if 'bounds' in locals(): 
-    m.zoom_to_bounds(bounds)
+    if 'bounds' in locals(): 
+        m.zoom_to_bounds(bounds)
 
 # check if any layer toggle is active
 any_chart_toggled = any(
@@ -358,20 +375,22 @@ with main:
     map_col, stats_col = st.columns([3,2])
 
     with map_col:
-        m.to_streamlit(height=650) # adding map
+        if 'not_mapping' not in locals():        
+            m.to_streamlit(height=650) # adding map
         with st.expander("🔍 View/download data"): # adding data table  
             if 'llm_output' not in locals():
                 st.dataframe(df_tab, use_container_width = True)  
             else:
-                if 'geom' in llm_output.columns:
+                if ('geom' in llm_output.columns) and (not llm_output.empty):
                     llm_output = llm_output.drop('geom',axis = 1)
                 st.dataframe(llm_output, use_container_width = True)
 
     with stats_col:
         with st.container():
-            st.markdown('')
-            st.altair_chart(area_chart(df_network, column, color_choice), use_container_width=True)
-            st.markdown('<p class="caption-shift-up">*Chart updates based on filters.</p>', unsafe_allow_html=True)
+            if 'not_mapping' not in locals():        
+                st.markdown('')
+                st.altair_chart(area_chart(df_network, column, color_choice), use_container_width=True)
+                st.markdown('<p class="caption-shift-up">*Chart updates based on filters.</p>', unsafe_allow_html=True)
 
             # display the pill selection if we will use any barcharts
             if any_chart_toggled or show_stacked or show_chatbot_chart:
