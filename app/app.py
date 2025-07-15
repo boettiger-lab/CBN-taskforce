@@ -70,13 +70,12 @@ with chatbot_container:
             - Show me protected areas with any recent additions.
             - Show me amphibian biodiversity hotspots that aren't currently conserved.
             - Show me protected areas in disadvantaged communities.
-            - Show me non-conserved areas where at least 80% of the land overlaps with regions of high endemic species richness.
-            - Show me all 30x30 conserved lands managed by The Nature Conservancy.
+            - Show me 30x30 conservation areas where at least 80% of the land overlaps with regions of high endemic species richness.
+            - Show me all 30x30 conservation areas managed by The Nature Conservancy.
             '''
             
             '''
             Exploratory data queries:
-            - Which habitat types are underrepresented across 30x30 conserved lands?
             - What is a GAP code?
             - What percentage of 30x30 conserved land has been impacted by wildfire?
             - How many acres are newly protected easements?
@@ -377,8 +376,8 @@ with main:
             # display the pill selection if we will use any barcharts
             if any_chart_toggled or show_stacked or show_chatbot_chart:
                 option_map = {
-                    'percent': "%",
                     'acres': "Acres",
+                    'percent': "%",
                 }
                 chart_choice = st.pills(
                     label="Bar chart metrics",
@@ -386,7 +385,7 @@ with main:
                     format_func=lambda option: option_map[option],
                     selection_mode="single",
                     label_visibility="collapsed",
-                    default="percent",
+                    default="acres",
                 )
             if chart_choice:    
                 if show_stacked:
