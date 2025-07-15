@@ -297,7 +297,9 @@ class CustomTooltip(PMTilesMapLibreTooltip):
               <div><strong>Climate Zone:</strong> ${props.climate_zone || 'N/A'}</div>
               <div><strong>Land Tenure:</strong> ${props.land_tenure || 'N/A'}</div>
               <div><strong>Ecoregion:</strong> ${props.ecoregion || 'N/A'}</div>
-              <div><strong>Acres:</strong> ${props.acres || 'N/A'}</div>
+              <div><strong>Acres:</strong> ${
+  props.acres ? (parseFloat(props.acres).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })) : 'N/A'
+}</div>
             `;
             popup.setLngLat(e.lngLat).setHTML(html).addTo(maplibre);
             if (popup._container) {
