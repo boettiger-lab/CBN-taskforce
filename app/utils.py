@@ -582,8 +582,17 @@ def create_bar_chart(df, x, y, feature_name, metric, percent_type = None, color=
 import minio
 import datetime
 
+minio_key = os.getenv("MINIO_KEY")
+if minio_key is None:
+    minio_key = st.secrets["MINIO_KEY"]
+
+minio_secret = os.getenv("MINIO_SECRET")
+if minio_secret is None:
+    minio_secret = st.secrets["MINIO_SECRET"]
+
+
 def minio_logger(consent, query, sql_query, llm_explanation, llm_choice, filename="query_log.csv", bucket="shared-ca30x30-app",
-                 key=os.getenv("MINIO_KEY", ""), secret=os.getenv("MINIO_SECRET", ""),
+                 key=minio_key, secret=minio_secret,
                  endpoint="minio.carlboettiger.info"):
     mc = minio.Minio(endpoint, key, secret)
     mc.fget_object(bucket, filename, filename)
