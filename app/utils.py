@@ -596,6 +596,7 @@ def minio_logger(consent, query, sql_query, llm_explanation, llm_choice, filenam
                  endpoint="minio.carlboettiger.info"):
     mc = minio.Minio(endpoint, key, secret)
     mc.fget_object(bucket, filename, filename)
+    log = pd.read_csv(filename)
     timestamp = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
     if consent:
         df = pd.DataFrame({"timestamp": [timestamp], "user_query": [query], "llm_sql": [sql_query], "llm_explanation": [llm_explanation], "llm_choice":[llm_choice]})
@@ -603,6 +604,8 @@ def minio_logger(consent, query, sql_query, llm_explanation, llm_choice, filenam
     # if user opted out, do not store query
     else:  
         df = pd.DataFrame({"timestamp": [timestamp], "user_query": ['USER OPTED OUT'], "llm_sql": [''], "llm_explanation": [''], "llm_choice":['']})
-
-    df.to_csv(filename, mode='a', index=False, header=False)
+    
+    pd.concat([log,df]).to_csv(filename, index=False, header=True)
     mc.fput_object(bucket, filename, filename, content_type="text/csv")
+
+    
