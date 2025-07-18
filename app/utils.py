@@ -28,7 +28,8 @@ def get_buttons(style_options, style_choice, default_boxes = None):
     buttons = {}
     for name in opts:
         key = column + str(name)
-        buttons[name] = st.checkbox(f"{name}", value=st.session_state[key], key=key, on_change = sync_checkboxes, args = (key,))
+        buttons[name] = st.checkbox(f"{name}", key=key, on_change = sync_checkboxes, args = (key,))
+
     filter_choice = [key for key, value in buttons.items() if value]
     return {column: filter_choice}
 
@@ -481,7 +482,7 @@ def get_hex(df, color, order):
                 .dropna()
                 .reset_index()).T.values.tolist()
 
-
+@st.fragment
 def create_bar_chart(df, x, y, feature_name, metric, percent_type = None, color=None, stacked=False, colors=None):
     """
     Generalized function to create a bar chart, supporting both standard and stacked bars.
@@ -577,3 +578,34 @@ def create_bar_chart(df, x, y, feature_name, metric, percent_type = None, color=
 
     return final_chart
 
+
+import minio
+import datetime
+
+minio_key = os.getenv("MINIO_KEY")
+if minio_key is None:
+    minio_key = st.secrets["MINIO_KEY"]
+
+minio_secret = os.getenv("MINIO_SECRET")
+if minio_secret is None:
+    minio_secret = st.secrets["MINIO_SECRET"]
+
+
+def minio_logger(consent, query, sql_query, llm_explanation, llm_choice, filename="query_log.csv", bucket="shared-ca30x30-app",
+                 key=minio_key, secret=minio_secret,
+                 endpoint="minio.carlboettiger.info"):
+    mc = minio.Minio(endpoint, key, secret)
+    mc.fget_object(bucket, filename, filename)
+    log = pd.read_csv(filename)
+    timestamp = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+    if consent:
+        df = pd.DataFrame({"timestamp": [timestamp], "user_query": [query], "llm_sql": [sql_query], "llm_explanation": [llm_explanation], "llm_choice":[llm_choice]})
+
+    # if user opted out, do not store query
+    else:  
+        df = pd.DataFrame({"timestamp": [timestamp], "user_query": ['USER OPTED OUT'], "llm_sql": [''], "llm_explanation": [''], "llm_choice":['']})
+    
+    pd.concat([log,df]).to_csv(filename, index=False, header=True)
+    mc.fput_object(bucket, filename, filename, content_type="text/csv")
+
+    

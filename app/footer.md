@@ -1,14 +1,14 @@
 ## Credits
-Authors: **Cassie Buhler** ([CIRES](https://cires.colorado.edu/) \& [ESIIL](https://esiil.org/)) and **Carl Boettiger** (UC Berkeley \& [ESIIL](https://esiil.org/))
+Authors: **Cassie Buhler** ([CIRES](https://cires.colorado.edu/), [ESIIL](https://esiil.org/), CU Boulder) and **Carl Boettiger** (UC Berkeley \& [ESIIL](https://esiil.org/))
 
-Made in collaboration with the *California Biodiversity Network (CBN)*. 
+Made in collaboration with the [California Biodiversity Network (CBN)](https://cabiodiversitynetwork.org/)
 
 License: BSD-2-clause
 
 
 Data: https://data.carlboettiger.info/public-ca30x30
 
-### Data sources
+#### Data sources
 1. **CA Nature (2024)**. *30x30 Conserved Areas (Terrestrial)*. Data: https://www.californianature.ca.gov/datasets/CAnature::30x30-conserved-areas-terrestrial-2024/about. License: Public Domain
 
 2. **Ackerly Lab & Kling, M.** *Climate Zones*. Data: https://github.com/matthewkling/climclust/tree/master/hclust.
@@ -33,5 +33,15 @@ Data: https://data.carlboettiger.info/public-ca30x30
 
 12. **CAL FIRE (2023)**. *Historic Fire Perimeters*. Data: https://www.fire.ca.gov/Home/What-We-Do/Fire-Resource-Assessment-Program/GIS-Mapping-and-Data-Analytics
 
-### LLMs
+#### LLMs
 This app can use a selection of open-weights language models hosted on the National Research Platform, https://nrp.ai/documentation/userdocs/ai/llm-managed/.
+
+---
+
+### Why save your queries?
+Conservation researchers and practitioners are interested in **learning what matters most to our community**. 
+
+By saving your anonymous queries, we can identify which topics and areas are drawing the most attention, helping us improve future tools and data products to **better support conservation efforts**. We also save the LLM’s response to each query to monitor its accuracy and ensure the system is working as intended. 
+
+You can opt out at any time by disabling “Save query”.
+
