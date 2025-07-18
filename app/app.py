@@ -62,7 +62,7 @@ basemaps = leafmap.basemaps.keys()
 
 chatbot_container = st.container()
 with chatbot_container:
-    llm_left_col, llm_right_col = st.columns([5,1], vertical_alignment = "bottom")
+    llm_left_col, llm_right_col = st.columns([4,1], vertical_alignment = "bottom")
     with llm_left_col:
         with st.popover("💬 Example Queries"):
             '''
@@ -83,11 +83,12 @@ with chatbot_container:
             '''
             
             st.info('If the map appears blank, queried data may be too small to see at the default zoom level. Check the table below the map, as query results will also be displayed there.', icon="ℹ️")
-    
+            
     with llm_right_col:
         llm_choice = st.selectbox("Select LLM:", llm_options, key = "llm", help = "Select which model to use.")   
         llm = llm_options[llm_choice]
-           
+
+
 ##### Chatbot stuff 
 from pydantic import BaseModel, Field
 class SQLResponse(BaseModel):
@@ -139,17 +140,7 @@ def run_sql(query):
 
 filters = {}
 
-with st.sidebar:
-    with st.popover("ℹ️ Help"):
-        '''
-        - ❌ Safari/iOS not yet supported. Firefox recommended. 
-        - 📊 Use this sidebar to color-code the map by different attributes **(Group by)**, toggle on data layers and view summary charts **(Data Layers)**, or filter data **(Filters)**.
-        - 💬 For a more tailored experience, query our dataset of protected areas and their precomputed mean values for each of the displayed layers, using the experimental chatbot. The language model tries to answer natural language questions by drawing only from curated datasets (listed below).
-        '''
-    if st.button("🧹 Clear Filters", type="secondary", help = 'Reset all the filters to their default state.'):
-        st.rerun()
-    st.divider()
-    
+
 
 
 ##### Chatbot 
@@ -158,7 +149,11 @@ with chatbot_container:
         example_query = "👋 Input query here"
         prompt = st.chat_input(example_query, key="chain", max_chars=300)
 
-
+with chatbot_container:
+    _,log_query_col, _ = st.columns([.001, 5,1], vertical_alignment = "top")
+    with log_query_col:
+        log_queries = st.checkbox("Save query", value = True, help = "Saving your queries helps improve this tool and guide conservation efforts. Your data is stored in a private location. For more details, see 'Why save your queries?' at the bottom of this page.")
+        
 # Try to update the st.radio session state before the widget is rendered --
 if prompt:
     try:
@@ -174,22 +169,18 @@ if prompt:
         pass  # errors handled in main block later
 
 
-with st.sidebar:
-    log_queries = st.toggle("Log user queries?", value = True)
 
 with st.container():
     if prompt: 
         st.chat_message("user").write(prompt)
-        if log_queries:
-            minio_logger(prompt, 'query_log.csv', "shared-ca30x30-app")
         try:
             with st.chat_message("assistant"):
                 with st.spinner("Invoking query..."):
                     llm_output, sql_query, llm_explanation = run_sql(prompt)
+                    minio_logger(log_queries, prompt, sql_query, llm_explanation, llm_choice, 'query_log.csv', "shared-ca30x30-app")
                     if sql_query =='':
                         st.success(llm_explanation)# if the chatbot can't generate a SQL query.
                         not_mapping = True
-
                         
                     elif llm_output.empty:
                         st.warning(llm_explanation, icon="⚠️")
@@ -209,20 +200,25 @@ with st.container():
                         ids = llm_output['id'].tolist()
                         cols = extract_columns(sql_query)
                         bounds = llm_output.total_bounds.tolist()
-                        chatbot_toggles = {
-                            key: (True if key in cols else value) 
-                            for key, value in chatbot_toggles.items()
-                        }
-                        for x in cols:
-                            group_by_name, group_by = next(((k, v) for k, v in select_column.items() if v == x), (None, None))
-                            if group_by:
-                                column = group_by
-                                color_choice = group_by_name
-                                colors = color_table(select_colors, color_choice, column)
-                        for key, value in chatbot_toggles.items():
-                            st.session_state[key] = value
-                    else:
+                    
+                    else: # if the output was empty, don't toggle on any charts
                         ids = []
+                        cols = []
+
+                    # toggle on charts based on the SQL query returned 
+                    chatbot_toggles = {
+                        key: (True if key in cols else value) 
+                        for key, value in chatbot_toggles.items()
+                    }
+                    for x in cols:
+                        group_by_name, group_by = next(((k, v) for k, v in select_column.items() if v == x), (None, None))
+                        if group_by:
+                            column = group_by
+                            color_choice = group_by_name
+                            colors = color_table(select_colors, color_choice, column)
+                    for key, value in chatbot_toggles.items():
+                        st.session_state[key] = value
+
         except Exception as e:
             import traceback
             import openai
@@ -269,7 +265,19 @@ with st.container():
 
 
 # Sidebar widgets
-with st.sidebar: 
+with st.sidebar:
+    with st.popover("ℹ️ Help"):
+        '''
+        - 📊 Use this sidebar to color-code the map by different attributes **(Group by)**, toggle on data layers and view summary charts **(Data Layers)**, or filter data **(Filters)**.
+        - 💬 For a more tailored experience, query our dataset of protected areas and their precomputed mean values for each of the displayed layers, using the experimental chatbot. The language model tries to answer natural language questions by drawing only from curated datasets (listed below).
+        '''
+    if st.button("🧹 Clear Filters", type="secondary", help = 'Reset all the filters to their default state.'):
+        st.rerun()
+    
+
+    st.divider()
+
+    
     color_choice = st.radio(
         "Group by:",
         style_options,
