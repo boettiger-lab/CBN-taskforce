@@ -149,6 +149,7 @@ with st.sidebar:
     if st.button("🧹 Clear Filters", type="secondary", help = 'Reset all the filters to their default state.'):
         st.rerun()
     st.divider()
+    
 
 
 ##### Chatbot 
@@ -156,6 +157,7 @@ with chatbot_container:
     with llm_left_col:
         example_query = "👋 Input query here"
         prompt = st.chat_input(example_query, key="chain", max_chars=300)
+
 
 # Try to update the st.radio session state before the widget is rendered --
 if prompt:
@@ -171,9 +173,15 @@ if prompt:
     except Exception:
         pass  # errors handled in main block later
 
+
+with st.sidebar:
+    log_queries = st.toggle("Log user queries?", value = True)
+
 with st.container():
     if prompt: 
         st.chat_message("user").write(prompt)
+        if log_queries:
+            minio_logger(prompt, 'query_log.csv', "shared-ca30x30-app")
         try:
             with st.chat_message("assistant"):
                 with st.spinner("Invoking query..."):
@@ -323,6 +331,9 @@ with st.sidebar:
 column = select_column[color_choice]
 colors = color_table(select_colors, color_choice, column)
 main = st.container()
+
+
+
 with main:
     map_col, stats_col = st.columns([3,2])
 
@@ -456,5 +467,6 @@ st.divider()
 with open('app/footer.md', 'r') as file:
     footer = file.read()
 st.markdown(footer)
+
 
 

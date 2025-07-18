@@ -577,3 +577,19 @@ def create_bar_chart(df, x, y, feature_name, metric, percent_type = None, color=
 
     return final_chart
 
+
+import minio
+import os
+import pandas as pd
+import datetime
+
+def minio_logger(query, filename="query_log.csv", bucket="shared-ca30x30-app",
+                 key=os.getenv("MINIO_KEY", ""), secret=os.getenv("MINIO_SECRET", ""),
+                 endpoint="minio.carlboettiger.info"):
+    mc = minio.Minio(endpoint, key, secret)
+    mc.fget_object(bucket, filename, filename)
+    timestamp = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+    df = pd.DataFrame({"timestamp": [timestamp], "query": [query]})
+    df.to_csv(filename, mode='a', index=False, header=False)
+    mc.fput_object(bucket, filename, filename, content_type="text/csv")
+
