@@ -520,6 +520,168 @@ default_boxes = {
     # "non-conserved":False
 }
 
+# variables.py
+
+ERROR_MESSAGES = {
+    "bad_request": lambda llm: f"""
+**Error Code 400 – LLM Unavailable** 
+
+*The LLM you selected `{llm}` is no longer available. Please select a different model.*
+""",
+    
+    "internal_server_error": lambda llm: f"""
+**Error Code 500 – LLM Temporarily Unavailable**
+
+The LLM you selected `{llm}` is currently down due to maintenance or provider outages. It may remain offline for several hours.
+
+**Please select a different model or try again later.**
+""",
+
+    "unexpected_llm_error": lambda prompt, e, tb_str: f"""
+🐞 **BUG: Unexpected Error in Application**
+
+An error occurred while processing your query:
+
+> "{prompt}"
+
+**Error Details:**
+`{type(e)}: {e}`
+
+Traceback:
+
+```{tb_str}```
+---
+
+🚨 **Help Us Improve!**
+
+Please help us fix this issue by reporting it on GitHub:
+[📄 Report this issue](https://github.com/boettiger-lab/CBN-taskforce/issues)
+
+Include the query you ran and any other relevant details. Thanks!
+""",
+
+    "unexpected_error": lambda e, tb_str: f"""
+🐞 **BUG: Unexpected Error in Application**
+
+
+**Error Details:**
+`{type(e)}: {e}`
+
+Traceback:
+
+```{tb_str}```
+
+---
+
+🚨 **Help Us Improve!**
+
+Please help us fix this issue by reporting it on GitHub:
+[📄 Report this issue](https://github.com/boettiger-lab/CBN-taskforce/issues)
+
+Include the steps you took to get this message and any other details that might help us debug. Thanks!
+"""
+}
+
+
+help_message = '''
+- 📊 Use this sidebar to color-code the map by different attributes **(Group by)**, toggle on data layers and view summary charts **(Data Layers)**, or filter data **(Filters)**.
+- 💬 For a more tailored experience, query our dataset of protected areas and their precomputed mean values for each of the displayed layers, using the experimental chatbot. The language model tries to answer natural language questions by drawing only from curated datasets (listed below).
+'''
+
+example_queries = """
+Mapping queries:
+- Show me protected areas with any recent additions.
+- Show me amphibian biodiversity hotspots that aren't currently conserved.
+- Show me protected areas in disadvantaged communities.
+- Show me 30x30 conservation areas where at least 80% of the land overlaps with regions of high endemic species richness.
+- Show me all 30x30 conservation areas managed by The Nature Conservancy.
+
+Exploratory data queries:
+- What is a GAP code?
+- What percentage of 30x30 conserved land has been impacted by wildfire?
+- How many acres are newly protected easements?
+- Which county has the highest percentage of wetlands?
+"""
+
+label_transforms = {
+    "access_type": ("replace(datum.access_type, ' Access', '')", lambda lbl: lbl.replace(" Access", "")),
+    "ecoregion": (
+        "replace(replace(replace(replace(replace("
+        "replace(datum.ecoregion, 'Northern California', 'NorCal'),"
+        "'Southern California', 'SoCal'),"
+        "'Southeastern', 'SE.'),"
+        "'Northwestern', 'NW.'),"
+        "'and', '&'),"
+        "'California', 'CA')",
+        lambda lbl: (lbl.replace("Northern California", "NorCal")
+                     .replace("Southern California", "SoCal")
+                     .replace("Southeastern", "SE.")
+                     .replace("Northwestern", "NW.")
+                     .replace("and", "&")
+                     .replace("California", "CA"))
+    ),
+}
+
+sort_options = {
+    "established": "-x",
+    "access_type": [
+        "Open",
+        "Restricted",
+        "No Public",
+        "Unknown"
+    ],
+    "land_tenure": [
+        "Easement",
+        "Non-Easement"
+    ],
+    "manager_type": [
+        "Federal",
+        "Tribal",
+        "State",
+        "Special District",
+        "County",
+        "City",
+        "HOA",
+        "Joint",
+        "Non Profit",
+        "Private",
+        "Unknown"
+    ],
+    "status": [
+        "30x30 Conservation Area",
+        "Other Conservation Area",
+        "Public or Unknown Conservation Area",
+        "Non-Conservation Area"
+    ],
+    "ecoregion": [
+        "SE. Great Basin",
+        "Mojave Desert",
+        "Sonoran Desert",
+        "Sierra Nevada",
+        "SoCal Mountains & Valleys",
+        "Mono",
+        "Central CA Coast",
+        "Klamath Mountains",
+        "NorCal Coast",
+        "NorCal Coast Ranges",
+        "NW. Basin & Range",
+        "Colorado Desert",
+        "Central Valley Coast Ranges",
+        "SoCal Coast",
+        "Sierra Nevada Foothills",
+        "Southern Cascades",
+        "Modoc Plateau",
+        "Great Valley (North)",
+        "NorCal Interior Coast Ranges",
+        "Great Valley (South)"
+    ],
+    "climate_zone": [
+        "Zone 1", "Zone 2", "Zone 3", "Zone 4", "Zone 5",
+        "Zone 6", "Zone 7", "Zone 8", "Zone 9", "Zone 10"
+    ],
+}
+  
+
 
 from langchain_openai import ChatOpenAI
 import streamlit as st
@@ -536,7 +698,6 @@ llm_options = {
     "deepseek-r1": BaseChatOpenAI(model = "deepseek-r1", api_key=api_key, base_url = "https://llm.nrp-nautilus.io/",  temperature=0),
     "gemma3": ChatOpenAI(model = "gemma3", api_key=api_key, base_url = "https://llm.nrp-nautilus.io/",  temperature=0),
     "watt": ChatOpenAI(model = "watt", api_key=api_key, base_url = "https://llm.nrp-nautilus.io/",  temperature=0),
-    # "phi3": ChatOpenAI(model = "phi3", api_key=api_key, base_url = "https://llm.nrp-nautilus.io/",  temperature=0),
 }
 
 
