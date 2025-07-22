@@ -193,3 +193,5 @@ k8s/secret-deployment.yaml
 **/*.sbx
 **/*.TablesByName..atx
 **/*.lyr
+duck.db
+query_log.csv
