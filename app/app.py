@@ -207,7 +207,7 @@ def main():
                 
                 else:
                     prompt = prompt.replace('\n', '')
-                    st.error(ERROR_MESSAGES["unexpected_llm_error"](prompt, e))
+                    st.error(ERROR_MESSAGES["unexpected_llm_error"](prompt, e, tb_str))
                 st.stop()
     
     
