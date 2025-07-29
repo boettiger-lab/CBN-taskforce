@@ -28,42 +28,6 @@ import re
 source_layer_name = re.sub(r'\W+', '', os.path.splitext(os.path.basename(ca_pmtiles))[0])
 #stripping hyphens to get layer name 
 
-#vector data 
-# url_ACE_rarerank_statewide = get_url('ACE_biodiversity/ACE_rarerank_statewide','ACE_rarerank_statewide.pmtiles')
-# url_ACE_rarerank_ecoregion = get_url('ACE_biodiversity/ACE_rarerank_ecoregion','ACE_rarerank_ecoregion.pmtiles')
-# url_ACE_biorank_statewide = get_url('ACE_biodiversity/ACE_biorank_statewide','ACE_biorank_statewide.pmtiles')
-# url_ACE_biorank_ecoregion = get_url('ACE_biodiversity/ACE_biorank_ecoregion','ACE_biorank_ecoregion.pmtiles')
-
-# url_ACE_amph_richness = get_url('ACE_biodiversity/ACE_amphibian_richness','ACE_amphibian_richness.pmtiles')
-# url_ACE_reptile_richness = get_url('ACE_biodiversity/ACE_reptile_richness','ACE_reptile_richness.pmtiles')
-# url_ACE_bird_richness = get_url('ACE_biodiversity/ACE_bird_richness','ACE_bird_richness.pmtiles')
-# url_ACE_mammal_richness = get_url('ACE_biodiversity/ACE_mammal_richness','ACE_mammal_richness.pmtiles')
-# url_ACE_rare_amph_richness = get_url('ACE_biodiversity/ACE_rare_amphibian_richness','ACE_rare_amphibian_richness.pmtiles')
-# url_ACE_rare_reptile_richness = get_url('ACE_biodiversity/ACE_rare_reptile_richness','ACE_rare_reptile_richness.pmtiles')
-# url_ACE_rare_bird_richness = get_url('ACE_biodiversity/ACE_rare_bird_richness','ACE_rare_bird_richness.pmtiles')
-# url_ACE_rare_mammal_richness = get_url('ACE_biodiversity/ACE_rare_mammal_richness','ACE_rare_mammal_richness.pmtiles')
-# url_ACE_end_amph_richness = get_url('ACE_biodiversity/ACE_endemic_amphibian_richness','ACE_endemic_amphibian_richness.pmtiles')
-# url_ACE_end_reptile_richness = get_url('ACE_biodiversity/ACE_endemic_reptile_richness','ACE_endemic_reptile_richness.pmtiles')
-# url_ACE_end_bird_richness = get_url('ACE_biodiversity/ACE_endemic_bird_richness','ACE_endemic_bird_richness.pmtiles')
-# url_ACE_end_mammal_richness = get_url('ACE_biodiversity/ACE_endemic_mammal_richness','ACE_endemic_mammal_richness.pmtiles')
-
-# url_wetlands = get_url('Freshwater_resources/Wetlands','CA_wetlands.pmtiles')
-# url_freshwater_richness = get_url('Freshwater_resources/Freshwater_species_richness','freshwater_species_richness_ds1197.pmtiles')
-
-# url_fire = get_url('Climate_risks/Historical_fire_perimeters','calfire_2023.pmtiles')
-# url_farmland = get_url('NBS_agriculture/Farmland_all/Farmland','Farmland_2018.pmtiles')
-# url_grazing = get_url('NBS_agriculture/Farmland_all/Lands_suitable_grazing','Grazing_land_2018.pmtiles')
-# url_DAC = get_url('Progress_data_new_protection/DAC','DAC_2022.pmtiles')
-# url_low_income = get_url('Progress_data_new_protection/Low_income_communities','low_income_CalEnviroScreen4.pmtiles')
-
-# raster data
-# url_climate_zones = get_url('Climate_zones', 'climate_zones_10_processed_COG.tif')
-# url_habitat = get_url('Habitat', 'CWHR13_2022_processed_COG.tif')
-# url_plant_richness = get_url('Biodiversity_unique/Plant_richness', 'species_D_80percentile_processed_COG.tif')
-# url_endemic_plant_richness = get_url('Biodiversity_unique/Rarityweighted_endemic_plant_richness', 'endemicspecies_E_80percentile_processed_COG.tif')
-# url_resilient_conn_network = get_url('Connectivity_resilience/Resilient_connected_network_allcategories', 
-#                                  'rcn_wIntactBioCat_caOnly_2020-10-27_processed_COG.tif')
-
 # column names for all data layers 
 keys = [
     "pct_newly_protected", "pct_increased_management", "pct_data_improvement",
@@ -252,10 +216,6 @@ app_formatting =  """
     </style>
     """
 
-            # margin-top: -5rem !important;
-
-
-# Maplibre styles. (should these be functions?)
 manager = {
     'property': 'manager_type',
     'type': 'categorical',
@@ -480,19 +440,7 @@ select_colors = {
 
 }
 
-# non-conserved areas, off by default
-default_boxes = {
-    # 'non-conserved': False,
-    # 3: False,
-    # 4: False,
-    # "other-conserved":False,
-    # "unknown":False,
-    # "non-conserved":False
-}
-
-# variables.py
-
-ERROR_MESSAGES = {
+error_messages = {
     "bad_request": lambda llm: f"""
 **Error Code 400 – LLM Unavailable** 
 

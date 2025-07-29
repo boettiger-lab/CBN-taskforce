@@ -8,22 +8,19 @@ from ibis import _
 import ibis.selectors as s
 import os
 from shapely import wkb  
-# from typing import Optional
 from functools import reduce
 from itertools import chain
-# import re
 from variables import *
 from pandas.api.types import CategoricalDtype
 from math import pi
 
 ######################## UI FUNCTIONS 
-def get_buttons(style_options, style_choice, default_boxes = None):
+def get_buttons(style_options, style_choice):
     """
     Creates Streamlit checkboxes based on style options and returns the selected filters.
     """
     column = style_options[style_choice]['property']
     opts = [style[0] for style in style_options[style_choice]['stops']]
-    default_boxes = default_boxes or {}
 
     buttons = {}
     for name in opts:
@@ -517,7 +514,6 @@ def create_bar_chart(
 
 import minio
 import datetime
-
 minio_key = os.getenv("MINIO_KEY")
 if minio_key is None:
     minio_key = st.secrets["MINIO_KEY"]
@@ -544,4 +540,3 @@ def minio_logger(consent, query, sql_query, llm_explanation, llm_choice, filenam
     pd.concat([log,df]).to_csv(filename, index=False, header=True)
     mc.fput_object(bucket, filename, filename, content_type="text/csv")
 
-    

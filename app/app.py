@@ -31,8 +31,7 @@ def main():
         for name in val['stops']:
             key = val['property']+str(name[0])
             if key not in st.session_state:
-                # st.session_state[key] = True
-                st.session_state[key] = default_boxes.get(name[0], True)
+                st.session_state[key] = True
     
                 
     #customizing style with CSS 
@@ -200,14 +199,14 @@ def main():
     
             except Exception as e:
                 if isinstance(e, openai.BadRequestError):
-                    st.error(ERROR_MESSAGES["bad_request"](llm_choice), icon="🚨")
+                    st.error(error_messages["bad_request"](llm_choice), icon="🚨")
                 
                 elif isinstance(e, openai.InternalServerError):
-                    st.error(ERROR_MESSAGES["internal_server_error"](llm_choice), icon="🚨")
+                    st.error(error_messages["internal_server_error"](llm_choice), icon="🚨")
                 
                 else:
                     prompt = prompt.replace('\n', '')
-                    st.error(ERROR_MESSAGES["unexpected_llm_error"](prompt, e, tb_str))
+                    st.error(error_messages["unexpected_llm_error"](prompt, e, tb_str))
                 st.stop()
     
     
@@ -234,7 +233,7 @@ def main():
         for label in style_options: # get selected filters (based on the buttons selected)
             with st.expander(label):  
                 if label in ["GAP Code","30x30 Status"]: # gap code 1 and 2 are on by default
-                    opts = get_buttons(style_options, label, default_boxes)
+                    opts = get_buttons(style_options, label)
                 else: # other buttons are not on by default.
                     opts = get_buttons(style_options, label) 
                 filters.update(opts)
@@ -441,5 +440,5 @@ if __name__ == "__main__":
         main()
     except Exception as e:
         tb_str = traceback.format_exc()  # full multiline traceback string
-        st.error(ERROR_MESSAGES["unexpected_error"](e, tb_str))
+        st.error(error_messages["unexpected_error"](e, tb_str))
 
