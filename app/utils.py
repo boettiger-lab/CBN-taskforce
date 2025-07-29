@@ -116,7 +116,6 @@ def get_summary(ca, combined_filter, column, main_group, feature_col, colors = N
 
     # join all aggregates
     all_aggs = {**base_aggs, **dynamic_aggs}
-
     # group and aggregate
     df = (ca.filter(combined_filter)
           .group_by(*column)
@@ -154,12 +153,9 @@ def get_summary_table(ca, column, select_colors, color_choice, filter_cols, filt
 
     #combining all the filters into ibis filter expression 
     combined_filter = reduce(lambda x, y: x & y, filters)
-    # only_conserved = combined_filter & (_.status.isin(['30x30 Conservation Area']))
 
     #df used for printed table
     df_tab = get_summary(ca, combined_filter, filter_cols, column, feature_col, colors=None)
-    if "Non-Conservation Area" in chain.from_iterable(filter_vals):
-        combined_filter = combined_filter | (_.status.isin(['Non-Conservation Area']))
 
     df_feature = None if feature_col is None else get_summary(ca, combined_filter, [column], column, feature_col, colors, feature = True)
     df_network = None if df_feature is not None else get_summary(ca, combined_filter, [column], column, feature_col, colors)        
@@ -184,21 +180,32 @@ def extract_columns(sql_query):
 
 
 ######################## MAP STYLING FUNCTIONS 
+
+from itertools import chain
+
 def get_pmtiles_style(paint, alpha=1, filter_cols=None, filter_vals=None, ids=None):
     """
     Generates a MapLibre GL style for PMTiles with either filters or a list of IDs.
+
     """
     if ids:
         filter_expr = ["in", ["get", "id"], ["literal", ids]]
     else:
-        filters = [["match", ["get", col], val, True, False] for col, val in zip(filter_cols, filter_vals)]
+        # Build strict 'all' filter logic: every attribute must match its allowed values
+        filters = [
+            ["match", ["get", col], val, True, False]
+            for col, val in zip(filter_cols, filter_vals)
+        ]
         filter_expr = ["all", *filters]
-        if "Non-Conservation Area" in chain.from_iterable(filter_vals):
-            filter_expr = ["any", filter_expr, ["match", ["get", "status"], ["Non-Conservation Area"], True, False]]
 
     return {
         "version": 8,
-        "sources": {"ca": {"type": "vector", "url": f"pmtiles://{ca_pmtiles}"}},
+        "sources": {
+            "ca": {
+                "type": "vector",
+                "url": f"pmtiles://{ca_pmtiles}"
+            }
+        },
         "layers": [
             {
                 "id": "ca30x30",
@@ -206,10 +213,14 @@ def get_pmtiles_style(paint, alpha=1, filter_cols=None, filter_vals=None, ids=No
                 "source-layer": source_layer_name,
                 "type": "fill",
                 "filter": filter_expr,
-                "paint": {"fill-color": paint, "fill-opacity": alpha},
+                "paint": {
+                    "fill-color": paint,
+                    "fill-opacity": alpha
+                },
             }
         ],
     }
+
 
 
 def get_legend(style_options, color_choice, df = None, column = None):

@@ -18,9 +18,9 @@ def main():
     if "mydata" not in set(current_tables):
         tbl = con.read_parquet(ca_parquet)
         con.create_table("mydata", tbl)
-    
+
     ca = con.table("mydata")
-    
+
     st.set_page_config(layout="wide", page_title="CA Protected Areas Explorer", page_icon=":globe:")
     # session state for syncing app 
     for key in keys:
@@ -293,7 +293,7 @@ def main():
     ## mapping data 
     legend, position, bg_color, fontsize = get_legend(style_options, color_choice, df_network, column)
     
-    if 'not_mapping' not in locals():        
+    if 'not_mapping' not in locals():      
         m.add_legend(legend_dict = legend, position = position)
         m.add_pmtiles(ca_pmtiles, style=style, name="CA", tooltip=False, zoom_to_layer=True)
     
