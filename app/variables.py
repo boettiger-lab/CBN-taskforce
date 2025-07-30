@@ -28,42 +28,6 @@ import re
 source_layer_name = re.sub(r'\W+', '', os.path.splitext(os.path.basename(ca_pmtiles))[0])
 #stripping hyphens to get layer name 
 
-#vector data 
-url_ACE_rarerank_statewide = get_url('ACE_biodiversity/ACE_rarerank_statewide','ACE_rarerank_statewide.pmtiles')
-url_ACE_rarerank_ecoregion = get_url('ACE_biodiversity/ACE_rarerank_ecoregion','ACE_rarerank_ecoregion.pmtiles')
-url_ACE_biorank_statewide = get_url('ACE_biodiversity/ACE_biorank_statewide','ACE_biorank_statewide.pmtiles')
-url_ACE_biorank_ecoregion = get_url('ACE_biodiversity/ACE_biorank_ecoregion','ACE_biorank_ecoregion.pmtiles')
-
-url_ACE_amph_richness = get_url('ACE_biodiversity/ACE_amphibian_richness','ACE_amphibian_richness.pmtiles')
-url_ACE_reptile_richness = get_url('ACE_biodiversity/ACE_reptile_richness','ACE_reptile_richness.pmtiles')
-url_ACE_bird_richness = get_url('ACE_biodiversity/ACE_bird_richness','ACE_bird_richness.pmtiles')
-url_ACE_mammal_richness = get_url('ACE_biodiversity/ACE_mammal_richness','ACE_mammal_richness.pmtiles')
-url_ACE_rare_amph_richness = get_url('ACE_biodiversity/ACE_rare_amphibian_richness','ACE_rare_amphibian_richness.pmtiles')
-url_ACE_rare_reptile_richness = get_url('ACE_biodiversity/ACE_rare_reptile_richness','ACE_rare_reptile_richness.pmtiles')
-url_ACE_rare_bird_richness = get_url('ACE_biodiversity/ACE_rare_bird_richness','ACE_rare_bird_richness.pmtiles')
-url_ACE_rare_mammal_richness = get_url('ACE_biodiversity/ACE_rare_mammal_richness','ACE_rare_mammal_richness.pmtiles')
-url_ACE_end_amph_richness = get_url('ACE_biodiversity/ACE_endemic_amphibian_richness','ACE_endemic_amphibian_richness.pmtiles')
-url_ACE_end_reptile_richness = get_url('ACE_biodiversity/ACE_endemic_reptile_richness','ACE_endemic_reptile_richness.pmtiles')
-url_ACE_end_bird_richness = get_url('ACE_biodiversity/ACE_endemic_bird_richness','ACE_endemic_bird_richness.pmtiles')
-url_ACE_end_mammal_richness = get_url('ACE_biodiversity/ACE_endemic_mammal_richness','ACE_endemic_mammal_richness.pmtiles')
-
-url_wetlands = get_url('Freshwater_resources/Wetlands','CA_wetlands.pmtiles')
-url_freshwater_richness = get_url('Freshwater_resources/Freshwater_species_richness','freshwater_species_richness_ds1197.pmtiles')
-
-url_fire = get_url('Climate_risks/Historical_fire_perimeters','calfire_2023.pmtiles')
-url_farmland = get_url('NBS_agriculture/Farmland_all/Farmland','Farmland_2018.pmtiles')
-url_grazing = get_url('NBS_agriculture/Farmland_all/Lands_suitable_grazing','Grazing_land_2018.pmtiles')
-url_DAC = get_url('Progress_data_new_protection/DAC','DAC_2022.pmtiles')
-url_low_income = get_url('Progress_data_new_protection/Low_income_communities','low_income_CalEnviroScreen4.pmtiles')
-
-# raster data
-url_climate_zones = get_url('Climate_zones', 'climate_zones_10_processed_COG.tif')
-url_habitat = get_url('Habitat', 'CWHR13_2022_processed_COG.tif')
-url_plant_richness = get_url('Biodiversity_unique/Plant_richness', 'species_D_80percentile_processed_COG.tif')
-url_endemic_plant_richness = get_url('Biodiversity_unique/Rarityweighted_endemic_plant_richness', 'endemicspecies_E_80percentile_processed_COG.tif')
-url_resilient_conn_network = get_url('Connectivity_resilience/Resilient_connected_network_allcategories', 
-                                 'rcn_wIntactBioCat_caOnly_2020-10-27_processed_COG.tif')
-
 # column names for all data layers 
 keys = [
     "pct_newly_protected", "pct_increased_management", "pct_data_improvement",
@@ -130,7 +94,7 @@ layer_config = [
 # colors for plotting 
 private_access_color = "#DE881E" # orange 
 public_access_color = "#3388ff" # blue
-tribal_color = "#BF40BF" # purple
+purple = "#BF40BF" # purple
 mixed_color = "#005a00" # green
 year2023_color = "#26542C" # green
 year2024_color = "#F3AB3D" # orange 
@@ -252,10 +216,6 @@ app_formatting =  """
     </style>
     """
 
-            # margin-top: -5rem !important;
-
-
-# Maplibre styles. (should these be functions?)
 manager = {
     'property': 'manager_type',
     'type': 'categorical',
@@ -268,9 +228,10 @@ manager = {
         ['County', county_color],
         ['City', city_color],
         ['Joint', joint_color],
-        ['Tribal', tribal_color],
+        ['Tribal', purple],
         ['Private', private_color],
         ['HOA', hoa_color],
+        ['None', white],
     ],
     'default': white
 }
@@ -281,20 +242,11 @@ land_tenure = {
     'stops': [
         ['Easement', private_access_color],
         ['Non-Easement', public_access_color],
+        ['None', white],
+
     ],
     'default': white
 }
-
-year = {
-    'property': 'established',
-    'type': 'categorical',
-    'stops': [
-        ['pre-2024', year2023_color],
-        ['2024', year2024_color],
-    ],
-    'default': white
-}
-
 access = {
     'property': 'access_type',
     'type': 'categorical',
@@ -302,7 +254,8 @@ access = {
         ['Open Access', public_access_color],
         ['No Public Access', private_access_color],
         ['Unknown Access', "#bbbbbb"],
-        ['Restricted Access', tribal_color],
+        ['Restricted Access', purple],
+        ['None', white],
     ],
     'default': white
 }
@@ -314,7 +267,9 @@ gap = {
         ['GAP 1', "#26633d"],
         ['GAP 2', "#879647"],
         ['GAP 3', "#bdcf72"],
-        ['GAP 4', "#6d6e6d"]
+        ['GAP 4', "#6d6e6d"],
+        ['None', white],
+
     ],
     'default': white
 }
@@ -327,8 +282,6 @@ status = {
         ['Other Conservation Area', "#b6ce7a"],
         ['Public or Unknown Conservation Area', "#e5efdb"],
         ['Non-Conservation Area', "#e1e1e1"]
-        # ['non-conserved', white]
-
     ],
 }
 
@@ -356,6 +309,7 @@ ecoregion = {
         ['Great Valley (South)', "#bcbd22"],
         ['Northern California Interior Coast Ranges', "#ffbb78"],
         ['Great Valley (North)', "#dbdb8d"],
+        ['None', white],
     ],
     'default': white
 }
@@ -374,6 +328,8 @@ climate_zone = {
         ['Zone 8', "#bcbd22"],
         ['Zone 9', "#c5b0d5"],
         ['Zone 10', "#e377c2"],
+        ['None', white],
+
     ],
     'default': white
 }
@@ -402,6 +358,7 @@ ecoregion = {
         ['Great Valley (South)', "#bcbd22"],
         ['Northern California Interior Coast Ranges', "#ffbb78"],
         ['Great Valley (North)', "#dbdb8d"],
+        ['None', white],
     ],
     'default': white
 }
@@ -431,43 +388,19 @@ networks = {
     'property': 'resilient_connected_network',
     'type': 'categorical',
     'stops': [
-        [110.0, "#257202"],
-        [103.0, "#1667f6"],
-        [1010.0, "#6b9ad3"],
-        [1100.0, "#a2b0d5"],
-        [1110.0, "#bfd1ff"],
-        [10000.0, "#9acb73"],
-        [10010.0, "#72b3fd"],
-        [20000.0, "#d09514"],
-        [20010.0, "#ffa807"],
-        [30000.0, "#7d7121"],
-        [30010.0, "#a87001"],
-        [40000.0, "#e377c2"],
-        [0.0, "#ffffff"],
+        ['Resilient biodiverse', "#257202"],
+        ['Additional resilient secured', "#1667f6"],
+        ['Biodiverse well-connected landscape', "#6b9ad3"],
+        ['Resilient well-connected landscape', "#a2b0d5"],
+        ['Resilient biodiverse well-connected landscape', "#bfd1ff"],
+        ['Climate migration route within well-connected landscape', "#9acb73"],
+        ['Linkage', "#d09514"],
+        ['Linkage and climate migration route', "#7d7121"],
+        ['Coastal migration space', "#e377c2"],
+        ['None', "#ffffff"],
     ],
     'default': white
 }
-
-update_type_style = {
-        "version": 8,
-        "sources": {"ca": {"type": "vector", "url": f"pmtiles://{ca_pmtiles}"}},
-        "layers": [
-            {
-                "id": "ca30x30",
-                "source": "ca",
-                "source-layer": source_layer_name,
-                "type": "fill",
-                "paint": {
-                    "fill-color": [
-                        "interpolate", ["linear"], ["get", "update_newly_protected"],
-                        0, white,
-                        1, purple
-                    ]
-                }
-            }
-        ]
-    }
-
 
 
 style_options = {
@@ -479,7 +412,6 @@ style_options = {
     "Resilient & Connected Network": networks,
     "Manager Type": manager,
     "Land Tenure Type": land_tenure,
-    # "Year": year,
     "Access Type": access,
 }
 
@@ -492,14 +424,12 @@ select_column = {
     "Resilient & Connected Network": "resilient_connected_network",
     "Manager Type": "manager_type",
     "Land Tenure Type": "land_tenure",
-    # "Year": "established",
     "Access Type": "access_type",
 }
 
 select_colors = {
     "30x30 Status": status["stops"],
     "GAP Code": gap["stops"],
-    # "Year": year["stops"],
     "Ecoregion": ecoregion["stops"],
     "Climate Zone": climate_zone["stops"],
     "Habitat Type": habitat_type["stops"],
@@ -510,19 +440,7 @@ select_colors = {
 
 }
 
-# non-conserved areas, off by default
-default_boxes = {
-    # 'non-conserved': False,
-    # 3: False,
-    # 4: False,
-    # "other-conserved":False,
-    # "unknown":False,
-    # "non-conserved":False
-}
-
-# variables.py
-
-ERROR_MESSAGES = {
+error_messages = {
     "bad_request": lambda llm: f"""
 **Error Code 400 – LLM Unavailable** 
 
@@ -628,11 +546,13 @@ sort_options = {
         "Open",
         "Restricted",
         "No Public",
-        "Unknown"
+        "Unknown",
+        "None",
     ],
     "land_tenure": [
         "Easement",
-        "Non-Easement"
+        "Non-Easement",
+        "None",
     ],
     "manager_type": [
         "Federal",
@@ -645,7 +565,8 @@ sort_options = {
         "Joint",
         "Non Profit",
         "Private",
-        "Unknown"
+        "Unknown",
+        "None",
     ],
     "status": [
         "30x30 Conservation Area",
@@ -674,14 +595,14 @@ sort_options = {
         "Great Valley (North)",
         "NorCal Interior Coast Ranges",
         "Great Valley (South)"
+        "None",
+
     ],
     "climate_zone": [
         "Zone 1", "Zone 2", "Zone 3", "Zone 4", "Zone 5",
-        "Zone 6", "Zone 7", "Zone 8", "Zone 9", "Zone 10"
+        "Zone 6", "Zone 7", "Zone 8", "Zone 9", "Zone 10", "None"
     ],
 }
-  
-
 
 from langchain_openai import ChatOpenAI
 import streamlit as st
@@ -694,12 +615,10 @@ if api_key is None:
     api_key = st.secrets["NRP_API_KEY"]
 
 llm_options = {
-    "llama3.3": ChatOpenAI(model = "llama3-sdsc", api_key=api_key, base_url = "https://llm.nrp-nautilus.io/",  temperature=0),
-    "deepseek-r1": BaseChatOpenAI(model = "deepseek-r1", api_key=api_key, base_url = "https://llm.nrp-nautilus.io/",  temperature=0),
     "gemma3": ChatOpenAI(model = "gemma3", api_key=api_key, base_url = "https://llm.nrp-nautilus.io/",  temperature=0),
-    "watt": ChatOpenAI(model = "watt", api_key=api_key, base_url = "https://llm.nrp-nautilus.io/",  temperature=0),
+    "llama3": ChatOpenAI(model = "llama3", api_key=api_key, base_url = "https://llm.nrp-nautilus.io/",  temperature=0),
+    "deepseek-r1": BaseChatOpenAI(model = "deepseek-r1", api_key=api_key, base_url = "https://llm.nrp-nautilus.io/",  temperature=0),
+    "olmo": ChatOpenAI(model = "olmo", api_key=api_key, base_url = "https://llm.nrp-nautilus.io/",  temperature=0),
+    "qwen3": ChatOpenAI(model = "qwen3", api_key=api_key, base_url = "https://llm.nrp-nautilus.io/",  temperature=0),
 }
-
-
-
 
