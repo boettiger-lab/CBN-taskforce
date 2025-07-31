@@ -285,7 +285,6 @@ def main():
     column = select_column[color_choice]
     colors = color_table(select_colors, color_choice, column)
     main = st.container()
-    bounds = [-124.42174575, 32.53428607, -114.13077782, 42.00950367]
     with main:
         map_col, stats_col = st.columns([3,2])
     
@@ -293,8 +292,7 @@ def main():
     if 'llm_output' not in locals():
         df_network, _, df_tab, df_bar_30x30 = get_summary_table(ca, column, select_colors, color_choice, filter_cols, filter_vals,colorby_vals)
         style = get_pmtiles_style(style_options[color_choice], alpha, filter_cols, filter_vals)
-        if county_choice != 'All':
-            bounds = get_county_bounds(county_choice)
+
             
     else:
         if 'not_mapping' not in locals():
@@ -307,7 +305,13 @@ def main():
     if 'not_mapping' not in locals():      
         m.add_legend(legend_dict = legend, position = position)
         m.add_pmtiles(ca_pmtiles, style=style, name="CA", tooltip=False, zoom_to_layer=True)
-    
+        if 'llm_output' not in locals():
+            if county_choice != 'All':
+                bounds = get_county_bounds(county_choice)
+            else:
+                bounds = [-124.42174575, 32.53428607, -114.13077782, 42.00950367]
+
+        m.zoom_to_bounds(bounds)
         # add custom tooltip to pmtiles layer
         for layer in m._children.values():
             if isinstance(layer, leafmap.PMTilesLayer):
@@ -315,8 +319,7 @@ def main():
                 break
         pmtiles_layer.add_child(CustomTooltip())
     
-        # if 'bounds' in locals(): 
-        m.zoom_to_bounds(bounds)
+
     
     # check if any layer toggle is active
     any_chart_toggled = any(
