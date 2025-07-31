@@ -279,13 +279,13 @@ def main():
         # adding github logo 
         st.markdown(f"<div class='spacer'>{github_html}</div>", unsafe_allow_html=True)
         st.markdown(":left_speech_bubble: [Get in touch or report an issue](https://github.com/boettiger-lab/CBN-taskforce/issues)")
-        if st.button(":robot_face: Clear Chatbot Cache", on_click=run_sql.clear, help = 'Reset the chatbot’s cache (useful if it behaves unexpectedly)'):
+        if st.button("🤖 Clear Chatbot Cache", on_click=run_sql.clear, help = 'Reset the chatbot’s cache (useful if it behaves unexpectedly)'):
             run_sql.clear()
     
     column = select_column[color_choice]
     colors = color_table(select_colors, color_choice, column)
     main = st.container()
-    
+    bounds = [-124.42174575, 32.53428607, -114.13077782, 42.00950367]
     with main:
         map_col, stats_col = st.columns([3,2])
     
@@ -295,8 +295,7 @@ def main():
         style = get_pmtiles_style(style_options[color_choice], alpha, filter_cols, filter_vals)
         if county_choice != 'All':
             bounds = get_county_bounds(county_choice)
-        else:
-            bounds = [-124.42174575, 32.53428607, -114.13077782, 42.00950367]
+            
     else:
         if 'not_mapping' not in locals():
             style = get_pmtiles_style(style_options[color_choice], ids = ids)
@@ -316,8 +315,8 @@ def main():
                 break
         pmtiles_layer.add_child(CustomTooltip())
     
-        if 'bounds' in locals(): 
-            m.zoom_to_bounds(bounds)
+        # if 'bounds' in locals(): 
+        m.zoom_to_bounds(bounds)
     
     # check if any layer toggle is active
     any_chart_toggled = any(
@@ -379,7 +378,7 @@ def main():
     
                 if show_stacked:
                     y_axis = 'percent_group' if chart_choice == 'percent' else 'acres'
-                    chart_title = f"{color_title}\n by 30x30 Status"
+                    chart_title = f"{color_choice}\n by 30x30 Status"
     
                     chart = stacked_bar(
                         df=df_bar_30x30,
