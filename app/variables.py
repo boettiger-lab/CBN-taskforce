@@ -1,7 +1,8 @@
 # urls for main layer 
-ca_parquet = 'https://minio.carlboettiger.info/public-ca30x30/ca30x30cbn_newlyprotected_v1.parquet'
-ca_pmtiles = 'https://minio.carlboettiger.info/public-ca30x30/ca30x30cbn_newlyprotected_v1.pmtiles'
+ca_parquet = 'https://minio.carlboettiger.info/public-ca30x30/ca30x30_cbn_v3.parquet'
+ca_pmtiles = 'https://minio.carlboettiger.info/public-ca30x30/ca30x30_cbn_v3.pmtiles'
 # 
+
 # computed by taking the sum of all the acres in this file:
 # https://minio.carlboettiger.info/public-ca30x30/CBN-data/Progress_data_new_protection/Land_Status_Zone_Ecoregion_Counties/all_regions_reGAP_county_eco.parquet
 ca_area_acres = 101523750.68856516 
@@ -30,15 +31,24 @@ source_layer_name = re.sub(r'\W+', '', os.path.splitext(os.path.basename(ca_pmti
 
 # column names for all data layers 
 keys = [
-    "pct_newly_protected", "pct_increased_management", "pct_data_improvement",
-    "pct_top_amphibian_richness", "pct_rare_amphibian_richness",
-    "pct_endemic_amphibian_richness",
-    "pct_top_reptile_richness", "pct_rare_reptile_richness","pct_endemic_reptile_richness",
-    "pct_top_bird_richness", "pct_rare_bird_richness","pct_endemic_bird_richness",
-    "pct_top_mammal_richness", "pct_rare_mammal_richness","pct_endemic_mammal_richness",
-    "pct_top_plant_richness", "pct_rarityweighted_endemic_plant_richness", "pct_wetlands",
+    "pct_top_amphibian_richness",
+    "pct_top_reptile_richness", 
+    "pct_top_bird_richness", 
+    "pct_top_mammal_richness", 
+    # "mean_amphibian_richness",
+    # "mean_reptile_richness", 
+    # "mean_bird_richness", 
+    # "mean_mammal_richness", 
+    "pct_top_plant_richness", 
+    # "mean_plant_richness", 
+    "pct_wetlands",
     "pct_top_freshwater_richness",
-    "pct_farmland", "pct_grazing_lands","pct_disadvantaged_community", "pct_low_income", "pct_fire"]
+    # "mean_freshwater_richness",
+    "pct_farmland",
+    "pct_grazing_lands",
+    "pct_disadvantaged_community", 
+    "pct_low_income_community", 
+    "pct_fire"]
 
 chatbot_toggles = {key: False for key in keys}
 
@@ -46,49 +56,44 @@ chatbot_toggles = {key: False for key in keys}
 layer_config = [
     #[(section, 'a_amph', [(col_name, full name, key, chatbot toggle key, citation)])]
     ('🐸 Amphibian', 'a_amph', [
-        ('pct_top_amphibian_richness', 'Amphibian Richness', keys[3], chatbot_toggles[keys[3]], 'Areas with the top 20% of amphibian richness (Reference #5)'),
-        ('pct_rare_amphibian_richness', 'Rare Amphibian Richness', keys[4], chatbot_toggles[keys[4]], 'Areas with rare amphibian richness (Reference #5)'),
-        ('pct_endemic_amphibian_richness', 'Endemic Amphibian Richness', keys[5], chatbot_toggles[keys[5]], 'Areas with endemic amphibian richness (Reference #5)'),
+        ('pct_top_amphibian_richness', 'Amphibian Richness', keys[0], chatbot_toggles[keys[0]], 'Areas with the top 20% of amphibian richness (Reference #5)'),
+        # ('mean_amphibian_richness', 'Mean Amphibian Richness', keys[1], chatbot_toggles[keys[1]], 'Average amphibian richness calculated over each area (Reference #5)'),
     ]),
     ('🐍 Reptile', 'a_rept', [
-        ('pct_top_reptile_richness', 'Reptile Richness', keys[6], chatbot_toggles[keys[6]], 'Areas with the top 20% of reptile richness (Reference #5)'),
-        ('pct_rare_reptile_richness', 'Rare Reptile Richness', keys[7], chatbot_toggles[keys[7]], 'Areas with rare reptile richness (Reference #5)'),
-        ('pct_endemic_reptile_richness', 'Endemic Reptile Richness', keys[8], chatbot_toggles[keys[8]], 'Areas with endemic reptile richness (Reference #5)'),
+        ('pct_top_reptile_richness', 'Reptile Richness', keys[1], chatbot_toggles[keys[1]], 'Areas with the top 20% of reptile richness (Reference #5)'),
+        # ('mean_reptile_richness', 'Mean Reptile Richness', keys[3], chatbot_toggles[keys[3]], 'Average reptile richness calculated over each area (Reference #5)'),
+
     ]),
     ('🦜 Bird', 'a_bird', [
-        ('pct_top_bird_richness', 'Bird Richness', keys[9], chatbot_toggles[keys[9]], 'Areas with the top 20% of bird richness (Reference #5)'),
-        ('pct_rare_bird_richness', 'Rare Bird Richness', keys[10], chatbot_toggles[keys[10]], 'Areas with rare bird richness (Reference #5)'),
-        ('pct_endemic_bird_richness', 'Endemic Bird Richness', keys[11], chatbot_toggles[keys[11]], 'Areas with endemic bird richness (Reference #5)'),
+        ('pct_top_bird_richness', 'Bird Richness', keys[2], chatbot_toggles[keys[2]], 'Areas with the top 20% of bird richness (Reference #5)'),
+        # ('mean_bird_richness', 'Mean Bird Richness', keys[5], chatbot_toggles[keys[5]], 'Average bird richness calculated over each area (Reference #5)'),
+
     ]),
     ('🦌 Mammal', 'a_mammal', [
-        ('pct_top_mammal_richness', 'Mammal Richness', keys[12], chatbot_toggles[keys[12]], 'Areas with the top 20% of mammal richness (Reference #5)'),
-        ('pct_rare_mammal_richness', 'Rare Mammal Richness', keys[13], chatbot_toggles[keys[13]], 'Areas with rare mammal richness (Reference #5)'),
-        ('pct_endemic_mammal_richness', 'Endemic Mammal Richness', keys[14], chatbot_toggles[keys[14]], 'Areas with endemic mammal richness (Reference #5)'),
+        ('pct_top_mammal_richness', 'Mammal Richness', keys[3], chatbot_toggles[keys[3]], 'Areas with the top 20% of mammal richness (Reference #5)'),
+        # ('mean_mammal_richness', 'Mean Mammal Richness', keys[7], chatbot_toggles[keys[7]], 'Average mammal richness calculated over each area (Reference #5)'),
     ]),
     ('🌿 Plant', 'a_plant', [
-        ('pct_top_plant_richness', 'Plant Richness', keys[15], chatbot_toggles[keys[15]], 'Areas with the top 20% of plant richness (Reference #6)'),
-        ('pct_rarityweighted_endemic_plant_richness', 'Rarity-Weighted Endemic\n Plant Richness', keys[16], chatbot_toggles[keys[16]], 'Areas with the top 20% of rarity-weighted endemic plant richness (Reference #6)'),
+        ('pct_top_plant_richness', 'Plant Richness', keys[4], chatbot_toggles[keys[4]], 'Areas with the top 20% of plant richness (Reference #6)'),
+        # ('mean_plant_richness', 'Mean Plant Richness', keys[9], chatbot_toggles[keys[9]], 'Average plant richness calculated over each area (Reference #6)'),
+
     ]),
     ('💧 Freshwater Resources', 'freshwater', [
-        ('pct_wetlands', 'Wetlands', keys[17], chatbot_toggles[keys[17]], 'Areas that are freshwater emergent, freshwater forested/shrub, or estuarine and marine wetlands (Reference #7)'),
-        ('pct_top_freshwater_richness', 'Freshwater Species Richness', keys[18], chatbot_toggles[keys[18]], 'Areas with the top 20% of freshwater species richness (Reference #8)'),
+        ('pct_wetlands', 'Wetlands', keys[5], chatbot_toggles[keys[5]], 'Areas that are freshwater emergent, freshwater forested/shrub, or estuarine and marine wetlands (Reference #7)'),
+        ('pct_top_freshwater_richness', 'Freshwater Species Richness', keys[6], chatbot_toggles[keys[6]], 'Areas with the top 20% of freshwater species richness (Reference #8)'),
+        # ('mean_freshwater_richness', 'Mean Freshwater Species Richness', keys[12], chatbot_toggles[keys[12]], 'Average freshwater species richness calculated over each area (Reference #8)'),
     ]),
     ('🚜 Agriculture', 'agriculture', [
-        ('pct_farmland', 'Farmland', keys[19], chatbot_toggles[keys[19]], 'Farmlands with prime, unique, or of statewide or local importance (Reference #9)'),
-        ('pct_grazing_lands', 'Lands Suitable for Grazing', keys[20], chatbot_toggles[keys[20]], 'Lands suitable for grazing (Reference #9)'),
+        ('pct_farmland', 'Farmland', keys[7], chatbot_toggles[keys[7]], 'Farmlands with prime, unique, or of statewide or local importance (Reference #9)'),
+        ('pct_grazing_lands', 'Lands Suitable for Grazing', keys[8], chatbot_toggles[keys[8]], 'Lands suitable for grazing (Reference #9)'),
     ]),
     ('👤 People', 'SVI', [
-        ('pct_disadvantaged_community', 'Disadvantaged Communities', keys[21], chatbot_toggles[keys[21]], 'Areas in disadvantaged communities (Reference #10)'),
-        ('pct_low_income', 'Low-Income Communities', keys[22], chatbot_toggles[keys[22]], 'Areas in low-income communities (Reference #11)'),
+        ('pct_disadvantaged_community', 'Disadvantaged Communities', keys[9], chatbot_toggles[keys[9]], 'Areas in disadvantaged communities (Reference #10)'),
+        ('pct_low_income_community', 'Low-Income Communities', keys[10], chatbot_toggles[keys[10]], 'Areas in low-income communities (Reference #11)'),
     ]),
     ('🔥 Climate Risks', 'calfire', [
-        ('pct_fire', 'Wildfires', keys[23], chatbot_toggles[keys[23]], 'Areas burned in the last 10 years (Reference #12)'),
+        ('pct_fire', 'Wildfires', keys[11], chatbot_toggles[keys[11]], 'Areas burned in the last 10 years (Reference #12)'),
     ]),
-    ('📈 Data Updates', 'a_new', [
-        ('pct_newly_protected', 'Newly Protected Land', keys[0], chatbot_toggles[keys[0]],'Lands that were privately-owned and unprotected and moved into conservation ownership and management'),
-        ('pct_increased_management', 'Land with Increased Management', keys[1], chatbot_toggles[keys[1]],'Lands that were newly counted towards 30x30 due to increased management or durability of protection and/or retirement of extractive uses (previously GAP 3 or 4)'),
-        ('pct_data_improvement', 'Land with Data Improvement', keys[2], chatbot_toggles[keys[2]],'Lands that are newly counted towards 30x30 due to additional GAP information but for which no on the ground conservation actions, policies, or management changes took place')
-    ])
 ]
 
 # colors for plotting 
@@ -380,24 +385,8 @@ habitat_type = {
         ['Urban', "#686868"],
         ['Water', "#BEFFE8"],
         ['Wetland', "#00A884"],
-    ],
-    'default': white
-}
+        ['None', white],
 
-networks = {
-    'property': 'resilient_connected_network',
-    'type': 'categorical',
-    'stops': [
-        ['Resilient biodiverse', "#257202"],
-        ['Additional resilient secured', "#1667f6"],
-        ['Biodiverse well-connected landscape', "#6b9ad3"],
-        ['Resilient well-connected landscape', "#a2b0d5"],
-        ['Resilient biodiverse well-connected landscape', "#bfd1ff"],
-        ['Climate migration route within well-connected landscape', "#9acb73"],
-        ['Linkage', "#d09514"],
-        ['Linkage and climate migration route', "#7d7121"],
-        ['Coastal migration space', "#e377c2"],
-        ['None', "#ffffff"],
     ],
     'default': white
 }
@@ -409,7 +398,6 @@ style_options = {
     "Ecoregion": ecoregion,
     "Climate Zone": climate_zone,
     "Habitat Type": habitat_type,
-    "Resilient & Connected Network": networks,
     "Manager Type": manager,
     "Land Tenure Type": land_tenure,
     "Access Type": access,
@@ -421,7 +409,6 @@ select_column = {
     "Ecoregion":  "ecoregion",
     "Climate Zone":  "climate_zone",
     "Habitat Type":  "habitat_type",
-    "Resilient & Connected Network": "resilient_connected_network",
     "Manager Type": "manager_type",
     "Land Tenure Type": "land_tenure",
     "Access Type": "access_type",
@@ -436,7 +423,6 @@ select_colors = {
     "Manager Type": manager["stops"],
     "Land Tenure Type": land_tenure["stops"],
     "Access Type": access["stops"],
-    "Resilient & Connected Network": networks["stops"],
 
 }
 
@@ -502,16 +488,14 @@ Include the steps you took to get this message and any other details that might 
 
 
 help_message = '''
-- 📊 Use this sidebar to color-code the map by different attributes **(Group by)**, toggle on data layers and view summary charts **(Data Layers)**, or filter data **(Filters)**.
-- 💬 For a more tailored experience, query our dataset of protected areas and their precomputed mean values for each of the displayed layers, using the experimental chatbot. The language model tries to answer natural language questions by drawing only from curated datasets (listed below).
+- 📊 Use this sidebar to color-code the map by different attributes **(Group by)**, filter data **(Filters)**, or toggle on data layers and view summary charts **(Data Layers)**.
+- 💬 For a more tailored experience, query our dataset of protected areas and their precomputed metrics for each of the displayed layers, using the experimental chatbot. The language model tries to answer natural language questions by drawing only from curated datasets (listed below).
 '''
 
 example_queries = """
 Mapping queries:
-- Show me protected areas with any recent additions.
 - Show me amphibian biodiversity hotspots that aren't currently conserved.
 - Show me protected areas in disadvantaged communities.
-- Show me 30x30 conservation areas where at least 80% of the land overlaps with regions of high endemic species richness.
 - Show me all 30x30 conservation areas managed by The Nature Conservancy.
 
 Exploratory data queries:
@@ -604,6 +588,166 @@ sort_options = {
     ],
 }
 
+counties = ['All',
+            'Alameda','Alpine','Amador','Butte',
+            'Calaveras','Colusa','Contra Costa',
+            'Del Norte','El Dorado','Fresno',
+            'Glenn','Humboldt','Imperial',
+            'Inyo','Kern','Kings','Lake',
+            'Lassen','Los Angeles','Madera',
+            'Marin','Mariposa','Mendocino',
+            'Merced','Modoc','Mono','Monterey',
+            'Napa','Nevada','Orange','Placer',
+            'Plumas','Riverside','Sacramento',
+            'San Benito','San Bernardino',
+            'San Diego','San Francisco',
+            'San Joaquin','San Luis Obispo',
+            'San Mateo','Santa Barbara',
+            'Santa Clara','Santa Cruz',
+            'Shasta','Sierra','Siskiyou',
+            'Solano','Sonoma','Stanislaus',
+            'Sutter','Tehama','Trinity',
+            'Tulare','Tuolumne','Ventura',
+            'Yolo','Yuba']
+
+county_bounds = {
+    'Alameda': [-122.37384325785614, 37.45395019087806, -121.46909053649193, 37.90581215615551],
+    'Alpine': [-120.07258425884774, 38.327993145831655, -119.54223011041208, 38.93342773013462],
+    'Amador': [-121.02730731480422, 38.217491780743636, -120.07237156968037, 38.70911291117487],
+    'Butte': [-122.06925623406984, 39.295759266788785, -121.07659058901427, 40.151724905958844],
+    'Calaveras': [-120.99563505712699, 37.832911048889336, -120.01784279081615, 38.50989256828466],
+    'Colusa': [-122.7851039963557, 38.92390908599703, -121.79535019214951, 39.41463679832666],
+    'Contra Costa': [-122.44136195698891, 37.71848003161996, -121.53427173214118, 38.10451269178112],
+    'Del Norte': [-124.29222096554467, 41.380808308174196, -123.51781185269014, 42.00093718008948],
+    'El Dorado': [-121.14871593526819, 38.50240659596396, -119.87715698072778, 39.06751520300653],
+    'Fresno': [-120.91924675434643, 35.906675889793114, -118.36128145056477, 37.58611123324542],
+    'Glenn': [-122.9382565375967, 39.382983163760805, -121.85664645766673, 39.80062595168279],
+    'Humboldt': [-124.42174856047471, 40.00139252700087, -123.40574432966143, 41.46572559085193],
+    'Imperial': [-116.10627332812045, 32.618402326401856, -114.46278796859593, 33.43383606750038],
+    'Inyo': [-118.7900568626879, 35.78658301549606, -115.64806204409115, 37.464922140000915],
+    'Kern': [-120.19415436469426, 34.78853746313057, -117.61634054187135, 35.7983087685926],
+    'Kings': [-120.31511241500048, 35.78861179496948, -119.47437670425381, 36.48883301918508],
+    'Lake': [-123.09417624448064, 38.66765292825958, -122.33982220613575, 39.58152361426639],
+    'Lassen': [-121.33200127890402, 39.70762659323746, -119.99560445053615, 41.18462162566647],
+    'Los Angeles': [-118.94473687665884, 32.79821786822939, -117.64626902157303, 34.823268840850936],
+    'Madera': [-120.5453555935079, 36.76290956666377, -119.02313701874256, 37.77824405308708],
+    'Marin': [-123.02454720223808, 37.81434498425288, -122.35271528742317, 38.32116119123995],
+    'Mariposa': [-120.39543629671475, 37.18302861670762, -119.3091611358611, 37.902782310170124],
+    'Mendocino': [-124.02304086840115, 38.75798088034271, -122.8176785694875, 40.00203170873202],
+    'Merced': [-121.24761545052745, 36.74041902700379, -120.05247703565685, 37.63351397040037],
+    'Modoc': [-121.45733565901256, 41.183891080265816, -119.99860790992162, 41.99770261425136],
+    'Mono': [-119.65129169554416, 37.46265974380474, -117.8330543487398, 38.71421962752979],
+    'Monterey': [-121.98121232673658, 35.7890394151396, -120.2139462682171, 36.919764203214925],
+    'Napa': [-122.64680992261836, 38.15486634651152, -122.06139053020189, 38.864319635366094],
+    'Nevada': [-121.27983631175151, 39.00521112712352, -120.00316950265977, 39.5269776072248],
+    'Orange': [-118.11591130948763, 33.3869535933095, -117.41276683318105, 33.94763009369535],
+    'Placer': [-121.48447174569603, 38.71121391174871, -120.0024840996466, 39.316477729088426],
+    'Plumas': [-121.49814672171111, 39.59728718352163, -120.09904721387224, 40.44953709582471],
+    'Riverside': [-117.67631998709106, 33.42595836771541, -114.43492272617631, 34.08010291317722],
+    'Sacramento': [-121.8628052495484, 38.01826994810689, -121.02708000920751, 38.7363541729806],
+    'San Benito': [-121.64390643788927, 36.19676935270105, -120.59665891295839, 36.98889694533727],
+    'San Bernardino': [-117.80270607757481, 33.87100430334213, -114.1307797292214, 35.80925464587483],
+    'San Diego': [-117.59618782585494, 32.534284897747774, -116.08103174786864, 33.50539078723194],
+    'San Francisco': [-123.10831309140733, 37.69318220804253, -122.28148008634933, 37.92820081871259],
+    'San Joaquin': [-121.58486554707626, 37.481903374861155, -120.91703421015885, 38.300124270425094],
+    'San Luis Obispo': [-121.3481463468677, 34.897517026385394, -119.47262333499197, 35.79522759709139],
+    'San Mateo': [-122.5258224417463, 37.10664649951801, -122.08170058501933, 37.70830102997501],
+    'Santa Barbara': [-120.67308089356803, 33.46314653916473, -119.02754553140863, 35.114664743543855],
+    'Santa Clara': [-122.20265824664642, 36.89311357700511, -121.20829193496792, 37.48463352900927],
+    'Santa Cruz': [-122.31756094951439, 36.8455928887126, -121.58152180864509, 37.285486526818595],
+    'Shasta': [-123.0690563724846, 40.28542875156154, -121.31956589577165, 41.1854051911446],
+    'Sierra': [-121.05816357318655, 39.391312349649645, -120.00115690935537, 39.776893139510406],
+    'Siskiyou': [-123.71921666125596, 40.992161506975485, -121.44597246960173, 42.0095013546309],
+    'Solano': [-122.40704233020435, 38.031901469642186, -121.59328788355768, 38.54031071585052],
+    'Sonoma': [-123.53409674915936, 38.06945545436569, -122.34969676191652, 38.85265625600535],
+    'Stanislaus': [-121.48508014594434, 37.13465559553392, -120.3877796675966, 38.077513404644776],
+    'Sutter': [-121.94803192250085, 38.73464395327457, -121.41457682661877, 39.30570924614072],
+    'Tehama': [-123.06606979920167, 39.797400024908534, -121.34202780109031, 40.4461608526014],
+    'Trinity': [-123.6237590070662, 39.976964508183706, -122.44579471602161, 41.36855812773586],
+    'Tulare': [-119.57337696768919, 35.786703233263246, -117.98078852804592, 36.75315531553344],
+    'Tuolumne': [-120.6531028934154, 37.63351397040037, -119.1995078951056, 38.435874537731834],
+    'Ventura': [-119.57884547615261, 33.214423112310726, -118.63248587968316, 34.901173610510234],
+    'Yolo': [-122.42292975313535, 38.313341330770385, -121.5011710694855, 38.925994128593054],
+    'Yuba': [-121.63634256943894, 38.918340603636125, -121.00962749771216, 39.639415414392985]
+}
+
+filter_expr_all = [
+    'all',
+    ['match', ['get', 'status'],
+        [
+            '30x30 Conservation Area',
+            'Other Conservation Area',
+            'Public or Unknown Conservation Area',
+            'Non-Conservation Area'
+        ],
+        True, False
+    ],
+    ['match', ['get', 'gap_code'],
+        [
+            'GAP 1', 'GAP 2', 'GAP 3', 'GAP 4', 'None'
+        ],
+        True, False
+    ],
+    ['match', ['get', 'ecoregion'],
+        [
+            'Southeastern Great Basin',
+            'Mojave Desert',
+            'Sonoran Desert',
+            'Sierra Nevada',
+            'Southern California Mountains and Valleys',
+            'Mono',
+            'Central California Coast',
+            'Klamath Mountains',
+            'Northern California Coast',
+            'Northern California Coast Ranges',
+            'Northwestern Basin and Range',
+            'Colorado Desert',
+            'Central Valley Coast Ranges',
+            'Southern California Coast',
+            'Sierra Nevada Foothills',
+            'Southern Cascades',
+            'Modoc Plateau',
+            'Great Valley (South)',
+            'Northern California Interior Coast Ranges',
+            'Great Valley (North)',
+            'None'
+        ],
+        True, False
+    ],
+    ['match', ['get', 'climate_zone'],
+        [
+            'Zone 1', 'Zone 2', 'Zone 3', 'Zone 4', 'Zone 5',
+            'Zone 6', 'Zone 7', 'Zone 8', 'Zone 9', 'Zone 10', 'None'
+        ],
+        True, False
+    ],
+    ['match', ['get', 'habitat_type'],
+        [
+            'Agriculture', 'Barren/Other', 'Conifer Forest', 'Conifer Woodland',
+            'Desert Shrub', 'Desert Woodland', 'Hardwood Forest', 'Hardwood Woodland',
+            'Grassland', 'Shrub', 'Urban', 'Water', 'Wetland', 'None'
+        ],
+        True, False
+    ],
+    ['match', ['get', 'manager_type'],
+        [
+            'Federal', 'State', 'Non Profit', 'Special District', 'Unknown',
+            'County', 'City', 'Joint', 'Tribal', 'Private', 'HOA', 'None'
+        ],
+        True, False
+    ],
+    ['match', ['get', 'land_tenure'],
+        ['Easement', 'Non-Easement', 'None'],
+        True, False
+    ],
+    ['match', ['get', 'access_type'],
+        ['Open Access', 'No Public Access', 'Unknown Access', 'Restricted Access', 'None'],
+        True, False
+    ]
+]
+
+
+
 from langchain_openai import ChatOpenAI
 import streamlit as st
 from langchain_openai.chat_models.base import BaseChatOpenAI
@@ -615,10 +759,12 @@ if api_key is None:
     api_key = st.secrets["NRP_API_KEY"]
 
 llm_options = {
-    "gemma3": ChatOpenAI(model = "gemma3", api_key=api_key, base_url = "https://llm.nrp-nautilus.io/",  temperature=0),
+    "olmo": ChatOpenAI(model = "olmo", api_key=api_key, base_url = "https://llm.nrp-nautilus.io/",  temperature=0),
+    "llama3-sdsc": ChatOpenAI(model = "llama3-sdsc", api_key=api_key, base_url = "https://llm.nrp-nautilus.io/",  temperature=0),
     "llama3": ChatOpenAI(model = "llama3", api_key=api_key, base_url = "https://llm.nrp-nautilus.io/",  temperature=0),
     "deepseek-r1": BaseChatOpenAI(model = "deepseek-r1", api_key=api_key, base_url = "https://llm.nrp-nautilus.io/",  temperature=0),
-    "olmo": ChatOpenAI(model = "olmo", api_key=api_key, base_url = "https://llm.nrp-nautilus.io/",  temperature=0),
     "qwen3": ChatOpenAI(model = "qwen3", api_key=api_key, base_url = "https://llm.nrp-nautilus.io/",  temperature=0),
+    "gemma3": ChatOpenAI(model = "gemma3", api_key=api_key, base_url = "https://llm.nrp-nautilus.io/",  temperature=0),
+
 }
 

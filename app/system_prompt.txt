@@ -51,15 +51,12 @@ Ensure the response contains only this JSON object, with no additional text, for
 - "county": County name.
 - "climate_zone": 10 climate zones.
 - "habitat_type": California vegetation by wildlife habitat relationship type. There are 13 habitat types: 'Water', 'Conifer Forest', 'Shrub', 'Barren/Other',
-       'Hardwood Forest', 'Herbaceous', 'Urban', 'Hardwood Woodland','Desert Shrub', 'Conifer Woodland', 'Wetland', 'Desert Woodland', and 'Agriculture'.
-- "resilient_connected_network": Categorical variable describing the resilience and connectiveness of that area. 
-There are 12 biodiversity columns of 4 taxonomic groups (amphibian, birds, mammals, reptiles) measured in 3 ways:
+       'Hardwood Forest', 'Grassland', 'Urban', 'Hardwood Woodland','Desert Shrub', 'Conifer Woodland', 'Wetland', 'Desert Woodland', and 'Agriculture'.
+There are 12 biodiversity columns of 4 taxonomic groups (amphibian, birds, mammals, reptiles) measured in 2 ways:
     1) "pct_top_amphibian_richness", "pct_top_reptile_richness", "pct_top_bird_richness", and "pct_top_mammal_richness" represent the percentage each area overlaps with the top 20% of native species richness.
-    2) "pct_rare_amphibian_richness", "pct_rare_reptile_richness", "pct_rare_bird_richness", and "pct_rare_mammal_richness" represent the percentage each area overlaps with the top 5% of rare species richness.
-    3) "pct_endemic_amphibian_richness", "pct_endemic_reptile_richness", "pct_endemic_bird_richness", and "pct_endemic_mammal_richness" represent the percentage each area overlaps with the top 5% of weighted endemism (range-restricted, irreplaceable species).
+    2) "mean_amphibian_richness", "mean_reptile_richness", "mean_bird_richness", and "mean_mammal_richness" represent the average species richness for each area.
 - "pct_top_plant_richness": Percentage each area overlaps with the top 20% of plant species.
-- "mean_plant_richness": Average plant richness in an area.
-- "pct_rarityweighted_endemic_plant_richness": Percentage each area overlaps with the top 20% of rarity-weighted endemic plant species.
+- "mean_plant_richness": Average plant richness in each area.
 - "pct_wetlands": How much an area overlaps with wetlands, specifically freshwater emergent wetland, freshwater forested/shrub wetland, or estuarine and marine wetland.
 - "pct_freshwater_richness": How much an area overlaps with the top 20% of freshwater species richness.
 - "mean_freshwater_richness": Average freshwater species richness.
@@ -68,9 +65,6 @@ There are 12 biodiversity columns of 4 taxonomic groups (amphibian, birds, mamma
 - "pct_grazing": How much an area overlaps with lands suitable for grazing.
 - "pct_low_income": How much an area overlaps with a low-income community.
 - "pct_disadvantaged_community": The percentage of overlap that an area has with a disadvantaged community. CalEPA defines disadvantaged communities as the census tracts with the top 25% highest CalEnviroScreen score (calculated based on pollution burden and population characteristics). Higher values indicate more disadvantage.
-- "pct_newly_protected": The percentage of parcel that is newly protected. 
-- "pct_increased_management": The percentage of parcel that is under changed management.
-- "pct_data_improvement": The percentage of parcel that has had data improvements.
 
 Only use the following table:
 {table_info}.
@@ -101,18 +95,6 @@ example_assistant: {{"sql_query":
     ORDER BY "mean_plant_richness" DESC
     LIMIT 10;
 "explanation": "I used `mean_plant_richness` and returned 10 protected areas with the highest average plant richness.}}
-
-## Example: 
-example_user: "Who manages the land that overlaps the most with endemic reptile hotspots?"
-example_assistant: {{"sql_query":    
-    SELECT "manager", SUM("pct_endemic_reptile_richness" * "acres") AS total_endemic_reptile_overlap
-    FROM mydata
-    WHERE "status" != 'Non-Conservation Area'
-    GROUP BY "manager"
-    ORDER BY "total_endemic_reptile_overlap" DESC
-    LIMIT 1;
-"explanation": "I used `pct_endemic_reptile_richness`, which represents the percentage of each area that overlaps with the top 5% of endemic reptile richness, and multiplied it by `acres` to calculate the area of overlap. I excluded non-conservation lands (`status` != 'Non-Conservation Area') since they do not have managers, and then summed the overlap by manager to find who manages the most overlapping land. 
-Note that the `manager` column refers to the specific agency or organization responsible for managing the land, while `manager_type` categorizes the type of jurisdiction (e.g., Federal, State, Non Profit).}}
 
 example_user: "Show me areas open to the public in disadvantaged communities."
 example_assistant: {{"sql_query":   

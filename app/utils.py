@@ -28,6 +28,7 @@ def get_buttons(style_options, style_choice):
         buttons[name] = st.checkbox(f"{name}", key=key, on_change = sync_checkboxes, args = (key,))
 
     filter_choice = [key for key, value in buttons.items() if value]
+    
     return {column: filter_choice}
 
 def sync_checkboxes(source):
@@ -158,7 +159,7 @@ def get_summary_table(ca, column, select_colors, color_choice, filter_cols, filt
     df_network = None if df_feature is not None else get_summary(ca, combined_filter, [column], column, feature_col, colors)        
     # df for stacked 30x30 status bar chart 
     df_bar_30x30 = None if column in ["status", "gap_code"] else get_summary(ca, combined_filter | (_.status.isin(['Non-Conservation Area'])), [column, 'status'], column, feature_col, color_table(select_colors, "30x30 Status", 'status'))
-    return df_network, df_feature, df_tab, df_bar_30x30
+    return df_network, df_feature, df_tab, df_bar_30x30 
 
 
 def get_summary_table_sql(ca, column, colors, ids, feature_col = None):
@@ -178,6 +179,9 @@ def extract_columns(sql_query):
 
 ######################## MAP STYLING FUNCTIONS 
 
+def get_county_bounds(county):
+    return county_bounds[county]
+    
 from itertools import chain
 
 def get_pmtiles_style(paint, alpha=1, filter_cols=None, filter_vals=None, ids=None):
@@ -188,13 +192,32 @@ def get_pmtiles_style(paint, alpha=1, filter_cols=None, filter_vals=None, ids=No
     if ids:
         filter_expr = ["in", ["get", "id"], ["literal", ids]]
     else:
-        # Build strict 'all' filter logic: every attribute must match its allowed values
-        filters = [
-            ["match", ["get", col], val, True, False]
-            for col, val in zip(filter_cols, filter_vals)
-        ]
-        filter_expr = ["all", *filters]
-
+        # we don't want to overwhelm streamlit so if they didn't filter anything, don't provide filter arg 
+        filter_length = sum([len(x) for x in filter_vals])
+        if filter_length == 75: # this means all the filters are checked
+            filter_expr = None
+        else: 
+            filters = [
+                ["match", ["get", col], val, True, False]
+                for col, val in zip(filter_cols, filter_vals)
+            ]
+            filter_expr = ["all", *filters]
+            
+            
+    config = {
+        "id": "ca30x30",
+        "source": "ca",
+        "source-layer": source_layer_name,
+        "type": "fill",
+        "paint": {
+            "fill-color": paint,
+            "fill-opacity": alpha
+        }
+    }
+    
+    if filter_expr:
+        config["filter"] = filter_expr
+    
     return {
         "version": 8,
         "sources": {
@@ -203,20 +226,9 @@ def get_pmtiles_style(paint, alpha=1, filter_cols=None, filter_vals=None, ids=No
                 "url": f"pmtiles://{ca_pmtiles}"
             }
         },
-        "layers": [
-            {
-                "id": "ca30x30",
-                "source": "ca",
-                "source-layer": source_layer_name,
-                "type": "fill",
-                "filter": filter_expr,
-                "paint": {
-                    "fill-color": paint,
-                    "fill-opacity": alpha
-                },
-            }
-        ],
+        "layers": [config]
     }
+
 
 
 
@@ -351,11 +363,13 @@ def get_chart_settings(x, feature_name, y=None, stacked=None, metric=None, perce
     x_title = next(k for k, v in select_column.items() if v == x)
     angle = 270 if x in {
         "manager_type", "ecoregion", "status", "habitat_type",
-        "resilient_connected_network", "access_type", "climate_zone", "land_tenure"
+         "access_type", "climate_zone", "land_tenure"
     } else 0
 
     chart_title, subtitle = '', ''
     y = y or ''
+
+
 
     if percent_type == "Network":
         chart_title = f"{feature_name} Within Each {x_title}"
@@ -369,12 +383,12 @@ def get_chart_settings(x, feature_name, y=None, stacked=None, metric=None, perce
 
     if stacked:
         chart_title = f"{x_title}\nby 30x30 Status"
-
+    
     elif metric == "acres" and not stacked:
         chart_title = f"Acres of {feature_name.rstrip()}\nWithin Each {x_title}"
 
+    
     height = (
-        720 if "rarityweighted" in y else
         350 if stacked else
         620 if "freshwater" in y else
         720 if "increased" in y and percent_type == "Feature" else

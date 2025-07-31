@@ -216,6 +216,9 @@ def main():
             st.markdown(help_message)
         if st.button("🧹 Clear Filters", type="secondary", help = 'Reset all the filters to their default state.'):
             st.rerun()
+
+        
+            
         st.divider()
         
         color_choice = st.radio(
@@ -246,7 +249,8 @@ def main():
                 filter_cols = []
                 filter_vals = []
         st.divider()
-    
+
+
     #### Data layers 
         st.markdown('<p class = "medium-font-sidebar"> Data Layers:</p>', help = "Select data layers to visualize on the map. Summary charts will update based on the displayed layers.", unsafe_allow_html= True)
         #display toggles to turn on data layers            
@@ -261,6 +265,12 @@ def main():
                         st.toggle(label, key=toggle_key)
         st.divider() 
         
+        # county choice
+        county_choice = st.selectbox("County", counties, index = 0, placeholder='Select a county')
+        if county_choice != 'All':
+            filter_cols.append('county')
+            filter_vals.append([county_choice])
+        
         #basemap choices
         b = st.selectbox("Basemap", basemaps,index= 40)
         m.add_basemap(b)
@@ -269,7 +279,7 @@ def main():
         # adding github logo 
         st.markdown(f"<div class='spacer'>{github_html}</div>", unsafe_allow_html=True)
         st.markdown(":left_speech_bubble: [Get in touch or report an issue](https://github.com/boettiger-lab/CBN-taskforce/issues)")
-        if st.button("🤖 Clear Chatbot Cache", on_click=run_sql.clear, help = 'Reset the chatbot’s cache (useful if it behaves unexpectedly)'):
+        if st.button(":robot_face: Clear Chatbot Cache", on_click=run_sql.clear, help = 'Reset the chatbot’s cache (useful if it behaves unexpectedly)'):
             run_sql.clear()
     
     column = select_column[color_choice]
@@ -283,7 +293,10 @@ def main():
     if 'llm_output' not in locals():
         df_network, _, df_tab, df_bar_30x30 = get_summary_table(ca, column, select_colors, color_choice, filter_cols, filter_vals,colorby_vals)
         style = get_pmtiles_style(style_options[color_choice], alpha, filter_cols, filter_vals)
-        bounds = [-124.42174575, 32.53428607, -114.13077782, 42.00950367]
+        if county_choice != 'All':
+            bounds = get_county_bounds(county_choice)
+        else:
+            bounds = [-124.42174575, 32.53428607, -114.13077782, 42.00950367]
     else:
         if 'not_mapping' not in locals():
             style = get_pmtiles_style(style_options[color_choice], ids = ids)
@@ -366,7 +379,6 @@ def main():
     
                 if show_stacked:
                     y_axis = 'percent_group' if chart_choice == 'percent' else 'acres'
-                    color_title = color_choice.replace("Resilient & Connected Network", "Resilient &\n Connected Network")
                     chart_title = f"{color_title}\n by 30x30 Status"
     
                     chart = stacked_bar(
