@@ -45,8 +45,8 @@ keys = [
     "pct_top_freshwater_richness",
     # "mean_freshwater_richness",
     "pct_farmland",
-    # "pct_grazing_lands",
-    "pct_grazing",
+    "pct_grazing_lands",
+    # "pct_grazing",
     "pct_disadvantaged_community", 
     # "pct_low_income_community", 
     # "pct_fire"
