@@ -11,8 +11,7 @@ from utils import *
 import traceback
 
 def main():
-    ## Create the table from remote parquet only if it doesn't already exist on disk
-    con = ibis.duckdb.connect("duck.db", extensions=["spatial"])
+    con = ibis.duckdb.connect(extensions=["spatial"]) # not saving to disk 
     current_tables = con.list_tables()
     
     if "mydata" not in set(current_tables):
@@ -101,7 +100,7 @@ def main():
         sql_query = output.sql_query
         explanation =output.explanation
         if not sql_query: # if the chatbot can't generate a SQL query.
-            return pd.DataFrame({'sub_id' : []}),'', explanation
+            return pd.DataFrame({'id' : []}),'', explanation
         result = ca.sql(sql_query).execute()
         if result.empty:
             explanation = "This query did not return any results. Please try again with a different query."
@@ -127,7 +126,7 @@ def main():
     if prompt:
         try:
             llm_output, sql_query, llm_explanation = run_sql(prompt)
-            if ("sub_id" in llm_output.columns) and (not llm_output.empty):
+            if ("id" in llm_output.columns) and (not llm_output.empty):
                 llm_cols = extract_columns(sql_query)
                 for x in llm_cols:
                     group_by_name, group_by = next(((k, v) for k, v in select_column.items() if v == x), (None, None))
@@ -158,8 +157,8 @@ def main():
                                 st.code(sql_query, language="sql")
                                 st.stop()
                                 
-                            # output without mapping columns (sub_id, geom)
-                            elif "sub_id" not in llm_output.columns and "geom" not in llm_output.columns:
+                            # output without mapping columns (id, geom)
+                            elif "id" not in llm_output.columns and "geom" not in llm_output.columns:
                                 st.write(llm_output)
                                 not_mapping = True
         
@@ -171,8 +170,8 @@ def main():
                                     st.code(sql_query,language = "sql") 
                                     
                         # extract ids, columns, bounds if present
-                        if "sub_id" in llm_output.columns and not llm_output.empty:
-                            ids = llm_output['sub_id'].tolist()
+                        if "id" in llm_output.columns and not llm_output.empty:
+                            ids = llm_output['id'].tolist()
                             llm_cols = extract_columns(sql_query)
                             bounds = llm_output.total_bounds.tolist()
                         else:
