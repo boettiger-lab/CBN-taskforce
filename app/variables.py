@@ -35,15 +35,9 @@ keys = [
     "pct_top_reptile_richness", 
     "pct_top_bird_richness", 
     "pct_top_mammal_richness", 
-    # "mean_amphibian_richness",
-    # "mean_reptile_richness", 
-    # "mean_bird_richness", 
-    # "mean_mammal_richness", 
     "pct_top_plant_richness", 
-    # "mean_plant_richness", 
     "pct_wetlands",
     "pct_top_freshwater_richness",
-    # "mean_freshwater_richness",
     "pct_farmland",
     "pct_grazing_lands",
     "pct_disadvantaged_community", 
@@ -56,33 +50,19 @@ chatbot_toggles = {key: False for key in keys}
 # data layers dict 
 layer_config = [
     #[(section, 'a_amph', [(col_name, full name, key, chatbot toggle key, citation)])]
-    ('🐸 Amphibian', 'a_amph', [
+    ('🦜 Animal', 'a_amph', [
         ('pct_top_amphibian_richness', 'Amphibian Richness', keys[0], chatbot_toggles[keys[0]], 'Areas with the top 20% of amphibian richness (Reference #5)'),
-        # ('mean_amphibian_richness', 'Mean Amphibian Richness', keys[1], chatbot_toggles[keys[1]], 'Average amphibian richness calculated over each area (Reference #5)'),
-    ]),
-    ('🐍 Reptile', 'a_rept', [
         ('pct_top_reptile_richness', 'Reptile Richness', keys[1], chatbot_toggles[keys[1]], 'Areas with the top 20% of reptile richness (Reference #5)'),
-        # ('mean_reptile_richness', 'Mean Reptile Richness', keys[3], chatbot_toggles[keys[3]], 'Average reptile richness calculated over each area (Reference #5)'),
-
-    ]),
-    ('🦜 Bird', 'a_bird', [
         ('pct_top_bird_richness', 'Bird Richness', keys[2], chatbot_toggles[keys[2]], 'Areas with the top 20% of bird richness (Reference #5)'),
-        # ('mean_bird_richness', 'Mean Bird Richness', keys[5], chatbot_toggles[keys[5]], 'Average bird richness calculated over each area (Reference #5)'),
-
-    ]),
-    ('🦌 Mammal', 'a_mammal', [
         ('pct_top_mammal_richness', 'Mammal Richness', keys[3], chatbot_toggles[keys[3]], 'Areas with the top 20% of mammal richness (Reference #5)'),
-        # ('mean_mammal_richness', 'Mean Mammal Richness', keys[7], chatbot_toggles[keys[7]], 'Average mammal richness calculated over each area (Reference #5)'),
     ]),
     ('🌿 Plant', 'a_plant', [
         ('pct_top_plant_richness', 'Plant Richness', keys[4], chatbot_toggles[keys[4]], 'Areas with the top 20% of plant richness (Reference #6)'),
-        # ('mean_plant_richness', 'Mean Plant Richness', keys[9], chatbot_toggles[keys[9]], 'Average plant richness calculated over each area (Reference #6)'),
 
     ]),
     ('💧 Freshwater Resources', 'freshwater', [
         ('pct_wetlands', 'Wetlands', keys[5], chatbot_toggles[keys[5]], 'Areas that are freshwater emergent, freshwater forested/shrub, or estuarine and marine wetlands (Reference #7)'),
         ('pct_top_freshwater_richness', 'Freshwater Species Richness', keys[6], chatbot_toggles[keys[6]], 'Areas with the top 20% of freshwater species richness (Reference #8)'),
-        # ('mean_freshwater_richness', 'Mean Freshwater Species Richness', keys[12], chatbot_toggles[keys[12]], 'Average freshwater species richness calculated over each area (Reference #8)'),
     ]),
     ('🚜 Agriculture', 'agriculture', [
         ('pct_farmland', 'Farmland', keys[7], chatbot_toggles[keys[7]], 'Farmlands with prime, unique, or of statewide or local importance (Reference #9)'),
@@ -676,6 +656,10 @@ county_bounds = {
 
 
 
+#maplibregl tooltip 
+tooltip_cols = ['id','name','manager','county','status','gap_code',
+                'habitat_type','climate_zone','land_tenure','ecoregion','acres']
+tooltip_template = "<br>".join([f"{col}: {{{{ {col} }}}}" for col in tooltip_cols])
 
 
 
@@ -698,4 +682,3 @@ llm_options = {
     "gemma3": ChatOpenAI(model = "gemma3", api_key=api_key, base_url = "https://llm.nrp-nautilus.io/",  temperature=0),
 
 }
-
