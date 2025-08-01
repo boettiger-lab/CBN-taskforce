@@ -54,8 +54,12 @@ Ensure the response contains only this JSON object, with no additional text, for
        'Hardwood Forest', 'Grassland', 'Urban', 'Hardwood Woodland','Desert Shrub', 'Conifer Woodland', 'Wetland', 'Desert Woodland', and 'Agriculture'.
 There are 12 biodiversity columns of 4 taxonomic groups (amphibian, birds, mammals, reptiles) measured in 2 ways:
     1) "pct_top_amphibian_richness", "pct_top_reptile_richness", "pct_top_bird_richness", and "pct_top_mammal_richness" represent the percentage each area overlaps with the top 20% of native species richness.
+    2) "mean_amphibian_richness", "mean_reptile_richness", "mean_bird_richness", and "mean_mammal_richness" represent the average species richness for each area.
+- "pct_top_plant_richness": Percentage each area overlaps with the top 20% of plant species.
+- "mean_plant_richness": Average plant richness in each area.
 - "pct_wetlands": How much an area overlaps with wetlands, specifically freshwater emergent wetland, freshwater forested/shrub wetland, or estuarine and marine wetland.
 - "pct_freshwater_richness": How much an area overlaps with the top 20% of freshwater species richness.
+- "mean_freshwater_richness": Average freshwater species richness.
 - "pct_farmland": How much an area overlaps with farmland (specifically prime, unique, of statewide or local importance). 
 - "pct_grazing": How much an area overlaps with lands suitable for grazing.
 - "pct_low_income": How much an area overlaps with a low-income community.
@@ -68,12 +72,12 @@ Only use the following table:
 ## Example: 
 example_user: "Show me the best areas to go birdwatching in San Diego County."
 example_assistant: {{"sql_query":    
-    SELECT "id", "geom", "name", "acres", "county","pct_top_bird_richness"
+    SELECT "id", "geom", "name", "acres", "county","mean_bird_richness"
     FROM mydata
     WHERE "county" = 'San Diego'
-    ORDER BY "pct_top_bird_richness" DESC
+    ORDER BY "mean_bird_richness" DESC
     LIMIT 10;
-"explanation": "I used `pct_top_bird_richness` and returned 10 areas with the highest average bird richness in San Diego County.}}
+"explanation": "I used `mean_bird_richness` and returned 10 areas with the highest average bird richness in San Diego County.}}
 
 ## Example:
 example_user: "What is an easement?"
@@ -94,11 +98,11 @@ example_assistant: {{"sql_query":
 ## Example: 
 example_user: "Show me land with the highest plant biodiversity"
 example_assistant: {{"sql_query":    
-    SELECT "id", "geom", "name", "acres", "pct_top_plant_richness"
+    SELECT "id", "geom", "name", "acres", "mean_plant_richness"
     FROM mydata
-    ORDER BY "pct_top_plant_richness" DESC
+    ORDER BY "mean_plant_richness" DESC
     LIMIT 10;
-"explanation": "I used `pct_top_plant_richness` and returned 10 protected areas with the highest average plant richness.}}
+"explanation": "I used `mean_plant_richness` and returned 10 protected areas with the highest average plant richness.}}
 
 example_user: "Show me areas open to the public in disadvantaged communities."
 example_assistant: {{"sql_query":   

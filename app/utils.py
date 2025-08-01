@@ -208,6 +208,7 @@ def get_pmtiles_style(paint, alpha=1, filter_cols=None, filter_vals=None, ids=No
         "id": "ca30x30",
         "source": "ca",
         "source-layer": source_layer_name,
+        # "source-layer": 'ca30x30_cbn_v3',
         "type": "fill",
         "paint": {
             "fill-color": paint,
@@ -231,8 +232,7 @@ def get_pmtiles_style(paint, alpha=1, filter_cols=None, filter_vals=None, ids=No
 
 
 
-
-def get_legend(style_options, color_choice, df = None, column = None):
+def get_legend(style_options, color_choice, leafmap_backend = 'foliumap', df = None, column = None):
     """
     Generates a legend dictionary with color mapping and formatting adjustments.
     """
@@ -241,8 +241,11 @@ def get_legend(style_options, color_choice, df = None, column = None):
         if ~df.empty:
             categories = df[column].to_list() #if we filter out categories, don't show them on the legend 
             legend = {cat: color for cat, color in legend.items() if str(cat) in categories}
-       
     position, fontsize, bg_color = 'bottomleft', 15, 'white'
+
+    if leafmap_backend == 'maplibregl':
+        position = 'bottom-left'
+
 
     # shorten legend for ecoregions 
     if color_choice == "Ecoregion":
@@ -553,4 +556,3 @@ def minio_logger(consent, query, sql_query, llm_explanation, llm_choice, filenam
     
     pd.concat([log,df]).to_csv(filename, index=False, header=True)
     mc.fput_object(bucket, filename, filename, content_type="text/csv")
-

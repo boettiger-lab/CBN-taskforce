@@ -1,5 +1,5 @@
 import streamlit as st
-import leafmap.foliumap as leafmap
+# import leafmap.foliumap as leafmap
 import altair as alt
 import ibis
 from ibis import _
@@ -9,6 +9,7 @@ import openai
 from variables import *
 from utils import *
 import traceback
+import importlib
 
 def main():
     con = ibis.duckdb.connect("duck.db", extensions=["spatial"])
@@ -46,9 +47,9 @@ def main():
     st.divider()
     
     # m = leafmap.Map(style="positron")
-    m = leafmap.Map(center=[35, -100], zoom=5, layers_control=True, fullscreen_control=True)
+    # m = leafmap.Map(center=[35, -100], zoom=5, layers_control=True, fullscreen_control=True)
     
-    basemaps = leafmap.basemaps.keys()
+    # basemaps = leafmap.basemaps.keys()
     #############
     
     chatbot_container = st.container()
@@ -57,8 +58,14 @@ def main():
         with llm_left_col:
             with st.popover("💬 Example Queries"):
                 st.markdown(example_queries)
-    
+                st.warning("""
+                **Chatbot Limitations:**
+                - The chatbot is independent from **Filters**, which do not modify the chatbot's input or output.
+                - The chatbot has no memory and won't remember previous questions or responses.
+                - The chatbot can’t directly change map colors or charts, it only updates them by adjusting **Group by** or **Data Layers** based on your query. To change the map or charts, ask about a grouping variable (e.g., `ecoregion`) or data layer (e.g., `wetlands`). 
+                """, icon="⚠️")
                 st.info('If the map appears blank, queried data may be too small to see at the default zoom level. Check the table below the map, as query results will also be displayed there.', icon="ℹ️")
+
                 
         with llm_right_col:
             llm_choice = st.selectbox("Select LLM:", llm_options, key = "llm", help = "Select which model to use.")   
@@ -179,6 +186,7 @@ def main():
                             not_mapping = True
     
                         # update toggles based on returned columns from SQL query
+                        llm_cols = [x.replace('mean_','pct_top_') for x in llm_cols]
                         chatbot_toggles = {
                             key: (True if key in llm_cols else value) 
                             for key, value in chatbot_toggles.items()
@@ -231,8 +239,9 @@ def main():
         colorby_vals = get_color_vals(style_options, color_choice)
         alpha = 0.8
         st.divider()
-    
-        st.markdown('<p class = "medium-font-sidebar"> Filters:</p>', help = "Apply filters to adjust what data is shown on the map.", unsafe_allow_html= True)
+
+        #### Data layers
+        st.markdown('<p class = "medium-font-sidebar"> Filters:</p>', help = "Apply filters to adjust what data is shown on the map. Filters do not modify the chatbot's input/output.", unsafe_allow_html= True)
         for label in style_options: # get selected filters (based on the buttons selected)
             with st.expander(label):  
                 if label in ["GAP Code","30x30 Status"]: # gap code 1 and 2 are on by default
@@ -248,11 +257,13 @@ def main():
             else: 
                 filter_cols = []
                 filter_vals = []
+
+
         st.divider()
 
 
     #### Data layers 
-        st.markdown('<p class = "medium-font-sidebar"> Data Layers:</p>', help = "Select data layers to visualize on the map. Summary charts will update based on the displayed layers.", unsafe_allow_html= True)
+        st.markdown('<p class = "medium-font-sidebar"> Data Layers:</p>', help = "Select data layers to display summary charts.", unsafe_allow_html= True)
         #display toggles to turn on data layers            
         for section, slider_key, items in layer_config:
             with st.expander(section):
@@ -270,8 +281,17 @@ def main():
         if county_choice != 'All':
             filter_cols.append('county')
             filter_vals.append([county_choice])
-        
+
+        leafmap_choice = st.selectbox("Leafmap module", ['maplibregl','foliumap'])
+        if leafmap_choice == "maplibregl":
+            leafmap = importlib.import_module("leafmap.maplibregl")
+            m = leafmap.Map(style="positron")
+        else:
+            leafmap = importlib.import_module("leafmap.foliumap")
+            m = leafmap.Map(center=[35, -100], zoom=5, layers_control=True, fullscreen_control=True)
+
         #basemap choices
+        basemaps = leafmap.basemaps.keys()
         b = st.selectbox("Basemap", basemaps,index= 40)
         m.add_basemap(b)
         st.divider()
@@ -300,25 +320,31 @@ def main():
         df_network, _ = get_summary_table_sql(ca, column, colors, ids)
     
     ## mapping data 
-    legend, position, bg_color, fontsize = get_legend(style_options, color_choice, df_network, column)
+    legend, position, bg_color, fontsize = get_legend(style_options, color_choice, leafmap_choice, df_network, column)
+
     
     if 'not_mapping' not in locals():      
-        m.add_legend(legend_dict = legend, position = position)
-        m.add_pmtiles(ca_pmtiles, style=style, name="CA", tooltip=False, zoom_to_layer=True)
         if 'llm_output' not in locals():
             if county_choice != 'All':
                 bounds = get_county_bounds(county_choice)
             else:
                 bounds = [-124.42174575, 32.53428607, -114.13077782, 42.00950367]
+        if leafmap_choice == "maplibregl":
+       
+            m.add_pmtiles(ca_pmtiles, style=style, name="CA", tooltip=True, 
+                          template = tooltip_template, fit_bounds=True)
+            m.fit_bounds(bounds)
+        else:
+            m.add_pmtiles(ca_pmtiles, style=style, name="CA", tooltip=False, zoom_to_layer=True)
+            m.zoom_to_bounds(bounds)   
+            # add custom tooltip to pmtiles layer
+            for layer in m._children.values():
+                if isinstance(layer, leafmap.PMTilesLayer):
+                    pmtiles_layer = layer
+                    break
+            pmtiles_layer.add_child(CustomTooltip())
+        m.add_legend(legend_dict = legend, position = position)
 
-        m.zoom_to_bounds(bounds)
-        # add custom tooltip to pmtiles layer
-        for layer in m._children.values():
-            if isinstance(layer, leafmap.PMTilesLayer):
-                pmtiles_layer = layer
-                break
-        pmtiles_layer.add_child(CustomTooltip())
-    
 
     
     # check if any layer toggle is active
@@ -463,4 +489,3 @@ if __name__ == "__main__":
     except Exception as e:
         tb_str = traceback.format_exc()  # full multiline traceback string
         st.error(error_messages["unexpected_error"](e, tb_str))
-
