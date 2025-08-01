@@ -2,6 +2,11 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: cbn-ingress
+  annotations:
+    haproxy.org/timeout-server: "300s"
+    haproxy.org/timeout-client: "300s"
+    haproxy.org/timeout-connect: "300s"
+    haproxy.org/timeout-http-request: "300s"
 spec:
   ingressClassName: haproxy
   rules:
