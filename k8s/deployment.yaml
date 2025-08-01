@@ -17,14 +17,21 @@ spec:
     spec:
       containers:
       - name: streamlit
-        image: ghcr.io/boettiger-lab/cbn-taskforce:k8s
+        image: ghcr.io/boettiger-lab/cbn-taskforce:latest
         imagePullPolicy: Always
         env:
+        - name: MINIO_KEY
+          value: "huggingface"
+        - name: MINIO_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: minio-secret
+              key: MINIO_SECRET
         - name: NRP_API_KEY
           valueFrom:
             secretKeyRef:
               name: nrp-api-key
-              key: NRP_API_KEY  
+              key: NRP_API_KEY
         resources:
           requests:
             cpu: 2
