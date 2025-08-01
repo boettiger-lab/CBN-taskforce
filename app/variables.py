@@ -45,9 +45,10 @@ keys = [
     "pct_top_freshwater_richness",
     # "mean_freshwater_richness",
     "pct_farmland",
-    "pct_grazing_lands",
+    # "pct_grazing_lands",
+    "pct_grazing",
     "pct_disadvantaged_community", 
-    "pct_low_income_community", 
+    # "pct_low_income_community", 
     # "pct_fire"
 ]
 
@@ -90,7 +91,7 @@ layer_config = [
     ]),
     ('👤 People', 'SVI', [
         ('pct_disadvantaged_community', 'Disadvantaged Communities', keys[9], chatbot_toggles[keys[9]], 'Areas in disadvantaged communities (Reference #10)'),
-        ('pct_low_income_community', 'Low-Income Communities', keys[10], chatbot_toggles[keys[10]], 'Areas in low-income communities (Reference #11)'),
+        # ('pct_low_income_community', 'Low-Income Communities', keys[10], chatbot_toggles[keys[10]], 'Areas in low-income communities (Reference #11)'),
     ]),
     # ('🔥 Climate Risks', 'calfire', [
         # ('pct_fire', 'Wildfires', keys[11], chatbot_toggles[keys[11]], 'Areas burned in the last 10 years (Reference #12)'),
