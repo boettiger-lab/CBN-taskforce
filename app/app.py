@@ -205,6 +205,7 @@ def main():
                 
                 else:
                     prompt = prompt.replace('\n', '')
+                    tb_str = traceback.format_exc()  # full multiline traceback string
                     st.error(error_messages["unexpected_llm_error"](prompt, e, tb_str))
                 st.stop()
     
