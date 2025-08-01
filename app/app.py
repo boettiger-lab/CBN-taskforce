@@ -11,7 +11,7 @@ from utils import *
 import traceback
 
 def main():
-    con = ibis.duckdb.connect(extensions=["spatial"]) # not saving to disk 
+    con = ibis.duckdb.connect("duck.db", extensions=["spatial"])
     current_tables = con.list_tables()
     
     if "mydata" not in set(current_tables):
