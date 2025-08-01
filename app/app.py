@@ -11,7 +11,6 @@ from utils import *
 import traceback
 
 def main():
-    ## Create the table from remote parquet only if it doesn't already exist on disk
     con = ibis.duckdb.connect("duck.db", extensions=["spatial"])
     current_tables = con.list_tables()
     
@@ -216,6 +215,9 @@ def main():
             st.markdown(help_message)
         if st.button("🧹 Clear Filters", type="secondary", help = 'Reset all the filters to their default state.'):
             st.rerun()
+
+        
+            
         st.divider()
         
         color_choice = st.radio(
@@ -246,7 +248,8 @@ def main():
                 filter_cols = []
                 filter_vals = []
         st.divider()
-    
+
+
     #### Data layers 
         st.markdown('<p class = "medium-font-sidebar"> Data Layers:</p>', help = "Select data layers to visualize on the map. Summary charts will update based on the displayed layers.", unsafe_allow_html= True)
         #display toggles to turn on data layers            
@@ -260,6 +263,12 @@ def main():
                         _, label, toggle_key, citation = item
                         st.toggle(label, key=toggle_key)
         st.divider() 
+        
+        # county choice
+        county_choice = st.selectbox("County", counties, index = 0, placeholder='Select a county')
+        if county_choice != 'All':
+            filter_cols.append('county')
+            filter_vals.append([county_choice])
         
         #basemap choices
         b = st.selectbox("Basemap", basemaps,index= 40)
@@ -275,7 +284,6 @@ def main():
     column = select_column[color_choice]
     colors = color_table(select_colors, color_choice, column)
     main = st.container()
-    
     with main:
         map_col, stats_col = st.columns([3,2])
     
@@ -283,7 +291,8 @@ def main():
     if 'llm_output' not in locals():
         df_network, _, df_tab, df_bar_30x30 = get_summary_table(ca, column, select_colors, color_choice, filter_cols, filter_vals,colorby_vals)
         style = get_pmtiles_style(style_options[color_choice], alpha, filter_cols, filter_vals)
-        bounds = [-124.42174575, 32.53428607, -114.13077782, 42.00950367]
+
+            
     else:
         if 'not_mapping' not in locals():
             style = get_pmtiles_style(style_options[color_choice], ids = ids)
@@ -295,7 +304,13 @@ def main():
     if 'not_mapping' not in locals():      
         m.add_legend(legend_dict = legend, position = position)
         m.add_pmtiles(ca_pmtiles, style=style, name="CA", tooltip=False, zoom_to_layer=True)
-    
+        if 'llm_output' not in locals():
+            if county_choice != 'All':
+                bounds = get_county_bounds(county_choice)
+            else:
+                bounds = [-124.42174575, 32.53428607, -114.13077782, 42.00950367]
+
+        m.zoom_to_bounds(bounds)
         # add custom tooltip to pmtiles layer
         for layer in m._children.values():
             if isinstance(layer, leafmap.PMTilesLayer):
@@ -303,8 +318,7 @@ def main():
                 break
         pmtiles_layer.add_child(CustomTooltip())
     
-        if 'bounds' in locals(): 
-            m.zoom_to_bounds(bounds)
+
     
     # check if any layer toggle is active
     any_chart_toggled = any(
@@ -335,8 +349,16 @@ def main():
                     if ('geom' in llm_output.columns) and (not llm_output.empty):
                         llm_output = llm_output.drop('geom',axis = 1)
                     if not llm_output.empty:
-                        st.dataframe(llm_output, use_container_width = True)
-    
+                        if 'name' in llm_output.columns and 'id' in llm_output.columns:
+                            llm_grouped = (llm_output.groupby('name')
+                                            .agg({col: ('sum' if col == 'acres' else 'first') 
+                                              for col in llm_output.columns 
+                                              if col != 'name'})).reset_index()
+                            llm_grouped.drop(['id'], axis=1, inplace = True)
+                            st.dataframe(llm_grouped, use_container_width = True)
+                        else:
+                            st.dataframe(llm_output, use_container_width = True)
+
             st.caption("***The label 'established' is inferred from the California Protected Areas Database, which may introduce artifacts. For details on our methodology, please refer to our <a href='https://github.com/boettiger-lab/CBN-taskforce' target='_blank'>our source code</a>.", unsafe_allow_html=True)
             st.caption("***Under California’s 30x30 framework, only GAP codes 1 and 2 are counted toward the conservation goal.") 
     
@@ -366,8 +388,7 @@ def main():
     
                 if show_stacked:
                     y_axis = 'percent_group' if chart_choice == 'percent' else 'acres'
-                    color_title = color_choice.replace("Resilient & Connected Network", "Resilient &\n Connected Network")
-                    chart_title = f"{color_title}\n by 30x30 Status"
+                    chart_title = f"{color_choice}\n by 30x30 Status"
     
                     chart = stacked_bar(
                         df=df_bar_30x30,
