@@ -495,9 +495,12 @@ help_message = '''
 
 example_queries = """
 Mapping queries:
+- Show me the best areas to go birdwatching in San Diego County. 
 - Show me amphibian biodiversity hotspots that aren't currently conserved.
 - Show me protected areas in disadvantaged communities.
 - Show me all 30x30 conservation areas managed by The Nature Conservancy.
+- Show me GAP 3 lands where 50% or more of the area overlaps with regions of high biodiversity.
+
 
 Exploratory data queries:
 - What is a GAP code?
