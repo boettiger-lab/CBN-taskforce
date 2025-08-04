@@ -195,3 +195,4 @@ k8s/secret-deployment.yaml
 **/*.lyr
 duck.db
 query_log.csv
+**/*.zip

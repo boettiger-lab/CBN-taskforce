@@ -1,5 +1,4 @@
 import streamlit as st
-# import leafmap.foliumap as leafmap
 import altair as alt
 import ibis
 from ibis import _
@@ -46,10 +45,6 @@ def main():
     
     st.divider()
     
-    # m = leafmap.Map(style="positron")
-    # m = leafmap.Map(center=[35, -100], zoom=5, layers_control=True, fullscreen_control=True)
-    
-    # basemaps = leafmap.basemaps.keys()
     #############
     
     chatbot_container = st.container()
@@ -282,13 +277,15 @@ def main():
             filter_cols.append('county')
             filter_vals.append([county_choice])
 
-        leafmap_choice = st.selectbox("Leafmap module", ['maplibregl','foliumap'])
-        if leafmap_choice == "maplibregl":
+        leafmap_choice = st.selectbox("Leafmap module", ['MapLibre','Folium'])
+        if leafmap_choice == "MapLibre":
             leafmap = importlib.import_module("leafmap.maplibregl")
             m = leafmap.Map(style="positron")
         else:
             leafmap = importlib.import_module("leafmap.foliumap")
-            m = leafmap.Map(center=[35, -100], zoom=5, layers_control=True, fullscreen_control=True)
+            m = leafmap.Map(center=[35, -100], zoom=5, 
+                            draw_control = False, search_control = False,
+                            measure_control = False)
 
         #basemap choices
         basemaps = leafmap.basemaps.keys()
@@ -329,20 +326,22 @@ def main():
                 bounds = get_county_bounds(county_choice)
             else:
                 bounds = [-124.42174575, 32.53428607, -114.13077782, 42.00950367]
-        if leafmap_choice == "maplibregl":
+        if leafmap_choice == "MapLibre":
        
             m.add_pmtiles(ca_pmtiles, style=style, name="CA", tooltip=True, 
                           template = tooltip_template, fit_bounds=True)
             m.fit_bounds(bounds)
         else:
-            m.add_pmtiles(ca_pmtiles, style=style, name="CA", tooltip=False, zoom_to_layer=True)
+            m.add_pmtiles(ca_pmtiles, style=style, name="30x30 Conserved Areas (Terrestrial) by CA Nature (2024)", tooltip=False, zoom_to_layer=True)
             m.zoom_to_bounds(bounds)   
+            
             # add custom tooltip to pmtiles layer
             for layer in m._children.values():
                 if isinstance(layer, leafmap.PMTilesLayer):
                     pmtiles_layer = layer
                     break
             pmtiles_layer.add_child(CustomTooltip())
+
         m.add_legend(legend_dict = legend, position = position)
 
 

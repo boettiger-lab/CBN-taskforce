@@ -208,6 +208,7 @@ def get_pmtiles_style(paint, alpha=1, filter_cols=None, filter_vals=None, ids=No
         "id": "ca30x30",
         "source": "ca",
         "source-layer": source_layer_name,
+        # "source-layer": 'ca30x30_cbn_v3fgb',
         # "source-layer": 'ca30x30_cbn_v3',
         "type": "fill",
         "paint": {
@@ -232,7 +233,7 @@ def get_pmtiles_style(paint, alpha=1, filter_cols=None, filter_vals=None, ids=No
 
 
 
-def get_legend(style_options, color_choice, leafmap_backend = 'foliumap', df = None, column = None):
+def get_legend(style_options, color_choice, leafmap_backend, df = None, column = None):
     """
     Generates a legend dictionary with color mapping and formatting adjustments.
     """
@@ -243,7 +244,7 @@ def get_legend(style_options, color_choice, leafmap_backend = 'foliumap', df = N
             legend = {cat: color for cat, color in legend.items() if str(cat) in categories}
     position, fontsize, bg_color = 'bottomleft', 15, 'white'
 
-    if leafmap_backend == 'maplibregl':
+    if leafmap_backend == 'MapLibre':
         position = 'bottom-left'
 
 
