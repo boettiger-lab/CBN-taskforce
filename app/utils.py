@@ -207,8 +207,8 @@ def get_pmtiles_style(paint, alpha=1, filter_cols=None, filter_vals=None, ids=No
     config = {
         "id": "ca30x30",
         "source": "ca",
-        "source-layer": source_layer_name,
-        # "source-layer": 'ca30x30_cbn_v3fgb',
+        # "source-layer": source_layer_name,
+        "source-layer": 'ca30x30_cbn_v3fgb',
         # "source-layer": 'ca30x30_cbn_v3',
         "type": "fill",
         "paint": {

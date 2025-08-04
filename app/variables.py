@@ -1,8 +1,7 @@
 # urls for main layer 
 ca_parquet = 'https://minio.carlboettiger.info/public-ca30x30/ca30x30_cbn_v3.parquet'
-ca_pmtiles = 'https://minio.carlboettiger.info/public-ca30x30/ca30x30_cbn_v3.pmtiles'
+ca_pmtiles = 'https://minio.carlboettiger.info/public-ca30x30/ca30x30_cbn_v3_z12_nofeatlimit_droprate0.pmtiles'
 # 
-
 # computed by taking the sum of all the acres in this file:
 # https://minio.carlboettiger.info/public-ca30x30/CBN-data/Progress_data_new_protection/Land_Status_Zone_Ecoregion_Counties/all_regions_reGAP_county_eco.parquet
 ca_area_acres = 101523750.68856516 
@@ -42,7 +41,6 @@ keys = [
     "pct_grazing_lands",
     "pct_disadvantaged_community", 
     "pct_low_income_community", 
-    # "pct_fire"
 ]
 
 chatbot_toggles = {key: False for key in keys}
@@ -72,9 +70,6 @@ layer_config = [
         ('pct_disadvantaged_community', 'Disadvantaged Communities', keys[9], chatbot_toggles[keys[9]], 'Areas in disadvantaged communities (Reference #10)'),
         ('pct_low_income_community', 'Low-Income Communities', keys[10], chatbot_toggles[keys[10]], 'Areas in low-income communities (Reference #11)'),
     ]),
-    # ('🔥 Climate Risks', 'calfire', [
-        # ('pct_fire', 'Wildfires', keys[11], chatbot_toggles[keys[11]], 'Areas burned in the last 10 years (Reference #12)'),
-    # ]),
 ]
 
 # colors for plotting 
