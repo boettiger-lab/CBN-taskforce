@@ -391,7 +391,9 @@ def main():
     
                 # display the pill selection if we will use any barcharts
                 if any_chart_toggled or show_stacked or show_chatbot_chart:
-                    option_map = {'acres': "Acres", 'percent': "%"}
+                    # option_map = {'acres': "Acres", 'percent': "%"}
+                    option_map = {'acres': "Acres", 'percent_network': "% of Network", 'percent_feature': "% of Feature"}
+
                     chart_choice = st.pills(
                         label="Bar chart metrics",
                         options=option_map.keys(),
@@ -405,7 +407,7 @@ def main():
                     st.warning("Please select a metric to display bar chart.")
     
                 if show_stacked:
-                    y_axis = 'percent_group' if chart_choice == 'percent' else 'acres'
+                    y_axis = 'percent_group' if (chart_choice in ['percent_network','percent_feature']) else 'acres'
                     chart_title = f"{color_choice}\n by 30x30 Status"
     
                     chart = stacked_bar(
@@ -419,7 +421,7 @@ def main():
                     st.altair_chart(chart, use_container_width=True) 
                     caption_text = (
                         f"*Percent of {color_choice} within each 30x30 conservation status."
-                        if chart_choice == 'percent'
+                        if (chart_choice in ['percent_network','percent_feature'])
                         else f"*Acres of {color_choice} within each 30x30 conservation status."
                     )
                     st.markdown(f'<p class="caption">{caption_text}</p>', unsafe_allow_html=True)
@@ -438,14 +440,14 @@ def main():
                         if ("Richness" in label) or ("Land" in label) or ("Communities" in label):
                             label += "\n"
             
-                        if chart_choice == 'percent':
+                        if chart_choice == 'percent_network':
                             # Percent of NETWORK
                             feature_col_net = f"pct_network_{suffix_clean}"
                             st.altair_chart(
                                 bar_chart(df_network, column, feature_col_net, label, metric=chart_choice, percent_type="Network"),
                                 use_container_width=True,
                             )
-    
+                        elif chart_choice == 'percent_feature':
                             # Percent of FEATURE
                             feature_col_feat = f"pct_feature_{suffix_clean}"
                             _, df_feature, _, _ = get_summary_table(
