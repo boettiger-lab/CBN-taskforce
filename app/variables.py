@@ -1,11 +1,10 @@
 # urls for main layer 
 ca_parquet = 'https://minio.carlboettiger.info/public-ca30x30/ca30x30_cbn_v3.parquet'
-ca_pmtiles = 'https://minio.carlboettiger.info/public-ca30x30/ca30x30_cbn_v3_z12.pmtiles'
+ca_pmtiles = 'https://minio.carlboettiger.info/public-ca30x30/ca30x30_cbn_v3.pmtiles'
 
 # computed by taking the sum of all the acres in this file:
 # https://minio.carlboettiger.info/public-ca30x30/CBN-data/Progress_data_new_protection/Land_Status_Zone_Ecoregion_Counties/all_regions_reGAP_county_eco.parquet
 ca_area_acres = 101523750.68856516 
-style_choice = "GAP Status Code"
 chart_choice = "percent" # 
 
 # this should go in utils, but I need it to build urls
@@ -193,6 +192,17 @@ app_formatting =  """
             text-align: right !important;
             font-style: italic !important;
             color: gray; /* optional: caption-like color */
+        }
+        .st-key-county div[data-baseweb="select"] > div:first-child {
+            background-color: #f0f2f5 !important;
+            border-color: #caccd0 !important;
+            font-size: 14px !important;
+            height: 3.5em !important;
+            padding-top: 0.3rem !important;
+            padding-bottom: 0.3rem !important;
+            padding-left: 0.2rem !important;
+            padding-right: 0.25rem !important;
+            color: #000000 !important;
         }
     </style>
     """
@@ -566,8 +576,7 @@ sort_options = {
     ],
 }
 
-counties = ['All',
-            'Alameda','Alpine','Amador','Butte',
+counties = ['Alameda','Alpine','Amador','Butte',
             'Calaveras','Colusa','Contra Costa',
             'Del Norte','El Dorado','Fresno',
             'Glenn','Humboldt','Imperial',
@@ -587,6 +596,10 @@ counties = ['All',
             'Sutter','Tehama','Trinity',
             'Tulare','Tuolumne','Ventura',
             'Yolo','Yuba']
+
+
+
+counties = [c + ' County' for c in counties]
 
 county_bounds = {
     'Alameda': [-122.42384326, 37.15395019, -121.41909054, 38.20581216],
@@ -655,8 +668,6 @@ county_bounds = {
 tooltip_cols = ['id','name','manager','county','status','gap_code',
                 'habitat_type','climate_zone','land_tenure','ecoregion','acres']
 tooltip_template = "<br>".join([f"{col}: {{{{ {col} }}}}" for col in tooltip_cols])
-
-
 
 from langchain_openai import ChatOpenAI
 import streamlit as st

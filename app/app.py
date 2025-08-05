@@ -253,6 +253,12 @@ def main():
                 filter_cols = []
                 filter_vals = []
 
+        # county choice
+        county_choice = st.selectbox("County", counties, index = None, placeholder='Counties', label_visibility = 'collapsed', key ='county')
+        if county_choice != None:
+            county_choice = county_choice.replace(' County','')
+            filter_cols.append('county')
+            filter_vals.append([county_choice])
 
         st.divider()
 
@@ -270,13 +276,8 @@ def main():
                         _, label, toggle_key, citation = item
                         st.toggle(label, key=toggle_key)
         st.divider() 
-        
-        # county choice
-        county_choice = st.selectbox("County", counties, index = 0, placeholder='Select a county')
-        if county_choice != 'All':
-            filter_cols.append('county')
-            filter_vals.append([county_choice])
 
+        #leafmap options 
         leafmap_choice = st.selectbox("Leafmap module", ['MapLibre','Folium'])
         if leafmap_choice == "MapLibre":
             leafmap = importlib.import_module("leafmap.maplibregl")
@@ -322,7 +323,7 @@ def main():
     
     if 'not_mapping' not in locals():      
         if 'llm_output' not in locals():
-            if county_choice != 'All':
+            if county_choice != None:
                 bounds = get_county_bounds(county_choice)
             else:
                 bounds = [-124.42174575, 32.53428607, -114.13077782, 42.00950367]
