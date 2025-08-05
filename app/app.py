@@ -53,15 +53,8 @@ def main():
         with llm_left_col:
             with st.popover("💬 Example Queries"):
                 st.markdown(example_queries)
-                st.warning("""
-                **Chatbot Limitations:**
-                - The chatbot is independent from **Filters**, which do not modify the chatbot's input or output.
-                - The chatbot has no memory and won't remember previous questions or responses.
-                - The chatbot can’t directly change map colors or charts, it only updates them by adjusting **Group by** or **Data Layers** based on your query. To change the map or charts, ask about a grouping variable (e.g., `ecoregion`) or data layer (e.g., `wetlands`). 
-                """, icon="⚠️")
-                st.info('If the map appears blank, queried data may be too small to see at the default zoom level. Check the table below the map, as query results will also be displayed there.', icon="ℹ️")
-
-                
+                st.warning(chatbot_limitations, icon="⚠️")
+                st.info(chatbot_info, icon="ℹ️")
         with llm_right_col:
             llm_choice = st.selectbox("Select LLM:", llm_options, key = "llm", help = "Select which model to use.")   
             llm = llm_options[llm_choice]
@@ -407,9 +400,7 @@ def main():
                         label_visibility="collapsed",
                         default="acres",
                     )
-                # if 'chart_choice' not in locals():
-                #     st.warning("Please select a metric to display bar chart.")
-    
+
                 if (any_chart_toggled or show_stacked or show_chatbot_chart) and not chart_choice:
                     st.warning("Please select a metric to display bar chart.")
     

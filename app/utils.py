@@ -13,6 +13,10 @@ from itertools import chain
 from variables import *
 from pandas.api.types import CategoricalDtype
 from math import pi
+from leafmap.foliumap import PMTilesMapLibreTooltip
+from branca.element import Template
+import minio
+import datetime
 
 ######################## UI FUNCTIONS 
 def get_buttons(style_options, style_choice):
@@ -30,6 +34,7 @@ def get_buttons(style_options, style_choice):
     filter_choice = [key for key, value in buttons.items() if value]
     
     return {column: filter_choice}
+
 
 def sync_checkboxes(source):
     """
@@ -75,6 +80,7 @@ def color_table(select_colors, color_choice, column):
     # return ibis.memtable(select_colors[color_choice], columns=[column, "color"]).to_pandas()
     return ibis.memtable(select_colors[color_choice], columns=[column, "color"])
 
+
 def get_color_vals(style_options, style_choice):
     """
     Extracts available color values for a selected style option.
@@ -93,7 +99,6 @@ def get_summary(ca, combined_filter, column, main_group, feature_col, colors = N
         key: (getattr(_, key) * _.acres).sum().name(f"total_feature_{key}")
         for key in keys
     }
-    
     totals = ca.aggregate(**total_features).execute().iloc[0].to_dict()
 
     # base columns
@@ -136,6 +141,7 @@ def get_summary(ca, combined_filter, column, main_group, feature_col, colors = N
         df = df.inner_join(colors, column[-1])
     return df.cast({col: "string" for col in column}).execute()
 
+    
 def get_summary_table(ca, column, select_colors, color_choice, filter_cols, filter_vals, colorby_vals, feature_col = None):
     """
     Generates summary tables for visualization and reporting.
@@ -171,6 +177,7 @@ def get_summary_table_sql(ca, column, colors, ids, feature_col = None):
     df_feature = get_summary(ca, combined_filter, [column], column, feature_col, colors, feature = True)
     return df_network, df_feature
 
+
 def extract_columns(sql_query):
     # Find all substrings inside double quotes
     columns = list(dict.fromkeys(re.findall(r'"(.*?)"', sql_query)))
@@ -178,16 +185,13 @@ def extract_columns(sql_query):
 
 
 ######################## MAP STYLING FUNCTIONS 
-
 def get_county_bounds(county):
     return county_bounds[county]
     
-from itertools import chain
 
 def get_pmtiles_style(paint, alpha=1, filter_cols=None, filter_vals=None, ids=None):
     """
     Generates a MapLibre GL style for PMTiles with either filters or a list of IDs.
-
     """
     if ids:
         filter_expr = ["in", ["get", "id"], ["literal", ids]]
@@ -230,7 +234,6 @@ def get_pmtiles_style(paint, alpha=1, filter_cols=None, filter_vals=None, ids=No
     }
 
 
-
 def get_legend(style_options, color_choice, leafmap_backend, df = None, column = None):
     """
     Generates a legend dictionary with color mapping and formatting adjustments.
@@ -244,7 +247,6 @@ def get_legend(style_options, color_choice, leafmap_backend, df = None, column =
 
     if leafmap_backend == 'MapLibre':
         position = 'bottom-left'
-
 
     # shorten legend for ecoregions 
     if color_choice == "Ecoregion":
@@ -260,8 +262,6 @@ def get_legend(style_options, color_choice, leafmap_backend, df = None, column =
 
 
 ### tooltip for pmtiles
-from leafmap.foliumap import PMTilesMapLibreTooltip
-from branca.element import Template
 
 class CustomTooltip(PMTilesMapLibreTooltip):
     _template = Template("""
@@ -343,15 +343,15 @@ def area_chart(df, column, color_choice):
     )
     return pie
 
-
-
 def bar_chart(df, x, y, title, metric = "percent", percent_type = None):
     """Creates a simple bar chart."""
     return create_bar_chart(df, x, y, title, metric, percent_type)
 
+
 def stacked_bar(df, x, y, metric, title, colors, color = "status"):
     """Creates a stacked bar chart."""
     return create_bar_chart(df, x, y, title, metric, color=color, stacked=True, colors=colors)
+
 
 def get_chart_settings(x, feature_name, y=None, stacked=None, metric=None, percent_type=None):
     """
@@ -371,8 +371,6 @@ def get_chart_settings(x, feature_name, y=None, stacked=None, metric=None, perce
     chart_title, subtitle = '', ''
     y = y or ''
 
-
-
     if percent_type == "Network":
         chart_title = f"{feature_name} Within Each {x_title}"
         y_title = f"% of Area with {feature_name}"
@@ -388,7 +386,6 @@ def get_chart_settings(x, feature_name, y=None, stacked=None, metric=None, perce
     
     elif metric == "acres" and not stacked:
         chart_title = f"Acres of {feature_name.rstrip()}\nWithin Each {x_title}"
-
     
     height = (
         350 if stacked else
@@ -411,6 +408,7 @@ def get_label_transform(x, label=None):
     if label is not None:
         return func(label) if callable(func) else label
     return transform[0]
+
     
 def get_hex(df, color, order):
     """
@@ -422,7 +420,8 @@ def get_hex(df, color, order):
                 .dropna()
                 .reset_index()).T.values.tolist()
 
-@st.fragment
+
+# @st.fragment
 def create_bar_chart(
     df, x, y, feature_name, metric,
     percent_type=None, color=None, stacked=False, colors=None
@@ -528,8 +527,6 @@ def create_bar_chart(
     return final_chart
 
 
-import minio
-import datetime
 minio_key = os.getenv("MINIO_KEY")
 if minio_key is None:
     minio_key = st.secrets["MINIO_KEY"]
@@ -537,7 +534,6 @@ if minio_key is None:
 minio_secret = os.getenv("MINIO_SECRET")
 if minio_secret is None:
     minio_secret = st.secrets["MINIO_SECRET"]
-
 
 def minio_logger(consent, query, sql_query, llm_explanation, llm_choice, filename="query_log.csv", bucket="shared-ca30x30-app",
                  key=minio_key, secret=minio_secret,
