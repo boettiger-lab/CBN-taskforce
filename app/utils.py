@@ -368,9 +368,9 @@ def arc_chart(df, column, color_choice):
     df["theta_scaled"] = (df["percent_CA"] * 3.14159)
     chart = (
         alt.Chart(df)
-        .mark_arc(innerRadius=50, outerRadius=120, stroke="black", strokeWidth=0.1)
+        .mark_arc(innerRadius=50, outerRadius=120, thetaOffset = -pi/2, stroke="black", strokeWidth=0.1 )
         .encode(
-            alt.Theta("theta_scaled:Q", scale = None),
+            alt.Theta("theta_scaled:Q", scale = None, stack = True),
             alt.Order("order_index:O"),
             alt.Color(
                 f'{column}:N',
