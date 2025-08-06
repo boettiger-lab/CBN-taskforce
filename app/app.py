@@ -303,7 +303,6 @@ def main():
     if 'llm_output' not in locals():
         df_network, _, df_tab, df_bar_30x30 = get_summary_table(ca, column, select_colors, color_choice, filter_cols, filter_vals,colorby_vals)
         style = get_pmtiles_style(style_options[color_choice], alpha, filter_cols, filter_vals)
-
             
     else:
         if 'not_mapping' not in locals():
@@ -313,7 +312,6 @@ def main():
     ## mapping data 
     legend, position, bg_color, fontsize = get_legend(style_options, color_choice, leafmap_choice, df_network, column)
 
-    
     if 'not_mapping' not in locals():      
         if 'llm_output' not in locals():
             if county_choice != None:
@@ -338,8 +336,6 @@ def main():
 
         m.add_legend(legend_dict = legend, position = position)
 
-
-    
     # check if any layer toggle is active
     any_chart_toggled = any(
         st.session_state.get(toggle_key, False)
@@ -358,7 +354,6 @@ def main():
     # main display 
     with main:
         map_col, stats_col = st.columns([3,2])
-    
         with map_col:
             if 'not_mapping' not in locals():        
                 m.to_streamlit(height=650) # adding map
@@ -387,12 +382,11 @@ def main():
                 if 'not_mapping' not in locals():        
                     st.markdown('')
                     st.altair_chart(area_chart(df_network, column, color_choice), use_container_width=True)
-                    st.markdown('<p class="caption-shift-up">*Chart updates based on filters.</p>', unsafe_allow_html=True)
+                    # st.markdown('<p class="caption">**Chart updates based on filters.</p>', unsafe_allow_html=True)
     
                 # display the pill selection if we will use any barcharts
                 if any_chart_toggled or show_stacked or show_chatbot_chart:
-                    # option_map = {'acres': "Acres", 'percent': "%"}
-                    option_map = {'acres': "Acres", 'percent_network': "% of Network", 'percent_feature': "% of Feature"}
+                    option_map = {'acres': "Acres", 'percent_feature': "% of Feature",'percent_network': "% of Network"}
 
                     chart_choice = st.pills(
                         label="Bar chart metrics",
@@ -402,30 +396,29 @@ def main():
                         label_visibility="collapsed",
                         default="acres",
                     )
-
                 if (any_chart_toggled or show_stacked or show_chatbot_chart) and not chart_choice:
                     st.warning("Please select a metric to display bar chart.")
-    
+
                 if show_stacked:
-                    y_axis = 'percent_group' if (chart_choice in ['percent_network','percent_feature']) else 'acres'
-                    chart_title = f"{color_choice}\n by 30x30 Status"
-    
-                    chart = stacked_bar(
-                        df=df_bar_30x30,
-                        x=column,
-                        y=y_axis,
-                        metric=chart_choice,
-                        title=chart_title,
-                        colors=colors,
-                    )
-                    st.altair_chart(chart, use_container_width=True) 
-                    caption_text = (
-                        f"*Percent of {color_choice} within each 30x30 conservation status."
-                        if (chart_choice in ['percent_network','percent_feature'])
-                        else f"*Acres of {color_choice} within each 30x30 conservation status."
-                    )
-                    st.markdown(f'<p class="caption">{caption_text}</p>', unsafe_allow_html=True)
-    
+                    if chart_choice in ["percent_feature","acres"]:
+                        y_axis = 'percent_group' if (chart_choice in ['percent_feature']) else 'acres'
+                        chart_title = f"{color_choice}\n by 30x30 Status"
+                        chart = stacked_bar(
+                            df=df_bar_30x30,
+                            x=column,
+                            y=y_axis,
+                            metric=chart_choice,
+                            title=chart_title,
+                            colors=colors,
+                        )
+                        st.altair_chart(chart, use_container_width=True) 
+                        caption_text = (
+                            f"*Percent of {color_choice} within each 30x30 conservation status."
+                            if (chart_choice in ['percent_network','percent_feature'])
+                            else f"*Acres of {color_choice} within each 30x30 conservation status."
+                        )
+                        st.markdown(f'<p class="caption">{caption_text}</p>', unsafe_allow_html=True)
+
                 # Show data layer summary charts for toggled layers
                 for _, _, items in layer_config:
                     for suffix, label, toggle_key, *_ in items:
@@ -439,7 +432,7 @@ def main():
                             label = f"Top {label}"
                         if ("Richness" in label) or ("Land" in label) or ("Communities" in label):
                             label += "\n"
-            
+
                         if chart_choice == 'percent_network':
                             # Percent of NETWORK
                             feature_col_net = f"pct_network_{suffix_clean}"
@@ -447,6 +440,7 @@ def main():
                                 bar_chart(df_network, column, feature_col_net, label, metric=chart_choice, percent_type="Network"),
                                 use_container_width=True,
                             )
+
                         elif chart_choice == 'percent_feature':
                             # Percent of FEATURE
                             feature_col_feat = f"pct_feature_{suffix_clean}"
@@ -460,6 +454,9 @@ def main():
                                 colorby_vals,
                                 feature_col_feat,
                             )
+
+
+                            
                             st.altair_chart(
                                 bar_chart(df_feature, column, feature_col_feat, label, metric=chart_choice, percent_type="Feature"),
                                 use_container_width=True,
