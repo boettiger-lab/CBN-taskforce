@@ -356,7 +356,7 @@ def main():
         map_col, stats_col = st.columns([3,2])
         with map_col:
             if 'not_mapping' not in locals():        
-                m.to_streamlit(width = 650,height=650) # adding map
+                m.to_streamlit(width = 850,height=650) # adding map
             with st.expander("🔍 View/download data"): # adding data table  
                 if 'llm_output' not in locals():
                     st.dataframe(df_tab, use_container_width = True)  
