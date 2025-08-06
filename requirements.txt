@@ -20,5 +20,5 @@ referencing==0.35.1
 shapely==2.0.4
 shiny==0.10.2
 SQLAlchemy==2.0.35
-streamlit==1.45.1
+streamlit==1.44.1
 streamlit_folium==0.20.0
