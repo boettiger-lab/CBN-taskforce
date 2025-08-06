@@ -100,10 +100,11 @@ def get_summary(ca, combined_filter, column, main_group, feature_col, colors = N
         for key in keys
     }
     totals = ca.aggregate(**total_features).execute().iloc[0].to_dict()
-
+    total_selected = ca.filter(combined_filter).acres.sum().execute()
     # base columns
     base_aggs = {
         "percent_CA": (_.acres.sum() / ca_area_acres),
+        "percent_selected": (_.acres.sum() / total_selected),
         "acres": _.acres.sum(),
         }
 
@@ -121,10 +122,10 @@ def get_summary(ca, combined_filter, column, main_group, feature_col, colors = N
     all_aggs = {**base_aggs, **dynamic_aggs}
     # group and aggregate
     df = (ca.filter(combined_filter)
-          .group_by(*column)
-          .aggregate(**all_aggs)
-          .mutate(percent_CA=_.percent_CA.round(5), acres=_.acres.round(0))
-        )
+            .group_by(*column)
+            .aggregate(**all_aggs)
+            .mutate(percent_CA=_.percent_CA.round(5), acres=_.acres.round(0),percent_selected=_.percent_selected.round(5))
+         )
 
      # Compute total acres by group and percent of group
     group_totals = (ca.filter(combined_filter)
@@ -322,11 +323,54 @@ def area_chart(df, column, color_choice):
     cat_dtype = CategoricalDtype(categories=labels_sorted, ordered=True)
     df["order_index"] = df[column].astype(cat_dtype).cat.codes  
     
-    pie = (
+    if color_choice in ['30x30 Status','GAP Code']:
+        chart = arc_chart(df, column, color_choice)
+    else:
+        chart = pie_chart(df, column, color_choice)
+    return chart
+
+def pie_chart(df, column, color_choice):
+    chart = (
+        alt.Chart(df)
+        .mark_arc(stroke="black", strokeWidth=0.1)
+        .encode(
+            alt.Theta("percent_selected:Q"),
+            alt.Order("order_index:O"),
+            alt.Color(
+                f'{column}:N',
+                scale=alt.Scale(domain=df[column].tolist(), range=df["color"].tolist()),
+                legend=None),
+            tooltip=[
+                alt.Tooltip(column, type="nominal"),
+                alt.Tooltip("percent_selected", type="quantitative", format=",.1%"),
+                alt.Tooltip("acres", type="quantitative", format=",.0f"),
+            ]
+        )
+        .properties(
+        height = 400,
+        title={
+            "text": f"Mapped Area by {color_choice}",
+            "subtitle": [f"The area currently shown on the map, divided among {color_choice} categories.","**Chart updates based on filters**"]
+
+        }).configure_title(
+            fontSize=16,
+            align="center",
+            anchor="middle",
+            offset=15,
+            subtitleColor="gray"
+        )
+        )
+    return chart
+    
+
+def arc_chart(df, column, color_choice):
+    total_percent = df["percent_CA"].sum()
+    df["theta_scaled"] = (df["percent_CA"] * 3.14159)
+    chart = (
         alt.Chart(df)
         .mark_arc(innerRadius=50, outerRadius=120, stroke="black", strokeWidth=0.1)
         .encode(
-            alt.Theta("percent_CA:Q", scale=alt.Scale(type="linear", rangeMax=pi/2, rangeMin=-pi/2)),
+            alt.Theta("theta_scaled:Q", scale = None),
             alt.Order("order_index:O"),
             alt.Color(
                 f'{column}:N',
@@ -341,8 +385,9 @@ def area_chart(df, column, color_choice):
         .properties(
         height = 320,
         title={
-            "text": f"Percent of California by {color_choice}",
-            "subtitle": [f"Acres of each {color_choice} divided by total acres of California","**Chart updates based on filters**"]
+            "text": f"California by {color_choice}",
+            "subtitle": [f"Total acres in California, divided among {color_choice} categories.","**Chart updates based on filters**"]
+
         }).configure_title(
             fontSize=16,
             align="center",
@@ -351,8 +396,7 @@ def area_chart(df, column, color_choice):
             subtitleColor="gray"
         )
         )
-    return pie
-
+    return chart
 
 def bar_chart(df, x, y, title, metric = "percent", percent_type = None):
     """Creates a simple bar chart."""
@@ -361,7 +405,8 @@ def bar_chart(df, x, y, title, metric = "percent", percent_type = None):
 
 def stacked_bar(df, x, y, metric, title, colors, color = "status"):
     """Creates a stacked bar chart."""
-    return create_bar_chart(df, x, y, title, metric, color=color, stacked=True, colors=colors)
+    chart = create_bar_chart(df, x, y, title, metric, color=color, stacked=True, colors=colors)
+    return chart 
 
 
 def get_chart_settings(x, feature_name, y=None, stacked=None, metric=None, percent_type=None):
@@ -451,7 +496,7 @@ def create_bar_chart(
     label_transform = get_label_transform(x)
     y_format = "~s" if metric == "acres" else ",.2%"
     tooltip_y = alt.Tooltip(y, type="quantitative", format=y_format)
-
+    
     # base chart
     base_chart = (
         alt.Chart(df)
@@ -481,7 +526,7 @@ def create_bar_chart(
             axis=alt.Axis(title=y_title, offset=-5, format=y_format),
             scale=alt.Scale(domain=[0, 1]) if ("percent" in metric) else alt.Undefined
         )
-
+        
         stacked_chart = base_chart.encode(
             x=alt.X("xlabel:N", sort=sort, title=None, axis=alt.Axis(labels=False)),
             y=y_axis_scale,
@@ -495,6 +540,14 @@ def create_bar_chart(
             ]
         )
 
+        rule = alt.Chart(pd.DataFrame({'y_value': [0.3]})).mark_rule(
+        color='red',
+        strokeDash=[5, 5]  
+        ).encode(
+            y='y_value'
+        )
+        stacked_chart = stacked_chart+rule
+        
         # prepare label layer
         colors = colors.to_pandas()
         colors["xlabel"] = [get_label_transform(x, str(lab)) for lab in colors[x]]
@@ -507,7 +560,7 @@ def create_bar_chart(
             )
             .properties(height=1)
         )
-
+        
         final_chart = alt.vconcat(stacked_chart, symbol_layer, spacing=8).resolve_scale(x="shared")
         final_chart = final_chart.properties(
                 title={

@@ -356,7 +356,7 @@ def main():
         map_col, stats_col = st.columns([3,2])
         with map_col:
             if 'not_mapping' not in locals():        
-                m.to_streamlit(width = 1050,height=650) # adding map
+                m.to_streamlit(height=650) # adding map
             with st.expander("🔍 View/download data"): # adding data table  
                 if 'llm_output' not in locals():
                     st.dataframe(df_tab, use_container_width = True)  
@@ -378,13 +378,15 @@ def main():
             st.caption("***Under California’s 30x30 framework, only GAP codes 1 and 2 are counted toward the conservation goal.") 
     
         with stats_col:
-            if 'not_mapping' not in locals():        
-                st.markdown('')
-                st.altair_chart(area_chart(df_network, column, color_choice), use_container_width=True)
-
-            # display the pill selection if we will use any barcharts
-            if any_chart_toggled or show_stacked or show_chatbot_chart:
-                option_map = {'acres': "Acres", 'percent_feature': "% of Feature",'percent_network': "% of Network"}
+            with st.container():
+                if 'not_mapping' not in locals():        
+                    st.markdown('')
+                    if column in ['status','gap_code']:
+                        st.altair_chart(area_chart(df_network, column, color_choice), use_container_width=True)
+    
+                # display the pill selection if we will use any barcharts
+                # if any_chart_toggled or show_stacked or show_chatbot_chart:
+                option_map = {'acres': "Acres", 'percent_network': "Composition", 'percent_feature': "Representation",}
 
                 chart_choice = st.pills(
                     label="Bar chart metrics",
@@ -394,75 +396,78 @@ def main():
                     label_visibility="collapsed",
                     default="acres",
                 )
-            if (any_chart_toggled or show_stacked or show_chatbot_chart) and not chart_choice:
-                st.warning("Please select a metric to display bar chart.")
-
-            if show_stacked:
-                if chart_choice in ["percent_feature","acres"]:
-                    y_axis = 'percent_group' if (chart_choice == 'percent_feature') else 'acres'
-                    chart_title = f"{color_choice}\n by 30x30 Status"
-                    chart = stacked_bar(
-                        df=df_bar_30x30,
-                        x=column,
-                        y=y_axis,
-                        metric=chart_choice,
-                        title=chart_title,
-                        colors=colors,
-                    )
-                    st.altair_chart(chart, use_container_width=True) 
-                    caption_text = (
-                        f"*Percent of {color_choice} within each 30x30 conservation status."
-                        if (chart_choice in ['percent_network','percent_feature'])
-                        else f"*Acres of {color_choice} within each 30x30 conservation status."
-                    )
-                    st.markdown(f'<p class="caption">{caption_text}</p>', unsafe_allow_html=True)
-
-            # Show data layer summary charts for toggled layers
-            for _, _, items in layer_config:
-                for suffix, label, toggle_key, *_ in items:
-                    if not st.session_state.get(toggle_key, False):
-                        continue
-        
-                    suffix_clean = suffix.replace("pct_", "").replace("-", "_")
-        
-                    # Modify label with clearer formatting
-                    if ('Richness' in label) and ('Endemic' not in label) and ('Rare' not in label):
-                        label = f"Top {label}"
-                    if ("Richness" in label) or ("Land" in label) or ("Communities" in label):
-                        label += "\n"
-
-                    if chart_choice == 'percent_network':
-                        # Percent of NETWORK
-                        feature_col_net = f"pct_network_{suffix_clean}"
-                        st.altair_chart(
-                            bar_chart(df_network, column, feature_col_net, label, metric=chart_choice, percent_type="Network"),
-                            use_container_width=True,
+                if (any_chart_toggled or show_stacked or show_chatbot_chart) and not chart_choice:
+                    st.warning("Please select a metric to display bar chart.")
+    
+                if show_stacked:
+                    if chart_choice in ["percent_feature","acres"]:
+                        y_axis = 'percent_group' if (chart_choice == 'percent_feature') else 'acres'
+                        chart_title = f"{color_choice}\n by 30x30 Status"
+                        chart = stacked_bar(
+                            df=df_bar_30x30,
+                            x=column,
+                            y=y_axis,
+                            metric=chart_choice,
+                            title=chart_title,
+                            colors=colors,
                         )
-
-                    elif chart_choice == 'percent_feature':
-                        # Percent of FEATURE
-                        feature_col_feat = f"pct_feature_{suffix_clean}"
-                        _, df_feature, _, _ = get_summary_table(
-                            ca,
-                            column,
-                            select_colors,
-                            color_choice,
-                            filter_cols,
-                            filter_vals,
-                            colorby_vals,
-                            feature_col_feat,
+                        st.altair_chart(chart, use_container_width=True) 
+                        caption_text = (
+                            f"*Percent of {color_choice} within each 30x30 conservation status."
+                            if (chart_choice in ['percent_network','percent_feature'])
+                            else f"*Acres of {color_choice} within each 30x30 conservation status."
                         )
-
-                        st.altair_chart(
-                            bar_chart(df_feature, column, feature_col_feat, label, metric=chart_choice, percent_type="Feature"),
-                            use_container_width=True,
-                        )
-                    else:
-                        feature_col = f"acres_{suffix_clean}"
-                        st.altair_chart(
-                            bar_chart(df_network, column, feature_col, label, metric=chart_choice),
-                            use_container_width=True,
-                        )
+                        st.markdown(f'<p class="caption">{caption_text}</p>', unsafe_allow_html=True)
+                
+                if chart_choice == "percent_network":
+                    st.altair_chart(area_chart(df_network, column, color_choice), use_container_width=True)
+                    
+                # Show data layer summary charts for toggled layers
+                for _, _, items in layer_config:
+                    for suffix, label, toggle_key, *_ in items:
+                        if not st.session_state.get(toggle_key, False):
+                            continue
+            
+                        suffix_clean = suffix.replace("pct_", "").replace("-", "_")
+            
+                        # Modify label with clearer formatting
+                        if ('Richness' in label) and ('Endemic' not in label) and ('Rare' not in label):
+                            label = f"Top {label}"
+                        if ("Richness" in label) or ("Land" in label) or ("Communities" in label):
+                            label += "\n"
+    
+                        if chart_choice == 'percent_network':
+                            # Percent of NETWORK
+                            feature_col_net = f"pct_network_{suffix_clean}"
+                            st.altair_chart(
+                                bar_chart(df_network, column, feature_col_net, label, metric=chart_choice, percent_type="Network"),
+                                use_container_width=True,
+                            )
+    
+                        elif chart_choice == 'percent_feature':
+                            # Percent of FEATURE
+                            feature_col_feat = f"pct_feature_{suffix_clean}"
+                            _, df_feature, _, _ = get_summary_table(
+                                ca,
+                                column,
+                                select_colors,
+                                color_choice,
+                                filter_cols,
+                                filter_vals,
+                                colorby_vals,
+                                feature_col_feat,
+                            )
+    
+                            st.altair_chart(
+                                bar_chart(df_feature, column, feature_col_feat, label, metric=chart_choice, percent_type="Feature"),
+                                use_container_width=True,
+                            )
+                        else:
+                            feature_col = f"acres_{suffix_clean}"
+                            st.altair_chart(
+                                bar_chart(df_network, column, feature_col, label, metric=chart_choice),
+                                use_container_width=True,
+                            )
 
     st.divider()
     with open('app/footer.md', 'r') as file:
