@@ -338,22 +338,20 @@ def area_chart(df, column, color_choice):
                 alt.Tooltip("acres", type="quantitative", format=",.0f"),
             ]
         )
-        .properties(title=[f"Percent of California", f"by {color_choice}"], height=320)
-        .configure_title(fontSize=16, align="center", anchor="middle", offset=15)
-    )
-    chart = pie.properties(
+        .properties(
+        height = 320,
         title={
             "text": f"Percent of California by {color_choice}",
             "subtitle": [f"Acres of each {color_choice} divided by total acres of California","**Chart updates based on filters**"]
-        }
-    ).configure_title(
-        fontSize=16,
-        align="center",
-        anchor="middle",
-        offset=10,
-        subtitleColor="gray"
-    )
-    return chart
+        }).configure_title(
+            fontSize=16,
+            align="center",
+            anchor="middle",
+            offset=15,
+            subtitleColor="gray"
+        )
+        )
+    return pie
 
 
 def bar_chart(df, x, y, title, metric = "percent", percent_type = None):
