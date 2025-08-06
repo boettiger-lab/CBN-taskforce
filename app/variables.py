@@ -343,9 +343,9 @@ ecoregion = {
         ['Sierra Nevada Foothills', "#1f77b4"],
         ['Southern Cascades', "#ff7f0e"],
         ['Modoc Plateau', "#c49c94"],
-        ['Great Valley (North)', "#dbdb8d"],
-        ['Northern California Interior Coast Ranges', "#ffbb78"],
         ['Great Valley (South)', "#bcbd22"],
+        ['Northern California Interior Coast Ranges', "#ffbb78"],
+        ['Great Valley (North)', "#dbdb8d"],
         ['None', white],
     ],
     'default': white

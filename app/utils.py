@@ -147,6 +147,7 @@ def get_summary_table(ca, column, select_colors, color_choice, filter_cols, filt
     Generates summary tables for visualization and reporting.
     """
     colors = color_table(select_colors, color_choice, column)
+
     #if a filter is selected, add to list of filters 
     filters = [getattr(_, col).isin(vals) for col, vals in zip(filter_cols, filter_vals) if vals]
     #show color_by column in table by adding it as a filter (if it's not already a filter)
@@ -214,7 +215,7 @@ def get_pmtiles_style(paint, alpha=1, filter_cols=None, filter_vals=None, ids=No
         "type": "fill",
         "paint": {
             "fill-color": paint,
-            "fill-opacity": alpha,
+            "fill-opacity": alpha
         }
     }
     
@@ -302,7 +303,6 @@ class CustomTooltip(PMTilesMapLibreTooltip):
 
 
 ######################## CHART FUNCTIONS 
-
 def area_chart(df, column, color_choice):
     """
     Generates an Altair pie chart representing the percentage of protected areas.
@@ -338,21 +338,10 @@ def area_chart(df, column, color_choice):
                 alt.Tooltip("acres", type="quantitative", format=",.0f"),
             ]
         )
-        .properties(
-        height = 320,
-        title={
-            "text": f"Percent of California by {color_choice}",
-            "subtitle": [f"Acres of each {color_choice} divided by total acres of California","**Chart updates based on filters**"]
-        }).configure_title(
-            fontSize=16,
-            align="center",
-            anchor="middle",
-            offset=15,
-            subtitleColor="gray"
-        )
-        )
+        .properties(title=[f"Percent of California", f"by {color_choice}"], height=300)
+        .configure_title(fontSize=16, align="center", anchor="middle", offset=15)
+    )
     return pie
-
 
 def bar_chart(df, x, y, title, metric = "percent", percent_type = None):
     """Creates a simple bar chart."""
@@ -369,8 +358,7 @@ def get_chart_settings(x, feature_name, y=None, stacked=None, metric=None, perce
     Returns sorting, axis settings, and y-axis title mappings for chart rendering.
     """
     y_title = {
-        'percent_network': "Percent",
-        'percent_feature': "Percent",
+        'percent': "Percent",
         'acres': "Acres"
     }.get(metric)
 
@@ -395,11 +383,7 @@ def get_chart_settings(x, feature_name, y=None, stacked=None, metric=None, perce
 
     if stacked:
         chart_title = f"{x_title}\nby 30x30 Status"
-        if metric != "acres":
-            subtitle = f'Acres of 30x30 Status within each {x_title} divided by total acres of each {x_title}'
-        else:
-            subtitle = f'Acres of 30x30 Status within each {x_title}'
-        
+    
     elif metric == "acres" and not stacked:
         chart_title = f"Acres of {feature_name.rstrip()}\nWithin Each {x_title}"
     
@@ -408,12 +392,13 @@ def get_chart_settings(x, feature_name, y=None, stacked=None, metric=None, perce
         620 if "freshwater" in y else
         720 if "increased" in y and percent_type == "Feature" else
         700 if "increased" in y else
-        600 if x in ["ecoregion", "habitat_type"] else
+        550 if x in ["ecoregion", "habitat_type"] else
         450 if x == "manager_type" else
         550 if x == "access_type" else
         600 if percent_type else
         540
     )
+
     return sort_options.get(x, "x"), angle, height, y_title, x_title, chart_title, subtitle
 
 
@@ -479,7 +464,7 @@ def create_bar_chart(
         y_axis_scale = alt.Y(
             y,
             axis=alt.Axis(title=y_title, offset=-5, format=y_format),
-            scale=alt.Scale(domain=[0, 1]) if ("percent" in metric) else alt.Undefined
+            scale=alt.Scale(domain=[0, 1]) if metric == "percent" else alt.Undefined
         )
 
         stacked_chart = base_chart.encode(
@@ -509,18 +494,7 @@ def create_bar_chart(
         )
 
         final_chart = alt.vconcat(stacked_chart, symbol_layer, spacing=8).resolve_scale(x="shared")
-        final_chart = final_chart.properties(
-                title={
-                    "text": chart_title.split("\n") if "\n" in chart_title else chart_title,
-                    "subtitle": subtitle.split("\n") if "\n" in subtitle else subtitle,
-                }
-            ).configure_title(
-                fontSize=16,
-                align="center",
-                anchor="middle",
-                offset=10,
-                subtitleColor="gray"
-            )
+
     # non-stacked chart
     else:
         final_chart = base_chart.encode(
