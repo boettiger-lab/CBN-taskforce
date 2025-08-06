@@ -401,7 +401,7 @@ def main():
 
             if show_stacked:
                 if chart_choice in ["percent_feature","acres"]:
-                    y_axis = 'percent_group' if (chart_choice in ['percent_feature']) else 'acres'
+                    y_axis = 'percent_group' if (chart_choice == 'percent_feature') else 'acres'
                     chart_title = f"{color_choice}\n by 30x30 Status"
                     chart = stacked_bar(
                         df=df_bar_30x30,
