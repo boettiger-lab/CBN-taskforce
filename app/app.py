@@ -355,35 +355,32 @@ def main():
     with main:
         map_col, stats_col = st.columns([3,2])
         with map_col:
-            with st.container():
-                if 'not_mapping' not in locals():        
-                    m.to_streamlit(height=650) # adding map
-                with st.expander("🔍 View/download data"): # adding data table  
-                    if 'llm_output' not in locals():
-                        st.dataframe(df_tab, use_container_width = True)  
-                    else:
-                        if ('geom' in llm_output.columns) and (not llm_output.empty):
-                            llm_output = llm_output.drop('geom',axis = 1)
-                        if not llm_output.empty:
-                            if 'name' in llm_output.columns and 'id' in llm_output.columns:
-                                llm_grouped = (llm_output.groupby('name')
-                                                .agg({col: ('sum' if col == 'acres' else 'first') 
-                                                  for col in llm_output.columns 
-                                                  if col != 'name'})).reset_index()
-                                llm_grouped.drop(['id'], axis=1, inplace = True)
-                                st.dataframe(llm_grouped, use_container_width = True)
-                            else:
-                                st.dataframe(llm_output, use_container_width = True)
+            if 'not_mapping' not in locals():        
+                m.to_streamlit(width = 650,height=650) # adding map
+            with st.expander("🔍 View/download data"): # adding data table  
+                if 'llm_output' not in locals():
+                    st.dataframe(df_tab, use_container_width = True)  
+                else:
+                    if ('geom' in llm_output.columns) and (not llm_output.empty):
+                        llm_output = llm_output.drop('geom',axis = 1)
+                    if not llm_output.empty:
+                        if 'name' in llm_output.columns and 'id' in llm_output.columns:
+                            llm_grouped = (llm_output.groupby('name')
+                                            .agg({col: ('sum' if col == 'acres' else 'first') 
+                                              for col in llm_output.columns 
+                                              if col != 'name'})).reset_index()
+                            llm_grouped.drop(['id'], axis=1, inplace = True)
+                            st.dataframe(llm_grouped, use_container_width = True)
+                        else:
+                            st.dataframe(llm_output, use_container_width = True)
 
             st.caption("***The label 'established' is inferred from the California Protected Areas Database, which may introduce artifacts. For details on our methodology, please refer to our <a href='https://github.com/boettiger-lab/CBN-taskforce' target='_blank'>our source code</a>.", unsafe_allow_html=True)
             st.caption("***Under California’s 30x30 framework, only GAP codes 1 and 2 are counted toward the conservation goal.") 
     
         with stats_col:
-            # with st.container():
             if 'not_mapping' not in locals():        
                 st.markdown('')
                 st.altair_chart(area_chart(df_network, column, color_choice), use_container_width=True)
-                # st.markdown('<p class="caption">**Chart updates based on filters.</p>', unsafe_allow_html=True)
 
             # display the pill selection if we will use any barcharts
             if any_chart_toggled or show_stacked or show_chatbot_chart:
