@@ -172,7 +172,12 @@ def get_summary_table(ca, column, select_colors, color_choice, filter_cols, filt
     df_feature = None if feature_col is None else get_summary(ca, combined_filter, [column], column, feature_col, colors, feature = True)
     df_network = None if df_feature is not None else get_summary(ca, combined_filter, [column], column, feature_col, colors)        
     # df for stacked 30x30 status bar chart 
-    df_bar_30x30 = None if column in ["status", "gap_code"] else get_summary(ca, combined_filter | (_.status.isin(['Non-Conservation Area'])), [column, 'status'], column, feature_col, color_table(select_colors, "30x30 Status", 'status'))
+    if column in ["status", "gap_code"]:
+        df_bar_30x30 = None 
+    else:
+        df_bar_30x30 = get_summary(ca, combined_filter | (_.status.isin(['Non-Conservation Area'])), [column, 'status'], column, feature_col, color_table(select_colors, "30x30 Status", 'status'))
+        df_bar_30x30 = df_bar_30x30[df_bar_30x30[column] != "None"]
+    # dropping nones 
     return df_network, df_feature, df_tab, df_bar_30x30 
 
 
@@ -548,7 +553,6 @@ def create_bar_chart(
             axis=alt.Axis(title=y_title, offset=-5, format=y_format),
             scale=alt.Scale(domain=[0, 1]) if ("percent" in metric) else alt.Undefined
         )
-        
         stacked_chart = base_chart.encode(
             x=alt.X("xlabel:N", sort=sort, title=None, axis=alt.Axis(labels=False)),
             y=y_axis_scale,
@@ -561,18 +565,19 @@ def create_bar_chart(
                 alt.Tooltip("acres", type="quantitative", format=",.0f"),
             ]
         )
-
-        rule = alt.Chart(pd.DataFrame({'y_value': [0.3]})).mark_rule(
-        color='red',
-        strokeDash=[5, 5]  
-        ).encode(
-            y='y_value'
-        )
-        stacked_chart = stacked_chart+rule
-        
+        if metric != "acres":
+            rule = alt.Chart(pd.DataFrame({'y_value': [0.3]})).mark_rule(
+            color='red',
+            strokeDash=[5, 5]  
+            ).encode(
+                y='y_value'
+            )
+            stacked_chart = stacked_chart+rule
+            
         # prepare label layer
         colors = colors.to_pandas()
         colors["xlabel"] = [get_label_transform(x, str(lab)) for lab in colors[x]]
+        colors = colors[colors['xlabel'] != "None"]
         symbol_layer = (
             alt.Chart(colors)
             .mark_point(filled=True, shape="circle", size=100, tooltip=False, yOffset=5)
