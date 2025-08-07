@@ -398,7 +398,6 @@ def arc_chart(df, column, color_choice):
         )
     )
 
-    chart = chart+tick + c2
     chart = chart.properties(
         height = 340,
         title={
