@@ -199,6 +199,9 @@ def main():
                 elif isinstance(e, openai.InternalServerError):
                     st.error(error_messages["internal_server_error"](llm_choice), icon="🚨")
                 
+                elif isinstance(e, openai.RateLimitError):
+                    st.error(error_messages["bad_request"](llm_choice), icon="🚨")
+                                
                 else:
                     prompt = prompt.replace('\n', '')
                     tb_str = traceback.format_exc()  # full multiline traceback string
