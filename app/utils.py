@@ -67,8 +67,7 @@ def sync_checkboxes(source):
             st.session_state['gap_codeGAP 4'] = st.session_state['statusPublic or Unknown Conservation Area']
 
     nonconserved_filters = [
-        'gap_codeNone', 'statusNon-Conservation Area','climate_zoneNone',
-        'ecoregionNone', 'manager_typeNone', 'land_tenureNone', 'habitat_typeNone', 'access_typeNone'
+        'gap_codeNone', 'statusNon-Conservation Area', 'manager_typeNone', 'land_tenureNone', 'access_typeNone'
     ]
     
     if source in nonconserved_filters:
@@ -185,7 +184,7 @@ def get_summary_table_sql(ca, column, colors, ids, feature_col = None):
     """
     Generates a summary table using specific IDs as filters.
     """
-    combined_filter = _.id.isin(ids)
+    combined_filter = _.sub_id.isin(ids)
     df_network = get_summary(ca, combined_filter, [column], column, feature_col, colors)
     df_feature = get_summary(ca, combined_filter, [column], column, feature_col, colors, feature = True)
     return df_network, df_feature
@@ -207,7 +206,7 @@ def get_pmtiles_style(paint, pmtiles_file, low_res, filter_cols=None, filter_val
     Generates a MapLibre GL style for PMTiles with either filters or a list of IDs.
     """
     if ids:
-        filter_expr = ["in", ["get", "id"], ["literal", ids]]
+        filter_expr = ["in", ["get", "sub_id"], ["literal", ids]]
     else:
         # we don't want to overwhelm streamlit so if they didn't filter anything, don't provide filter arg 
         filter_length = sum([len(x) for x in filter_vals])
