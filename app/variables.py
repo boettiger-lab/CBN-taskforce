@@ -1,6 +1,7 @@
 # urls for main layer 
 ca_parquet = 'https://minio.carlboettiger.info/public-ca30x30/ca30x30_cbn_v3.parquet'
 ca_pmtiles = 'https://minio.carlboettiger.info/public-ca30x30/ca30x30_cbn_v3.pmtiles'
+low_res_pmtiles = 'https://minio.carlboettiger.info/public-ca30x30/pmtiles_v3_options/ca30x30_cbn_v3_zg_coalesce_dense.pmtiles'
 
 # computed by taking the sum of all the acres in this file:
 # https://minio.carlboettiger.info/public-ca30x30/CBN-data/Progress_data_new_protection/Land_Status_Zone_Ecoregion_Counties/all_regions_reGAP_county_eco.parquet
@@ -22,10 +23,6 @@ def get_url(folder, file, base_folder = 'CBN'):
         path = os.path.join(bucket,base_folder,folder,file)
     url = minio+path
     return url
-
-import re
-source_layer_name = re.sub(r'\W+', '', os.path.splitext(os.path.basename(ca_pmtiles))[0])
-#stripping hyphens to get layer name 
 
 # column names for all data layers 
 keys = [

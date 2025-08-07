@@ -212,9 +212,6 @@ def main():
             st.markdown(help_message)
         if st.button("🧹 Clear Filters", type="secondary", help = 'Reset all the filters to their default state.'):
             st.rerun()
-
-        
-            
         st.divider()
         
         color_choice = st.radio(
@@ -225,7 +222,6 @@ def main():
             captions=['','Degree of biodiversity protection [(what is this?)](https://www.protectedlands.net/uses-of-pad-us/#conservation-of-biodiversity-2)','', '', '', '', '', '', '']
         )
         colorby_vals = get_color_vals(style_options, color_choice)
-        alpha = 0.8
         st.divider()
 
         #### Data layers
@@ -269,7 +265,14 @@ def main():
                         _, label, toggle_key, citation = item
                         st.toggle(label, key=toggle_key)
         st.divider() 
-
+        st.markdown('<p class = "medium-font-sidebar"> Map Settings:</p>', help = "Select the mapping backend and basemap used to render the map. Use low resolution if experiencing performance issues.", unsafe_allow_html= True)
+        # pmtiles selectino
+        low_res = st.toggle("Low Resolution", key = 'pmtiles_choice', help = "Toggle on low resolution map if the app is lagging.")
+        if low_res:
+            pmtiles_file = low_res_pmtiles
+        else:
+            pmtiles_file = ca_pmtiles
+            
         #leafmap options 
         leafmap_choice = st.selectbox("Leafmap module", ['MapLibre','Folium'])
         if leafmap_choice == "MapLibre":
@@ -285,8 +288,9 @@ def main():
         basemaps = leafmap.basemaps.keys()
         b = st.selectbox("Basemap", basemaps,index= 40)
         m.add_basemap(b)
+
         st.divider()
-        
+
         # adding github logo 
         st.markdown(f"<div class='spacer'>{github_html}</div>", unsafe_allow_html=True)
         st.markdown(":left_speech_bubble: [Get in touch or report an issue](https://github.com/boettiger-lab/CBN-taskforce/issues)")
@@ -302,11 +306,11 @@ def main():
     ## parameters for mapping the data (if we didn't use llm)
     if 'llm_output' not in locals():
         df_network, _, df_tab, df_bar_30x30 = get_summary_table(ca, column, select_colors, color_choice, filter_cols, filter_vals,colorby_vals)
-        style = get_pmtiles_style(style_options[color_choice], alpha, filter_cols, filter_vals)
+        style = get_pmtiles_style(style_options[color_choice],pmtiles_file, low_res, filter_cols, filter_vals)
             
     else:
         if 'not_mapping' not in locals():
-            style = get_pmtiles_style(style_options[color_choice], ids = ids)
+            style = get_pmtiles_style(style_options[color_choice], pmtiles_file, low_res, ids = ids)
         df_network, _ = get_summary_table_sql(ca, column, colors, ids)
     
     ## mapping data 
@@ -320,11 +324,11 @@ def main():
                 bounds = [-124.42174575, 32.53428607, -114.13077782, 42.00950367]
         if leafmap_choice == "MapLibre":
        
-            m.add_pmtiles(ca_pmtiles, style=style, name="CA", tooltip=True, 
+            m.add_pmtiles(pmtiles_file, style=style, name="CA", tooltip=True, 
                           template = tooltip_template, fit_bounds=True)
             m.fit_bounds(bounds)
         else:
-            m.add_pmtiles(ca_pmtiles, style=style, name="30x30 Conserved Areas (Terrestrial) by CA Nature (2024)", tooltip=False, zoom_to_layer=True)
+            m.add_pmtiles(pmtiles_file, style=style, name="30x30 Conserved Areas (Terrestrial) by CA Nature (2024)", tooltip=False, zoom_to_layer=True)
             m.zoom_to_bounds(bounds)   
             
             # add custom tooltip to pmtiles layer

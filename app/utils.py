@@ -10,6 +10,7 @@ import os
 from shapely import wkb  
 from functools import reduce
 from itertools import chain
+import itertools
 from variables import *
 from pandas.api.types import CategoricalDtype
 from math import pi
@@ -18,6 +19,7 @@ from branca.element import Template
 import minio
 import datetime
 import numpy as np
+import re
 ######################## UI FUNCTIONS 
 def get_buttons(style_options, style_choice):
     """
@@ -37,6 +39,7 @@ def get_buttons(style_options, style_choice):
 
 
 def sync_checkboxes(source):
+    print(st.session_state)
     """
     Synchronizes checkbox selections in Streamlit based on 30x30 status and GAP codes. 
     """
@@ -64,15 +67,25 @@ def sync_checkboxes(source):
         if "gap_codeGAP 4" in st.session_state and st.session_state['statusPublic or Unknown Conservation Area'] != st.session_state['gap_codeGAP 4']:
             st.session_state['gap_codeGAP 4'] = st.session_state['statusPublic or Unknown Conservation Area']
 
-    # non-conserved on <-> gap 0 
-    elif source == "gapNon-Conservation Area":
-        st.session_state['statusNon-Conservation Area'] = st.session_state['gapNon-Conservation Area']
+    # non-conserved on <-> gap None
+    # elif source == "gap_codeNone":
+    #     st.session_state['statusNon-Conservation Area'] = st.session_state['gap_codeNone']
 
-    elif source == "statusNon-Conservation Area":
-        if "gapNon-Conservation Area" in st.session_state and st.session_state['statusNon-Conservation Area'] != st.session_state['gapNon-Conservation Area']:
-            st.session_state['gapNon-Conservation Area'] = st.session_state['statusNon-Conservation Area']
+    # elif source == "statusNon-Conservation Area":
+    #     if "gap_codeNone" in st.session_state and st.session_state['statusNon-Conservation Area'] != st.session_state['gap_codeNone']:
+    #         st.session_state['gap_codeNone'] = st.session_state['statusNon-Conservation Area']
 
-
+    nonconserved_filters = [
+        'gap_codeNone', 'statusNon-Conservation Area','climate_zoneNone',
+        'ecoregionNone', 'manager_typeNone', 'land_tenureNone', 'habitat_typeNone', 'access_typeNone'
+    ]
+    
+    if source in nonconserved_filters:
+        toggled_value = st.session_state.get(source, False)
+        for filt in nonconserved_filters:
+            if st.session_state.get(filt, None) != toggled_value:
+                st.session_state[filt] = toggled_value
+        
 def color_table(select_colors, color_choice, column):
     """
     Converts selected color mapping into a DataFrame.
@@ -155,9 +168,13 @@ def get_summary_table(ca, column, select_colors, color_choice, filter_cols, filt
         filter_cols.append(column)
         filters.append(getattr(_, column).isin(colorby_vals[column]))
 
+
     #combining all the filters into ibis filter expression 
     combined_filter = reduce(lambda x, y: x & y, filters)
-
+    flatten_vals = list(itertools.chain.from_iterable(filter_vals))
+    if (("GAP 2" in flatten_vals) or ("GAP 1" in flatten_vals)) and ("30x30 Conservation Area" not in flatten_vals):
+        include_gap = [getattr(_, col).isin(vals) for col, vals in zip(filter_cols, filter_vals) if vals and (col == 'gap_code')]
+        combined_filter = combined_filter | include_gap[0]
     #df used for printed table
     df_tab = get_summary(ca, combined_filter, filter_cols, column, feature_col, colors=None)
 
@@ -189,7 +206,7 @@ def get_county_bounds(county):
     return county_bounds[county]
     
 
-def get_pmtiles_style(paint, alpha=1, filter_cols=None, filter_vals=None, ids=None):
+def get_pmtiles_style(paint, pmtiles_file, low_res, filter_cols=None, filter_vals=None, ids=None, alpha=1):
     """
     Generates a MapLibre GL style for PMTiles with either filters or a list of IDs.
     """
@@ -206,8 +223,12 @@ def get_pmtiles_style(paint, alpha=1, filter_cols=None, filter_vals=None, ids=No
                 for col, val in zip(filter_cols, filter_vals)
             ]
             filter_expr = ["all", *filters]
-            
-            
+
+    if low_res: 
+        source_layer_name = 'ca30x30_cbn_v3fgb'
+    else:
+        source_layer_name = re.sub(r'\W+', '', os.path.splitext(os.path.basename(pmtiles_file))[0])
+
     config = {
         "id": "ca30x30",
         "source": "ca",
@@ -227,7 +248,7 @@ def get_pmtiles_style(paint, alpha=1, filter_cols=None, filter_vals=None, ids=No
         "sources": {
             "ca": {
                 "type": "vector",
-                "url": f"pmtiles://{ca_pmtiles}"
+                "url": f"pmtiles://{pmtiles_file}"
             }
         },
         "layers": [config]
@@ -386,13 +407,31 @@ def arc_chart(df, column, color_choice):
         )
     )
 
-    ## uncomment to get a 30% tick mark on the area chart 
-    # start_x = -0.5
-    # start_y = 0.866
-#     start_x = -.5625
-#     start_y = 0.97525
-#     end_x = 0
-#     end_y = 0
+    # end_x = -0.53125
+    # end_y = 0.920625
+    # start_x = -.5625
+    # start_y = 0.97525
+
+    # end_x = -0.5
+    # end_y = 0.866
+    # uncomment to get a 30% tick mark on the area chart 
+
+    start_x = -0.546875
+    start_y = 0.9479375
+    end_x = -0.571875
+    end_y = 0.9912375
+    # end_x = 0
+    # end_y = 0
+    
+    # start_x = -.5625
+    # start_y = 0.97525
+
+    # start_x = -0.53125
+    # start_y = 0.920625
+    # start_x = -.625
+    # start_y = 1.0845
+    # end_x = 0
+    # end_y = 0
 
 #     df = pd.DataFrame({
 #     'x': [start_x, end_x],
@@ -400,7 +439,7 @@ def arc_chart(df, column, color_choice):
 #     'values': ['30%','']
 # })
 
-    # get a tick exactly at 30% progress
+#     ## get a tick exactly at 30% progress
 #     tick = alt.Chart(df).mark_line(
 #     color='black',
 #     strokeDash=[2, 2],
@@ -409,7 +448,7 @@ def arc_chart(df, column, color_choice):
 #     x=alt.X('x:Q', scale=alt.Scale(domain=[-1.2, 1.2])),
 #     y=alt.Y('y:Q', scale=alt.Scale(domain=[-1.2, 1.2]))
 # )
-    # c2 = tick.mark_text(yOffset = -10).encode(text="values:N")
+#     c2 = tick.mark_text(xOffset = -3, yOffset = -10, angle = 330).encode(text="values:N")
     # chart = chart+tick + c2
     chart = chart.properties(
         height = 340,
