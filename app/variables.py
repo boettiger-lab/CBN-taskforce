@@ -44,7 +44,7 @@ chatbot_toggles = {key: False for key in keys}
 # data layers dict 
 layer_config = [
     #[(section, 'a_amph', [(col_name, full name, key, chatbot toggle key, citation)])]
-    ('🦜 Terrestrial Species', 'a_amph', [
+    ('🐻 Vertebrates', 'a_amph', [
         ('pct_top_amphibian_richness', 'Amphibian Richness', keys[0], chatbot_toggles[keys[0]], 'Areas with the top 20% of amphibian richness (Reference #5)'),
         ('pct_top_reptile_richness', 'Reptile Richness', keys[1], chatbot_toggles[keys[1]], 'Areas with the top 20% of reptile richness (Reference #5)'),
         ('pct_top_bird_richness', 'Bird Richness', keys[2], chatbot_toggles[keys[2]], 'Areas with the top 20% of bird richness (Reference #5)'),
@@ -52,7 +52,6 @@ layer_config = [
     ]),
     ('🌿 Plants', 'a_plant', [
         ('pct_top_plant_richness', 'Plant Richness', keys[4], chatbot_toggles[keys[4]], 'Areas with the top 20% of plant richness (Reference #6)'),
-
     ]),
     ('💧 Freshwater Resources', 'freshwater', [
         ('pct_wetlands', 'Wetlands', keys[5], chatbot_toggles[keys[5]], 'Areas that are freshwater emergent, freshwater forested/shrub, or estuarine and marine wetlands (Reference #7)'),
@@ -492,6 +491,7 @@ Mapping queries:
 
 Exploratory data queries:
 - What is a GAP code?
+- What is the habitat composition of the 30x30 network?
 - How many acres are newly protected easements?
 - Which county has the highest percentage of wetlands?
 - Summarize the habitat types in the Mojave preserve.

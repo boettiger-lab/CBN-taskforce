@@ -140,13 +140,13 @@ sql_query:
 ## Example: 
 example_user: "Show me all land managed by the United States Forest Service."
 sql_query:  
-    SELECT "sub_id", "geom", "name", "acres", "manager" FROM mydata 
+    SELECT "id", "geom", "name", "acres", "manager" FROM mydata 
     WHERE LOWER("manager") LIKE '%united states forest service%';
 
 ## Example:
 example_user: "Show me areas with more than 25% overlap in bird species richness."
 sql_query:
-    SELECT "sub_id", "geom", "name", "acres", "pct_bird_richness"
+    SELECT "id", "geom", "name", "acres", "pct_bird_richness"
     FROM mydata
       AND (
         "pct_bird_richness" > 0.25 
@@ -185,7 +185,7 @@ example_assistant: {{"sql_query":
         SELECT PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY "mean_amphibian_richness") AS mean_amphibian_richness_95_percentile
         FROM mydata
     )
-    SELECT "sub_id", "geom", "name", "acres","mean_amphibian_richness"
+    SELECT "id", "geom", "name", "acres","mean_amphibian_richness"
     FROM mydata
     WHERE "gap_code" = 3
         AND "mean_amphibian_richness" > (SELECT mean_amphibian_richness_95_percentile FROM percentile);
