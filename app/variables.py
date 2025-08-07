@@ -407,18 +407,32 @@ select_colors = {
 }
 
 error_messages = {
-    "bad_request": lambda llm: f"""
+    "bad_request": lambda llm, e, tb_str: f"""
 **Error Code 400 – LLM Unavailable** 
 
 *The LLM you selected `{llm}` is no longer available. Please select a different model.*
+
+**Error Details:**
+`{type(e)}: {e}`
+
+Traceback:
+
+```{tb_str}```
 """,
-    
-    "internal_server_error": lambda llm: f"""
+
+    "internal_server_error": lambda llm, e, tb_str: f"""
 **Error Code 500 – LLM Temporarily Unavailable**
 
 The LLM you selected `{llm}` is currently down due to maintenance or provider outages. It may remain offline for several hours.
 
 **Please select a different model or try again later.**
+
+**Error Details:**
+`{type(e)}: {e}`
+
+Traceback:
+
+```{tb_str}```
 """,
 
     "unexpected_llm_error": lambda prompt, e, tb_str: f"""
@@ -474,11 +488,13 @@ help_message = '''
 
 example_queries = """
 Mapping queries:
-- Show me the best areas to go birdwatching in San Diego County. 
+- Show me GAP 3 lands in the top 10% of mean amphibian richness
+- Show me easements where 90% or more of its area overlaps with regions of high biodiversity.
+- Show me amphibian biodiversity hotspots that aren't currently conserved.
+- Show me the areas with the highest bird richness in San Diego County. 
 - Show me amphibian biodiversity hotspots that aren't currently conserved.
 - Show me protected areas in disadvantaged communities.
 - Show me all 30x30 conservation areas managed by The Nature Conservancy.
-- Show me GAP 3 lands where 50% or more of the area overlaps with regions of high biodiversity.
 
 
 Exploratory data queries:
@@ -684,9 +700,9 @@ if openrouter_api is None:
     openrouter_api = st.secrets["OPENROUTER_API_KEY"]
 
 llm_options = {
+    "mistral-small-3.2-24b-instruct": ChatOpenAI(model = "mistralai/mistral-small-3.2-24b-instruct:free", api_key=openrouter_api, base_url = "https://openrouter.ai/api/v1",  temperature=0),
     "gpt-oss-20b": ChatOpenAI(model = "openai/gpt-oss-20b:free", api_key=openrouter_api, base_url = "https://openrouter.ai/api/v1",  temperature=0),
     "kimi-dev-72b": ChatOpenAI(model = "moonshotai/kimi-dev-72b:free", api_key=openrouter_api, base_url = "https://openrouter.ai/api/v1",  temperature=0),
-    "mistral-small-3.2-24b-instruct": ChatOpenAI(model = "mistralai/mistral-small-3.2-24b-instruct:free", api_key=openrouter_api, base_url = "https://openrouter.ai/api/v1",  temperature=0),
     "olmo": ChatOpenAI(model = "olmo", api_key=api_key, base_url = "https://llm.nrp-nautilus.io/",  temperature=0),
     "llama3": ChatOpenAI(model = "llama3", api_key=api_key, base_url = "https://llm.nrp-nautilus.io/",  temperature=0),
     "deepseek-r1": BaseChatOpenAI(model = "deepseek-r1", api_key=api_key, base_url = "https://llm.nrp-nautilus.io/",  temperature=0),

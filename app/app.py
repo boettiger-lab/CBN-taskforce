@@ -94,6 +94,7 @@ def main():
         output = few_shot_structured_llm.invoke(query)
         sql_query = output.sql_query
         explanation =output.explanation
+        print(output)
         if not sql_query: # if the chatbot can't generate a SQL query.
             return pd.DataFrame({'id' : []}),'', explanation
         result = ca.sql(sql_query).execute()
@@ -193,20 +194,21 @@ def main():
                             st.session_state[key] = value
     
             except Exception as e:
+                tb_str = traceback.format_exc()  # full multiline traceback string
                 if isinstance(e, openai.BadRequestError):
-                    st.error(error_messages["bad_request"](llm_choice), icon="🚨")
+                    st.error(error_messages["bad_request"](llm_choice, e, tb_str), icon="🚨")
                     
                 elif isinstance(e, openai.RateLimitError):
-                    st.error(error_messages["bad_request"](llm_choice), icon="🚨")
+                    st.error(error_messages["bad_request"](llm_choice, e, tb_str), icon="🚨")
                 
                 elif isinstance(e, openai.InternalServerError):
-                    st.error(error_messages["internal_server_error"](llm_choice), icon="🚨")
+                    print(e)
+                    st.error(error_messages["internal_server_error"](llm_choice, e, tb_str), icon="🚨")
                 
                 elif isinstance(e, openai.NotFoundError):
-                    st.error(error_messages["internal_server_error"](llm_choice), icon="🚨")
+                    st.error(error_messages["internal_server_error"](llm_choice, e, tb_str), icon="🚨")
                 else:
                     prompt = prompt.replace('\n', '')
-                    tb_str = traceback.format_exc()  # full multiline traceback string
                     st.error(error_messages["unexpected_llm_error"](prompt, e, tb_str))
                 st.stop()
     
