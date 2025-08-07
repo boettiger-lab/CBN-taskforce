@@ -94,7 +94,6 @@ def main():
         output = few_shot_structured_llm.invoke(query)
         sql_query = output.sql_query
         explanation =output.explanation
-        print(output)
         if not sql_query: # if the chatbot can't generate a SQL query.
             return pd.DataFrame({'id' : []}),'', explanation
         result = ca.sql(sql_query).execute()
@@ -202,7 +201,6 @@ def main():
                     st.error(error_messages["bad_request"](llm_choice, e, tb_str), icon="🚨")
                 
                 elif isinstance(e, openai.InternalServerError):
-                    print(e)
                     st.error(error_messages["internal_server_error"](llm_choice, e, tb_str), icon="🚨")
                 
                 elif isinstance(e, openai.NotFoundError):

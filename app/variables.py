@@ -488,11 +488,10 @@ help_message = '''
 
 example_queries = """
 Mapping queries:
-- Show me GAP 3 lands in the top 10% of mean amphibian richness
+- Show me GAP 3 lands in the top 10% of mean amphibian richness.
 - Show me easements where 90% or more of its area overlaps with regions of high biodiversity.
 - Show me amphibian biodiversity hotspots that aren't currently conserved.
 - Show me the areas with the highest bird richness in San Diego County. 
-- Show me amphibian biodiversity hotspots that aren't currently conserved.
 - Show me protected areas in disadvantaged communities.
 - Show me all 30x30 conservation areas managed by The Nature Conservancy.
 
@@ -501,6 +500,7 @@ Exploratory data queries:
 - What is a GAP code?
 - How many acres are newly protected easements?
 - Which county has the highest percentage of wetlands?
+- Summarize the habitat types in the Mojave preserve.
 """
 
 chatbot_limitations = """
