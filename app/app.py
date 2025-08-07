@@ -195,13 +195,15 @@ def main():
             except Exception as e:
                 if isinstance(e, openai.BadRequestError):
                     st.error(error_messages["bad_request"](llm_choice), icon="🚨")
+                    
+                elif isinstance(e, openai.RateLimitError):
+                    st.error(error_messages["bad_request"](llm_choice), icon="🚨")
                 
                 elif isinstance(e, openai.InternalServerError):
                     st.error(error_messages["internal_server_error"](llm_choice), icon="🚨")
                 
-                elif isinstance(e, openai.RateLimitError):
-                    st.error(error_messages["bad_request"](llm_choice), icon="🚨")
-                                
+                elif isinstance(e, openai.NotFoundError):
+                    st.error(error_messages["internal_server_error"](llm_choice), icon="🚨")
                 else:
                     prompt = prompt.replace('\n', '')
                     tb_str = traceback.format_exc()  # full multiline traceback string
@@ -275,22 +277,25 @@ def main():
             pmtiles_file = low_res_pmtiles
         else:
             pmtiles_file = ca_pmtiles
-            
+
         #leafmap options 
         leafmap_choice = st.selectbox("Leafmap module", ['MapLibre','Folium'])
         if leafmap_choice == "MapLibre":
             leafmap = importlib.import_module("leafmap.maplibregl")
-            m = leafmap.Map(style="positron")
+            controls={'navigation': 'top-left', 
+                      'fullscreen': 'top-left'}
+            m = leafmap.Map(style="positron", zoom=5, controls = controls,
+                           attribution_control=False)
         else:
             leafmap = importlib.import_module("leafmap.foliumap")
             m = leafmap.Map(center=[35, -100], zoom=5, 
-                            draw_control = False, search_control = False,
-                            measure_control = False)
+                            scale_control = False, draw_control = False, search_control = False,
+                            measure_control = False, layers_control = False)
 
         #basemap choices
         basemaps = leafmap.basemaps.keys()
         b = st.selectbox("Basemap", basemaps,index= 40)
-        m.add_basemap(b)
+        m.add_basemap(b, attribution = "")
 
         st.divider()
 
@@ -325,13 +330,19 @@ def main():
                 bounds = get_county_bounds(county_choice)
             else:
                 bounds = [-124.42174575, 32.53428607, -114.13077782, 42.00950367]
+        
+        ### mapping with maplibre
         if leafmap_choice == "MapLibre":
        
-            m.add_pmtiles(pmtiles_file, style=style, name="CA", tooltip=True, 
-                          template = tooltip_template, fit_bounds=True)
+            m.add_pmtiles(pmtiles_file, style=style, name="30x30 Conserved Areas (Terrestrial)", 
+                          attribution = "CA Nature (2024)", tooltip=True, template = tooltip_template, fit_bounds=True)
             m.fit_bounds(bounds)
-        else:
-            m.add_pmtiles(pmtiles_file, style=style, name="30x30 Conserved Areas (Terrestrial) by CA Nature (2024)", tooltip=False, zoom_to_layer=True)
+            m.add_legend(legend_dict = legend, fontsize = fontsize, bg_color = bg_color, position = position,
+                        title = '')
+        ### mapping with folium
+        else: 
+            m.add_pmtiles(pmtiles_file, style=style, name="30x30 Conserved Areas (Terrestrial) by CA Nature (2024)",
+                          tooltip=False, zoom_to_layer=True)
             m.zoom_to_bounds(bounds)   
             
             # add custom tooltip to pmtiles layer
@@ -340,8 +351,7 @@ def main():
                     pmtiles_layer = layer
                     break
             pmtiles_layer.add_child(CustomTooltip())
-
-        m.add_legend(legend_dict = legend, position = position)
+            m.add_legend(legend_dict = legend, position = position, draggable = False, title = '')
 
     # check if any layer toggle is active
     any_chart_toggled = any(
@@ -362,8 +372,13 @@ def main():
     with main:
         map_col, stats_col = st.columns([3,2])
         with map_col:
-            if 'not_mapping' not in locals():        
-                m.to_streamlit(height=650) # adding map
+            if 'not_mapping' not in locals():   
+                if leafmap_choice == "MapLibre":
+                    m.to_streamlit(height=650) # adding map
+                else: 
+                    m.to_streamlit(height=650, add_layer_control = False) # adding map
+                
+                
             with st.expander("🔍 View/download data"): # adding data table  
                 if 'llm_output' not in locals():
                     st.dataframe(df_tab, use_container_width = True)  

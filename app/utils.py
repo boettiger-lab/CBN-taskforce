@@ -270,6 +270,10 @@ def get_legend(style_options, color_choice, leafmap_backend, df = None, column =
         legend = {key.replace("Northwestern", "NW."): value for key, value in legend.items()} 
         bg_color = 'rgba(255, 255, 255, 0.6)'
         fontsize = 12
+        if leafmap_backend == 'MapLibre':
+            position = 'top-right'
+        else: 
+            position = 'topright'
     return legend, position, bg_color, fontsize
 
 
