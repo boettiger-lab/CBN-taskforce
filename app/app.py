@@ -392,14 +392,18 @@ def main():
                 if any_chart_toggled or show_stacked or show_chatbot_chart or (column not in ['status','gap_code']):
                     option_map = {'acres': "Acres", 'percent_network': "Composition", 'percent_feature': "Representation",}
 
-                chart_choice = st.pills(
-                    label="Bar chart metrics",
-                    options=option_map.keys(),
-                    format_func=lambda option: option_map[option],
-                    selection_mode="single",
-                    label_visibility="collapsed",
-                    default="acres",
-                )
+                    chart_choice = st.pills(
+                        label="Bar chart metrics",
+                        options=option_map.keys(),
+                        format_func=lambda option: option_map[option],
+                        selection_mode="single",
+                        label_visibility="collapsed",
+                        default="acres",
+                    )
+                    if chart_choice == "percent_network":
+                        if column not in ['status','gap_code']:
+                            st.altair_chart(area_chart(df_network, column, color_choice), use_container_width=True)
+                    
                 if (any_chart_toggled or show_stacked or show_chatbot_chart) and not chart_choice:
                     st.warning("Please select a metric to display bar chart.")
     
@@ -423,10 +427,7 @@ def main():
                         )
                         st.markdown(f'<p class="caption">{caption_text}</p>', unsafe_allow_html=True)
                 
-                if chart_choice == "percent_network":
-                    if column not in ['status','gap_code']:
-                        st.altair_chart(area_chart(df_network, column, color_choice), use_container_width=True)
-                    
+                
                 # Show data layer summary charts for toggled layers
                 for _, _, items in layer_config:
                     for suffix, label, toggle_key, *_ in items:

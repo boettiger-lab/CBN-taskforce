@@ -39,7 +39,6 @@ def get_buttons(style_options, style_choice):
 
 
 def sync_checkboxes(source):
-    print(st.session_state)
     """
     Synchronizes checkbox selections in Streamlit based on 30x30 status and GAP codes. 
     """
@@ -66,14 +65,6 @@ def sync_checkboxes(source):
     elif source == "statusPublic or Unknown Conservation Area":
         if "gap_codeGAP 4" in st.session_state and st.session_state['statusPublic or Unknown Conservation Area'] != st.session_state['gap_codeGAP 4']:
             st.session_state['gap_codeGAP 4'] = st.session_state['statusPublic or Unknown Conservation Area']
-
-    # non-conserved on <-> gap None
-    # elif source == "gap_codeNone":
-    #     st.session_state['statusNon-Conservation Area'] = st.session_state['gap_codeNone']
-
-    # elif source == "statusNon-Conservation Area":
-    #     if "gap_codeNone" in st.session_state and st.session_state['statusNon-Conservation Area'] != st.session_state['gap_codeNone']:
-    #         st.session_state['gap_codeNone'] = st.session_state['statusNon-Conservation Area']
 
     nonconserved_filters = [
         'gap_codeNone', 'statusNon-Conservation Area','climate_zoneNone',
@@ -406,40 +397,17 @@ def arc_chart(df, column, color_choice):
             ]
         )
     )
-
-    # end_x = -0.53125
-    # end_y = 0.920625
-    # start_x = -.5625
-    # start_y = 0.97525
-
-    # end_x = -0.5
-    # end_y = 0.866
-    # uncomment to get a 30% tick mark on the area chart 
-
-    start_x = -0.546875
-    start_y = 0.9479375
-    end_x = -0.571875
-    end_y = 0.9912375
-    # end_x = 0
-    # end_y = 0
-    
-    # start_x = -.5625
-    # start_y = 0.97525
-
-    # start_x = -0.53125
-    # start_y = 0.920625
-    # start_x = -.625
-    # start_y = 1.0845
-    # end_x = 0
-    # end_y = 0
-
+#     start_x = -0.546875
+#     start_y = 0.9479375
+#     end_x = -0.21875
+#     end_y = 0.379175
 #     df = pd.DataFrame({
 #     'x': [start_x, end_x],
 #     'y': [start_y, end_y],
 #     'values': ['30%','']
 # })
 
-#     ## get a tick exactly at 30% progress
+#     # get a tick exactly at 30% progress
 #     tick = alt.Chart(df).mark_line(
 #     color='black',
 #     strokeDash=[2, 2],
@@ -449,7 +417,7 @@ def arc_chart(df, column, color_choice):
 #     y=alt.Y('y:Q', scale=alt.Scale(domain=[-1.2, 1.2]))
 # )
 #     c2 = tick.mark_text(xOffset = -3, yOffset = -10, angle = 330).encode(text="values:N")
-    # chart = chart+tick + c2
+    chart = chart+tick + c2
     chart = chart.properties(
         height = 340,
         title={
