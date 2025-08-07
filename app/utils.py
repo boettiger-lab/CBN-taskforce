@@ -397,26 +397,7 @@ def arc_chart(df, column, color_choice):
             ]
         )
     )
-#     start_x = -0.546875
-#     start_y = 0.9479375
-#     end_x = -0.21875
-#     end_y = 0.379175
-#     df = pd.DataFrame({
-#     'x': [start_x, end_x],
-#     'y': [start_y, end_y],
-#     'values': ['30%','']
-# })
 
-#     # get a tick exactly at 30% progress
-#     tick = alt.Chart(df).mark_line(
-#     color='black',
-#     strokeDash=[2, 2],
-#     strokeWidth=2
-#     ).encode(
-#     x=alt.X('x:Q', scale=alt.Scale(domain=[-1.2, 1.2])),
-#     y=alt.Y('y:Q', scale=alt.Scale(domain=[-1.2, 1.2]))
-# )
-#     c2 = tick.mark_text(xOffset = -3, yOffset = -10, angle = 330).encode(text="values:N")
     chart = chart+tick + c2
     chart = chart.properties(
         height = 340,
