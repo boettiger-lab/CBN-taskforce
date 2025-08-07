@@ -10,10 +10,16 @@ import os
 from shapely import wkb  
 from functools import reduce
 from itertools import chain
+import itertools
 from variables import *
 from pandas.api.types import CategoricalDtype
 from math import pi
-
+from leafmap.foliumap import PMTilesMapLibreTooltip
+from branca.element import Template
+import minio
+import datetime
+import numpy as np
+import re
 ######################## UI FUNCTIONS 
 def get_buttons(style_options, style_choice):
     """
@@ -30,6 +36,7 @@ def get_buttons(style_options, style_choice):
     filter_choice = [key for key, value in buttons.items() if value]
     
     return {column: filter_choice}
+
 
 def sync_checkboxes(source):
     """
@@ -59,21 +66,24 @@ def sync_checkboxes(source):
         if "gap_codeGAP 4" in st.session_state and st.session_state['statusPublic or Unknown Conservation Area'] != st.session_state['gap_codeGAP 4']:
             st.session_state['gap_codeGAP 4'] = st.session_state['statusPublic or Unknown Conservation Area']
 
-    # non-conserved on <-> gap 0 
-    elif source == "gapNon-Conservation Area":
-        st.session_state['statusNon-Conservation Area'] = st.session_state['gapNon-Conservation Area']
-
-    elif source == "statusNon-Conservation Area":
-        if "gapNon-Conservation Area" in st.session_state and st.session_state['statusNon-Conservation Area'] != st.session_state['gapNon-Conservation Area']:
-            st.session_state['gapNon-Conservation Area'] = st.session_state['statusNon-Conservation Area']
-
-
+    nonconserved_filters = [
+        'gap_codeNone', 'statusNon-Conservation Area','climate_zoneNone',
+        'ecoregionNone', 'manager_typeNone', 'land_tenureNone', 'habitat_typeNone', 'access_typeNone'
+    ]
+    
+    if source in nonconserved_filters:
+        toggled_value = st.session_state.get(source, False)
+        for filt in nonconserved_filters:
+            if st.session_state.get(filt, None) != toggled_value:
+                st.session_state[filt] = toggled_value
+        
 def color_table(select_colors, color_choice, column):
     """
     Converts selected color mapping into a DataFrame.
     """
     # return ibis.memtable(select_colors[color_choice], columns=[column, "color"]).to_pandas()
     return ibis.memtable(select_colors[color_choice], columns=[column, "color"])
+
 
 def get_color_vals(style_options, style_choice):
     """
@@ -93,12 +103,12 @@ def get_summary(ca, combined_filter, column, main_group, feature_col, colors = N
         key: (getattr(_, key) * _.acres).sum().name(f"total_feature_{key}")
         for key in keys
     }
-    
     totals = ca.aggregate(**total_features).execute().iloc[0].to_dict()
-
+    total_selected = ca.filter(combined_filter).acres.sum().execute()
     # base columns
     base_aggs = {
         "percent_CA": (_.acres.sum() / ca_area_acres),
+        "percent_selected": (_.acres.sum() / total_selected),
         "acres": _.acres.sum(),
         }
 
@@ -116,10 +126,10 @@ def get_summary(ca, combined_filter, column, main_group, feature_col, colors = N
     all_aggs = {**base_aggs, **dynamic_aggs}
     # group and aggregate
     df = (ca.filter(combined_filter)
-          .group_by(*column)
-          .aggregate(**all_aggs)
-          .mutate(percent_CA=_.percent_CA.round(5), acres=_.acres.round(0))
-        )
+            .group_by(*column)
+            .aggregate(**all_aggs)
+            .mutate(percent_CA=_.percent_CA.round(5), acres=_.acres.round(0),percent_selected=_.percent_selected.round(5))
+         )
 
      # Compute total acres by group and percent of group
     group_totals = (ca.filter(combined_filter)
@@ -136,12 +146,12 @@ def get_summary(ca, combined_filter, column, main_group, feature_col, colors = N
         df = df.inner_join(colors, column[-1])
     return df.cast({col: "string" for col in column}).execute()
 
+    
 def get_summary_table(ca, column, select_colors, color_choice, filter_cols, filter_vals, colorby_vals, feature_col = None):
     """
     Generates summary tables for visualization and reporting.
     """
     colors = color_table(select_colors, color_choice, column)
-
     #if a filter is selected, add to list of filters 
     filters = [getattr(_, col).isin(vals) for col, vals in zip(filter_cols, filter_vals) if vals]
     #show color_by column in table by adding it as a filter (if it's not already a filter)
@@ -149,9 +159,13 @@ def get_summary_table(ca, column, select_colors, color_choice, filter_cols, filt
         filter_cols.append(column)
         filters.append(getattr(_, column).isin(colorby_vals[column]))
 
+
     #combining all the filters into ibis filter expression 
     combined_filter = reduce(lambda x, y: x & y, filters)
-
+    flatten_vals = list(itertools.chain.from_iterable(filter_vals))
+    if (("GAP 2" in flatten_vals) or ("GAP 1" in flatten_vals)) and ("30x30 Conservation Area" not in flatten_vals):
+        include_gap = [getattr(_, col).isin(vals) for col, vals in zip(filter_cols, filter_vals) if vals and (col == 'gap_code')]
+        combined_filter = combined_filter | include_gap[0]
     #df used for printed table
     df_tab = get_summary(ca, combined_filter, filter_cols, column, feature_col, colors=None)
 
@@ -171,6 +185,7 @@ def get_summary_table_sql(ca, column, colors, ids, feature_col = None):
     df_feature = get_summary(ca, combined_filter, [column], column, feature_col, colors, feature = True)
     return df_network, df_feature
 
+
 def extract_columns(sql_query):
     # Find all substrings inside double quotes
     columns = list(dict.fromkeys(re.findall(r'"(.*?)"', sql_query)))
@@ -178,16 +193,13 @@ def extract_columns(sql_query):
 
 
 ######################## MAP STYLING FUNCTIONS 
-
 def get_county_bounds(county):
     return county_bounds[county]
     
-from itertools import chain
 
-def get_pmtiles_style(paint, alpha=1, filter_cols=None, filter_vals=None, ids=None):
+def get_pmtiles_style(paint, pmtiles_file, low_res, filter_cols=None, filter_vals=None, ids=None, alpha=1):
     """
     Generates a MapLibre GL style for PMTiles with either filters or a list of IDs.
-
     """
     if ids:
         filter_expr = ["in", ["get", "id"], ["literal", ids]]
@@ -202,8 +214,12 @@ def get_pmtiles_style(paint, alpha=1, filter_cols=None, filter_vals=None, ids=No
                 for col, val in zip(filter_cols, filter_vals)
             ]
             filter_expr = ["all", *filters]
-            
-            
+
+    if low_res: 
+        source_layer_name = 'ca30x30_cbn_v3fgb'
+    else:
+        source_layer_name = re.sub(r'\W+', '', os.path.splitext(os.path.basename(pmtiles_file))[0])
+
     config = {
         "id": "ca30x30",
         "source": "ca",
@@ -211,7 +227,7 @@ def get_pmtiles_style(paint, alpha=1, filter_cols=None, filter_vals=None, ids=No
         "type": "fill",
         "paint": {
             "fill-color": paint,
-            "fill-opacity": alpha
+            "fill-opacity": alpha,
         }
     }
     
@@ -223,16 +239,14 @@ def get_pmtiles_style(paint, alpha=1, filter_cols=None, filter_vals=None, ids=No
         "sources": {
             "ca": {
                 "type": "vector",
-                "url": f"pmtiles://{ca_pmtiles}"
+                "url": f"pmtiles://{pmtiles_file}"
             }
         },
         "layers": [config]
     }
 
 
-
-
-def get_legend(style_options, color_choice, df = None, column = None):
+def get_legend(style_options, color_choice, leafmap_backend, df = None, column = None):
     """
     Generates a legend dictionary with color mapping and formatting adjustments.
     """
@@ -241,8 +255,10 @@ def get_legend(style_options, color_choice, df = None, column = None):
         if ~df.empty:
             categories = df[column].to_list() #if we filter out categories, don't show them on the legend 
             legend = {cat: color for cat, color in legend.items() if str(cat) in categories}
-       
     position, fontsize, bg_color = 'bottomleft', 15, 'white'
+
+    if leafmap_backend == 'MapLibre':
+        position = 'bottom-left'
 
     # shorten legend for ecoregions 
     if color_choice == "Ecoregion":
@@ -258,8 +274,6 @@ def get_legend(style_options, color_choice, df = None, column = None):
 
 
 ### tooltip for pmtiles
-from leafmap.foliumap import PMTilesMapLibreTooltip
-from branca.element import Template
 
 class CustomTooltip(PMTilesMapLibreTooltip):
     _template = Template("""
@@ -301,6 +315,7 @@ class CustomTooltip(PMTilesMapLibreTooltip):
 
 
 ######################## CHART FUNCTIONS 
+
 def area_chart(df, column, color_choice):
     """
     Generates an Altair pie chart representing the percentage of protected areas.
@@ -320,11 +335,56 @@ def area_chart(df, column, color_choice):
     cat_dtype = CategoricalDtype(categories=labels_sorted, ordered=True)
     df["order_index"] = df[column].astype(cat_dtype).cat.codes  
     
-    pie = (
+    if color_choice in ['30x30 Status','GAP Code']:
+        chart = arc_chart(df, column, color_choice)
+    else:
+        chart = pie_chart(df, column, color_choice)
+    return chart
+
+def pie_chart(df, column, color_choice):
+    chart = (
         alt.Chart(df)
-        .mark_arc(innerRadius=50, outerRadius=120, stroke="black", strokeWidth=0.1)
+        .mark_arc(outerRadius=120,stroke="black", strokeWidth=0.1)
         .encode(
-            alt.Theta("percent_CA:Q", scale=alt.Scale(type="linear", rangeMax=pi/2, rangeMin=-pi/2)),
+            alt.Theta("percent_selected:Q"),
+            alt.Order("order_index:O"),
+            alt.Color(
+                f'{column}:N',
+                scale=alt.Scale(domain=df[column].tolist(), range=df["color"].tolist()),
+                legend=None),
+            tooltip=[
+                alt.Tooltip(column, type="nominal"),
+                alt.Tooltip("percent_selected", type="quantitative", format=",.1%"),
+                alt.Tooltip("acres", type="quantitative", format=",.0f"),
+            ]
+        )
+        .properties(
+        height = 330,
+        title={
+            "text": f"Mapped Area by {color_choice}",
+            "subtitle": ["The area currently shown on the map,", f"divided among each {color_choice}.","**Chart updates based on filters**"]
+
+        }).configure_title(
+            fontSize=16,
+            align="center",
+            anchor="middle",
+            offset=15,
+            subtitleColor="gray"
+        )
+        )
+    return chart
+    
+
+def arc_chart(df, column, color_choice):
+    pi = 3.14159
+    total_percent = df["percent_CA"].sum()
+    df["theta_scaled"] = (df["percent_CA"] * pi)
+
+    chart = (
+        alt.Chart(df)
+        .mark_arc(innerRadius=50, outerRadius=120, thetaOffset = -pi/2, stroke="black", strokeWidth=0.1 )
+        .encode(
+            alt.Theta("theta_scaled:Q", scale = None, stack = True),
             alt.Order("order_index:O"),
             alt.Color(
                 f'{column}:N',
@@ -336,27 +396,43 @@ def area_chart(df, column, color_choice):
                 alt.Tooltip("acres", type="quantitative", format=",.0f"),
             ]
         )
-        .properties(title=[f"Percent of California", f"by {color_choice}"], height=300)
-        .configure_title(fontSize=16, align="center", anchor="middle", offset=15)
     )
-    return pie
 
+    chart = chart.properties(
+        height = 340,
+        title={
+            "text": f"California by {color_choice}",
+            "subtitle": [f"Total acres in California,", f"divided among each {color_choice}.","**Chart updates based on filters**"]
 
+        }).configure_title(
+            fontSize=16,
+            align="center",
+            anchor="middle",
+            offset=15,
+            subtitleColor="gray"
+        ).configure_axis(
+        disable = True
+        )
+    return chart
 
 def bar_chart(df, x, y, title, metric = "percent", percent_type = None):
     """Creates a simple bar chart."""
     return create_bar_chart(df, x, y, title, metric, percent_type)
 
+
 def stacked_bar(df, x, y, metric, title, colors, color = "status"):
     """Creates a stacked bar chart."""
-    return create_bar_chart(df, x, y, title, metric, color=color, stacked=True, colors=colors)
+    chart = create_bar_chart(df, x, y, title, metric, color=color, stacked=True, colors=colors)
+    return chart 
+
 
 def get_chart_settings(x, feature_name, y=None, stacked=None, metric=None, percent_type=None):
     """
     Returns sorting, axis settings, and y-axis title mappings for chart rendering.
     """
     y_title = {
-        'percent': "Percent",
+        'percent_network': "Percent",
+        'percent_feature': "Percent",
         'acres': "Acres"
     }.get(metric)
 
@@ -369,8 +445,6 @@ def get_chart_settings(x, feature_name, y=None, stacked=None, metric=None, perce
     chart_title, subtitle = '', ''
     y = y or ''
 
-
-
     if percent_type == "Network":
         chart_title = f"{feature_name} Within Each {x_title}"
         y_title = f"% of Area with {feature_name}"
@@ -379,27 +453,30 @@ def get_chart_settings(x, feature_name, y=None, stacked=None, metric=None, perce
     elif percent_type == "Feature":
         chart_title = f"Distribution of\n{feature_name} by {x_title}"
         y_title = f"% of Total {feature_name}"
-        subtitle = f"Acres of {feature_name} in each {x_title},\ndivided by total acres of {feature_name}"
+        subtitle = [f"Acres of {feature_name} in each {x_title}",f"divided by total acres of {feature_name}","**Chart updates based on filters**"]
 
     if stacked:
-        chart_title = f"{x_title}\nby 30x30 Status"
-    
+        if metric != "acres":
+            chart_title = f"{x_title} Representation\n by 30x30 Status"
+            subtitle = [f'Acres of 30x30 Status within each {x_title}',f'divided by total acres of each {x_title}','**Chart updates based on filters**']
+        else:
+            chart_title = f"{x_title}\nby 30x30 Status"
+            subtitle = f'Acres of 30x30 Status within each {x_title}'
+        
     elif metric == "acres" and not stacked:
         chart_title = f"Acres of {feature_name.rstrip()}\nWithin Each {x_title}"
-
     
     height = (
         350 if stacked else
         620 if "freshwater" in y else
         720 if "increased" in y and percent_type == "Feature" else
         700 if "increased" in y else
-        550 if x in ["ecoregion", "habitat_type"] else
+        600 if x in ["ecoregion", "habitat_type"] else
         450 if x == "manager_type" else
         550 if x == "access_type" else
         600 if percent_type else
         540
     )
-
     return sort_options.get(x, "x"), angle, height, y_title, x_title, chart_title, subtitle
 
 
@@ -409,6 +486,7 @@ def get_label_transform(x, label=None):
     if label is not None:
         return func(label) if callable(func) else label
     return transform[0]
+
     
 def get_hex(df, color, order):
     """
@@ -420,7 +498,8 @@ def get_hex(df, color, order):
                 .dropna()
                 .reset_index()).T.values.tolist()
 
-@st.fragment
+
+# @st.fragment
 def create_bar_chart(
     df, x, y, feature_name, metric,
     percent_type=None, color=None, stacked=False, colors=None
@@ -435,7 +514,7 @@ def create_bar_chart(
     label_transform = get_label_transform(x)
     y_format = "~s" if metric == "acres" else ",.2%"
     tooltip_y = alt.Tooltip(y, type="quantitative", format=y_format)
-
+    
     # base chart
     base_chart = (
         alt.Chart(df)
@@ -463,9 +542,9 @@ def create_bar_chart(
         y_axis_scale = alt.Y(
             y,
             axis=alt.Axis(title=y_title, offset=-5, format=y_format),
-            scale=alt.Scale(domain=[0, 1]) if metric == "percent" else alt.Undefined
+            scale=alt.Scale(domain=[0, 1]) if ("percent" in metric) else alt.Undefined
         )
-
+        
         stacked_chart = base_chart.encode(
             x=alt.X("xlabel:N", sort=sort, title=None, axis=alt.Axis(labels=False)),
             y=y_axis_scale,
@@ -479,6 +558,14 @@ def create_bar_chart(
             ]
         )
 
+        rule = alt.Chart(pd.DataFrame({'y_value': [0.3]})).mark_rule(
+        color='red',
+        strokeDash=[5, 5]  
+        ).encode(
+            y='y_value'
+        )
+        stacked_chart = stacked_chart+rule
+        
         # prepare label layer
         colors = colors.to_pandas()
         colors["xlabel"] = [get_label_transform(x, str(lab)) for lab in colors[x]]
@@ -491,9 +578,20 @@ def create_bar_chart(
             )
             .properties(height=1)
         )
-
+        
         final_chart = alt.vconcat(stacked_chart, symbol_layer, spacing=8).resolve_scale(x="shared")
-
+        final_chart = final_chart.properties(
+                title={
+                    "text": chart_title.split("\n") if "\n" in chart_title else chart_title,
+                    "subtitle": subtitle.split("\n") if "\n" in subtitle else subtitle,
+                }
+            ).configure_title(
+                fontSize=16,
+                align="center",
+                anchor="middle",
+                offset=10,
+                subtitleColor="gray"
+            )
     # non-stacked chart
     else:
         final_chart = base_chart.encode(
@@ -526,8 +624,6 @@ def create_bar_chart(
     return final_chart
 
 
-import minio
-import datetime
 minio_key = os.getenv("MINIO_KEY")
 if minio_key is None:
     minio_key = st.secrets["MINIO_KEY"]
@@ -535,7 +631,6 @@ if minio_key is None:
 minio_secret = os.getenv("MINIO_SECRET")
 if minio_secret is None:
     minio_secret = st.secrets["MINIO_SECRET"]
-
 
 def minio_logger(consent, query, sql_query, llm_explanation, llm_choice, filename="query_log.csv", bucket="shared-ca30x30-app",
                  key=minio_key, secret=minio_secret,
@@ -553,4 +648,3 @@ def minio_logger(consent, query, sql_query, llm_explanation, llm_choice, filenam
     
     pd.concat([log,df]).to_csv(filename, index=False, header=True)
     mc.fput_object(bucket, filename, filename, content_type="text/csv")
-

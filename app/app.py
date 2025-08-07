@@ -1,5 +1,4 @@
 import streamlit as st
-import leafmap.foliumap as leafmap
 import altair as alt
 import ibis
 from ibis import _
@@ -9,6 +8,7 @@ import openai
 from variables import *
 from utils import *
 import traceback
+import importlib
 
 def main():
     con = ibis.duckdb.connect("duck.db", extensions=["spatial"])
@@ -45,10 +45,6 @@ def main():
     
     st.divider()
     
-    # m = leafmap.Map(style="positron")
-    m = leafmap.Map(center=[35, -100], zoom=5, layers_control=True, fullscreen_control=True)
-    
-    basemaps = leafmap.basemaps.keys()
     #############
     
     chatbot_container = st.container()
@@ -57,9 +53,8 @@ def main():
         with llm_left_col:
             with st.popover("💬 Example Queries"):
                 st.markdown(example_queries)
-    
-                st.info('If the map appears blank, queried data may be too small to see at the default zoom level. Check the table below the map, as query results will also be displayed there.', icon="ℹ️")
-                
+                st.warning(chatbot_limitations, icon="⚠️")
+                st.info(chatbot_info, icon="ℹ️")
         with llm_right_col:
             llm_choice = st.selectbox("Select LLM:", llm_options, key = "llm", help = "Select which model to use.")   
             llm = llm_options[llm_choice]
@@ -179,6 +174,7 @@ def main():
                             not_mapping = True
     
                         # update toggles based on returned columns from SQL query
+                        llm_cols = [x.replace('mean_','pct_top_') for x in llm_cols]
                         chatbot_toggles = {
                             key: (True if key in llm_cols else value) 
                             for key, value in chatbot_toggles.items()
@@ -205,6 +201,7 @@ def main():
                 
                 else:
                     prompt = prompt.replace('\n', '')
+                    tb_str = traceback.format_exc()  # full multiline traceback string
                     st.error(error_messages["unexpected_llm_error"](prompt, e, tb_str))
                 st.stop()
     
@@ -215,9 +212,6 @@ def main():
             st.markdown(help_message)
         if st.button("🧹 Clear Filters", type="secondary", help = 'Reset all the filters to their default state.'):
             st.rerun()
-
-        
-            
         st.divider()
         
         color_choice = st.radio(
@@ -228,10 +222,10 @@ def main():
             captions=['','Degree of biodiversity protection [(what is this?)](https://www.protectedlands.net/uses-of-pad-us/#conservation-of-biodiversity-2)','', '', '', '', '', '', '']
         )
         colorby_vals = get_color_vals(style_options, color_choice)
-        alpha = 0.8
         st.divider()
-    
-        st.markdown('<p class = "medium-font-sidebar"> Filters:</p>', help = "Apply filters to adjust what data is shown on the map.", unsafe_allow_html= True)
+
+        #### Data layers
+        st.markdown('<p class = "medium-font-sidebar"> Filters:</p>', help = "Apply filters to adjust what data is shown on the map. Filters do not modify the chatbot's input/output.", unsafe_allow_html= True)
         for label in style_options: # get selected filters (based on the buttons selected)
             with st.expander(label):  
                 if label in ["GAP Code","30x30 Status"]: # gap code 1 and 2 are on by default
@@ -247,11 +241,19 @@ def main():
             else: 
                 filter_cols = []
                 filter_vals = []
+
+        # county choice
+        county_choice = st.selectbox("County", counties, index = None, placeholder='Counties', label_visibility = 'collapsed', key ='county')
+        if county_choice != None:
+            county_choice = county_choice.replace(' County','')
+            filter_cols.append('county')
+            filter_vals.append([county_choice])
+
         st.divider()
 
 
     #### Data layers 
-        st.markdown('<p class = "medium-font-sidebar"> Data Layers:</p>', help = "Select data layers to visualize on the map. Summary charts will update based on the displayed layers.", unsafe_allow_html= True)
+        st.markdown('<p class = "medium-font-sidebar"> Data Layers:</p>', help = "Select data layers to display summary charts.", unsafe_allow_html= True)
         #display toggles to turn on data layers            
         for section, slider_key, items in layer_config:
             with st.expander(section):
@@ -263,18 +265,32 @@ def main():
                         _, label, toggle_key, citation = item
                         st.toggle(label, key=toggle_key)
         st.divider() 
-        
-        # county choice
-        county_choice = st.selectbox("County", counties, index = 0, placeholder='Select a county')
-        if county_choice != 'All':
-            filter_cols.append('county')
-            filter_vals.append([county_choice])
-        
+        st.markdown('<p class = "medium-font-sidebar"> Map Settings:</p>', help = "Select the mapping backend and basemap used to render the map. Use low resolution if experiencing performance issues.", unsafe_allow_html= True)
+        # pmtiles selectino
+        low_res = st.toggle("Low Resolution", key = 'pmtiles_choice', help = "Toggle on low resolution map if the app is lagging.")
+        if low_res:
+            pmtiles_file = low_res_pmtiles
+        else:
+            pmtiles_file = ca_pmtiles
+            
+        #leafmap options 
+        leafmap_choice = st.selectbox("Leafmap module", ['MapLibre','Folium'])
+        if leafmap_choice == "MapLibre":
+            leafmap = importlib.import_module("leafmap.maplibregl")
+            m = leafmap.Map(style="positron")
+        else:
+            leafmap = importlib.import_module("leafmap.foliumap")
+            m = leafmap.Map(center=[35, -100], zoom=5, 
+                            draw_control = False, search_control = False,
+                            measure_control = False)
+
         #basemap choices
+        basemaps = leafmap.basemaps.keys()
         b = st.selectbox("Basemap", basemaps,index= 40)
         m.add_basemap(b)
+
         st.divider()
-        
+
         # adding github logo 
         st.markdown(f"<div class='spacer'>{github_html}</div>", unsafe_allow_html=True)
         st.markdown(":left_speech_bubble: [Get in touch or report an issue](https://github.com/boettiger-lab/CBN-taskforce/issues)")
@@ -290,36 +306,40 @@ def main():
     ## parameters for mapping the data (if we didn't use llm)
     if 'llm_output' not in locals():
         df_network, _, df_tab, df_bar_30x30 = get_summary_table(ca, column, select_colors, color_choice, filter_cols, filter_vals,colorby_vals)
-        style = get_pmtiles_style(style_options[color_choice], alpha, filter_cols, filter_vals)
-
+        style = get_pmtiles_style(style_options[color_choice],pmtiles_file, low_res, filter_cols, filter_vals)
             
     else:
         if 'not_mapping' not in locals():
-            style = get_pmtiles_style(style_options[color_choice], ids = ids)
+            style = get_pmtiles_style(style_options[color_choice], pmtiles_file, low_res, ids = ids)
         df_network, _ = get_summary_table_sql(ca, column, colors, ids)
     
     ## mapping data 
-    legend, position, bg_color, fontsize = get_legend(style_options, color_choice, df_network, column)
-    
+    legend, position, bg_color, fontsize = get_legend(style_options, color_choice, leafmap_choice, df_network, column)
+
     if 'not_mapping' not in locals():      
-        m.add_legend(legend_dict = legend, position = position)
-        m.add_pmtiles(ca_pmtiles, style=style, name="CA", tooltip=False, zoom_to_layer=True)
         if 'llm_output' not in locals():
-            if county_choice != 'All':
+            if county_choice != None:
                 bounds = get_county_bounds(county_choice)
             else:
                 bounds = [-124.42174575, 32.53428607, -114.13077782, 42.00950367]
+        if leafmap_choice == "MapLibre":
+       
+            m.add_pmtiles(pmtiles_file, style=style, name="CA", tooltip=True, 
+                          template = tooltip_template, fit_bounds=True)
+            m.fit_bounds(bounds)
+        else:
+            m.add_pmtiles(pmtiles_file, style=style, name="30x30 Conserved Areas (Terrestrial) by CA Nature (2024)", tooltip=False, zoom_to_layer=True)
+            m.zoom_to_bounds(bounds)   
+            
+            # add custom tooltip to pmtiles layer
+            for layer in m._children.values():
+                if isinstance(layer, leafmap.PMTilesLayer):
+                    pmtiles_layer = layer
+                    break
+            pmtiles_layer.add_child(CustomTooltip())
 
-        m.zoom_to_bounds(bounds)
-        # add custom tooltip to pmtiles layer
-        for layer in m._children.values():
-            if isinstance(layer, leafmap.PMTilesLayer):
-                pmtiles_layer = layer
-                break
-        pmtiles_layer.add_child(CustomTooltip())
-    
+        m.add_legend(legend_dict = legend, position = position)
 
-    
     # check if any layer toggle is active
     any_chart_toggled = any(
         st.session_state.get(toggle_key, False)
@@ -338,7 +358,6 @@ def main():
     # main display 
     with main:
         map_col, stats_col = st.columns([3,2])
-    
         with map_col:
             if 'not_mapping' not in locals():        
                 m.to_streamlit(height=650) # adding map
@@ -366,12 +385,13 @@ def main():
             with st.container():
                 if 'not_mapping' not in locals():        
                     st.markdown('')
-                    st.altair_chart(area_chart(df_network, column, color_choice), use_container_width=True)
-                    st.markdown('<p class="caption-shift-up">*Chart updates based on filters.</p>', unsafe_allow_html=True)
+                    if column in ['status','gap_code']:
+                        st.altair_chart(area_chart(df_network, column, color_choice), use_container_width=True)
     
                 # display the pill selection if we will use any barcharts
-                if any_chart_toggled or show_stacked or show_chatbot_chart:
-                    option_map = {'acres': "Acres", 'percent': "%"}
+                if any_chart_toggled or show_stacked or show_chatbot_chart or (column not in ['status','gap_code']):
+                    option_map = {'acres': "Acres", 'percent_network': "Composition", 'percent_feature': "Representation",}
+
                     chart_choice = st.pills(
                         label="Bar chart metrics",
                         options=option_map.keys(),
@@ -380,32 +400,34 @@ def main():
                         label_visibility="collapsed",
                         default="acres",
                     )
-                # if 'chart_choice' not in locals():
-                #     st.warning("Please select a metric to display bar chart.")
-    
+                    if chart_choice == "percent_network":
+                        if column not in ['status','gap_code']:
+                            st.altair_chart(area_chart(df_network, column, color_choice), use_container_width=True)
+                    
                 if (any_chart_toggled or show_stacked or show_chatbot_chart) and not chart_choice:
                     st.warning("Please select a metric to display bar chart.")
     
                 if show_stacked:
-                    y_axis = 'percent_group' if chart_choice == 'percent' else 'acres'
-                    chart_title = f"{color_choice}\n by 30x30 Status"
-    
-                    chart = stacked_bar(
-                        df=df_bar_30x30,
-                        x=column,
-                        y=y_axis,
-                        metric=chart_choice,
-                        title=chart_title,
-                        colors=colors,
-                    )
-                    st.altair_chart(chart, use_container_width=True) 
-                    caption_text = (
-                        f"*Percent of {color_choice} within each 30x30 conservation status."
-                        if chart_choice == 'percent'
-                        else f"*Acres of {color_choice} within each 30x30 conservation status."
-                    )
-                    st.markdown(f'<p class="caption">{caption_text}</p>', unsafe_allow_html=True)
-    
+                    if chart_choice in ["percent_feature","acres"]:
+                        y_axis = 'percent_group' if (chart_choice == 'percent_feature') else 'acres'
+                        chart_title = f"{color_choice}\n by 30x30 Status"
+                        chart = stacked_bar(
+                            df=df_bar_30x30,
+                            x=column,
+                            y=y_axis,
+                            metric=chart_choice,
+                            title=chart_title,
+                            colors=colors,
+                        )
+                        st.altair_chart(chart, use_container_width=True) 
+                        caption_text = (
+                            f"*Percent of {color_choice} within each 30x30 conservation status."
+                            if (chart_choice in ['percent_network','percent_feature'])
+                            else f"*Acres of {color_choice} within each 30x30 conservation status."
+                        )
+                        st.markdown(f'<p class="caption">{caption_text}</p>', unsafe_allow_html=True)
+                
+                
                 # Show data layer summary charts for toggled layers
                 for _, _, items in layer_config:
                     for suffix, label, toggle_key, *_ in items:
@@ -419,8 +441,8 @@ def main():
                             label = f"Top {label}"
                         if ("Richness" in label) or ("Land" in label) or ("Communities" in label):
                             label += "\n"
-            
-                        if chart_choice == 'percent':
+    
+                        if chart_choice == 'percent_network':
                             # Percent of NETWORK
                             feature_col_net = f"pct_network_{suffix_clean}"
                             st.altair_chart(
@@ -428,6 +450,7 @@ def main():
                                 use_container_width=True,
                             )
     
+                        elif chart_choice == 'percent_feature':
                             # Percent of FEATURE
                             feature_col_feat = f"pct_feature_{suffix_clean}"
                             _, df_feature, _, _ = get_summary_table(
@@ -440,6 +463,7 @@ def main():
                                 colorby_vals,
                                 feature_col_feat,
                             )
+    
                             st.altair_chart(
                                 bar_chart(df_feature, column, feature_col_feat, label, metric=chart_choice, percent_type="Feature"),
                                 use_container_width=True,
@@ -450,7 +474,7 @@ def main():
                                 bar_chart(df_network, column, feature_col, label, metric=chart_choice),
                                 use_container_width=True,
                             )
-    
+
     st.divider()
     with open('app/footer.md', 'r') as file:
         footer = file.read()
@@ -462,4 +486,3 @@ if __name__ == "__main__":
     except Exception as e:
         tb_str = traceback.format_exc()  # full multiline traceback string
         st.error(error_messages["unexpected_error"](e, tb_str))
-

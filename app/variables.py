@@ -1,12 +1,11 @@
 # urls for main layer 
 ca_parquet = 'https://minio.carlboettiger.info/public-ca30x30/ca30x30_cbn_v3.parquet'
 ca_pmtiles = 'https://minio.carlboettiger.info/public-ca30x30/ca30x30_cbn_v3.pmtiles'
-# 
+low_res_pmtiles = 'https://minio.carlboettiger.info/public-ca30x30/pmtiles_v3_options/ca30x30_cbn_v3_zg_coalesce_dense.pmtiles'
 
 # computed by taking the sum of all the acres in this file:
 # https://minio.carlboettiger.info/public-ca30x30/CBN-data/Progress_data_new_protection/Land_Status_Zone_Ecoregion_Counties/all_regions_reGAP_county_eco.parquet
 ca_area_acres = 101523750.68856516 
-style_choice = "GAP Status Code"
 chart_choice = "percent" # 
 
 # this should go in utils, but I need it to build urls
@@ -25,30 +24,19 @@ def get_url(folder, file, base_folder = 'CBN'):
     url = minio+path
     return url
 
-import re
-source_layer_name = re.sub(r'\W+', '', os.path.splitext(os.path.basename(ca_pmtiles))[0])
-#stripping hyphens to get layer name 
-
 # column names for all data layers 
 keys = [
     "pct_top_amphibian_richness",
     "pct_top_reptile_richness", 
     "pct_top_bird_richness", 
     "pct_top_mammal_richness", 
-    # "mean_amphibian_richness",
-    # "mean_reptile_richness", 
-    # "mean_bird_richness", 
-    # "mean_mammal_richness", 
     "pct_top_plant_richness", 
-    # "mean_plant_richness", 
     "pct_wetlands",
     "pct_top_freshwater_richness",
-    # "mean_freshwater_richness",
     "pct_farmland",
     "pct_grazing_lands",
     "pct_disadvantaged_community", 
     "pct_low_income_community", 
-    # "pct_fire"
 ]
 
 chatbot_toggles = {key: False for key in keys}
@@ -56,33 +44,19 @@ chatbot_toggles = {key: False for key in keys}
 # data layers dict 
 layer_config = [
     #[(section, 'a_amph', [(col_name, full name, key, chatbot toggle key, citation)])]
-    ('🐸 Amphibian', 'a_amph', [
+    ('🦜 Terrestrial Species', 'a_amph', [
         ('pct_top_amphibian_richness', 'Amphibian Richness', keys[0], chatbot_toggles[keys[0]], 'Areas with the top 20% of amphibian richness (Reference #5)'),
-        # ('mean_amphibian_richness', 'Mean Amphibian Richness', keys[1], chatbot_toggles[keys[1]], 'Average amphibian richness calculated over each area (Reference #5)'),
-    ]),
-    ('🐍 Reptile', 'a_rept', [
         ('pct_top_reptile_richness', 'Reptile Richness', keys[1], chatbot_toggles[keys[1]], 'Areas with the top 20% of reptile richness (Reference #5)'),
-        # ('mean_reptile_richness', 'Mean Reptile Richness', keys[3], chatbot_toggles[keys[3]], 'Average reptile richness calculated over each area (Reference #5)'),
-
-    ]),
-    ('🦜 Bird', 'a_bird', [
         ('pct_top_bird_richness', 'Bird Richness', keys[2], chatbot_toggles[keys[2]], 'Areas with the top 20% of bird richness (Reference #5)'),
-        # ('mean_bird_richness', 'Mean Bird Richness', keys[5], chatbot_toggles[keys[5]], 'Average bird richness calculated over each area (Reference #5)'),
-
-    ]),
-    ('🦌 Mammal', 'a_mammal', [
         ('pct_top_mammal_richness', 'Mammal Richness', keys[3], chatbot_toggles[keys[3]], 'Areas with the top 20% of mammal richness (Reference #5)'),
-        # ('mean_mammal_richness', 'Mean Mammal Richness', keys[7], chatbot_toggles[keys[7]], 'Average mammal richness calculated over each area (Reference #5)'),
     ]),
-    ('🌿 Plant', 'a_plant', [
+    ('🌿 Plants', 'a_plant', [
         ('pct_top_plant_richness', 'Plant Richness', keys[4], chatbot_toggles[keys[4]], 'Areas with the top 20% of plant richness (Reference #6)'),
-        # ('mean_plant_richness', 'Mean Plant Richness', keys[9], chatbot_toggles[keys[9]], 'Average plant richness calculated over each area (Reference #6)'),
 
     ]),
     ('💧 Freshwater Resources', 'freshwater', [
         ('pct_wetlands', 'Wetlands', keys[5], chatbot_toggles[keys[5]], 'Areas that are freshwater emergent, freshwater forested/shrub, or estuarine and marine wetlands (Reference #7)'),
         ('pct_top_freshwater_richness', 'Freshwater Species Richness', keys[6], chatbot_toggles[keys[6]], 'Areas with the top 20% of freshwater species richness (Reference #8)'),
-        # ('mean_freshwater_richness', 'Mean Freshwater Species Richness', keys[12], chatbot_toggles[keys[12]], 'Average freshwater species richness calculated over each area (Reference #8)'),
     ]),
     ('🚜 Agriculture', 'agriculture', [
         ('pct_farmland', 'Farmland', keys[7], chatbot_toggles[keys[7]], 'Farmlands with prime, unique, or of statewide or local importance (Reference #9)'),
@@ -92,9 +66,6 @@ layer_config = [
         ('pct_disadvantaged_community', 'Disadvantaged Communities', keys[9], chatbot_toggles[keys[9]], 'Areas in disadvantaged communities (Reference #10)'),
         ('pct_low_income_community', 'Low-Income Communities', keys[10], chatbot_toggles[keys[10]], 'Areas in low-income communities (Reference #11)'),
     ]),
-    # ('🔥 Climate Risks', 'calfire', [
-        # ('pct_fire', 'Wildfires', keys[11], chatbot_toggles[keys[11]], 'Areas burned in the last 10 years (Reference #12)'),
-    # ]),
 ]
 
 # colors for plotting 
@@ -118,7 +89,6 @@ purple =  "#00008B" #purple
 cyan = "#1bc7c3" #cyan
 white =  "#FFFFFF" 
 
-
 # github logo 
 github_logo = 'M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.012 8.012 0 0 0 16 8c0-4.42-3.58-8-8-8z'
 
@@ -133,8 +103,6 @@ github_html = f"""
         <a href='https://github.com/boettiger-lab/CBN-taskforce' target='_blank'>https://github.com/boettiger-lab/CBN-taskforce</a>
     </span>
 """
-
-
 
 question_icon = """
 <svg xmlns='http://www.w3.org/2000/svg' height='1em' viewBox='0 0 24 24' width='1em' 
@@ -218,6 +186,17 @@ app_formatting =  """
             text-align: right !important;
             font-style: italic !important;
             color: gray; /* optional: caption-like color */
+        }
+        .st-key-county div[data-baseweb="select"] > div:first-child {
+            background-color: #f0f2f5 !important;
+            border-color: #caccd0 !important;
+            font-size: 14px !important;
+            height: 3.5em !important;
+            padding-top: 0.3rem !important;
+            padding-bottom: 0.3rem !important;
+            padding-left: 0.2rem !important;
+            padding-right: 0.25rem !important;
+            color: #000000 !important;
         }
     </style>
     """
@@ -361,9 +340,9 @@ ecoregion = {
         ['Sierra Nevada Foothills', "#1f77b4"],
         ['Southern Cascades', "#ff7f0e"],
         ['Modoc Plateau', "#c49c94"],
-        ['Great Valley (South)', "#bcbd22"],
-        ['Northern California Interior Coast Ranges', "#ffbb78"],
         ['Great Valley (North)', "#dbdb8d"],
+        ['Northern California Interior Coast Ranges', "#ffbb78"],
+        ['Great Valley (South)', "#bcbd22"],
         ['None', white],
     ],
     'default': white
@@ -487,8 +466,8 @@ Include the steps you took to get this message and any other details that might 
 """
 }
 
-
 help_message = '''
+- ❌ Safari/iOS not yet supported. For Safari/iOS users, change the **Leafmap module** below to Folium. 
 - 📊 Use this sidebar to color-code the map by different attributes **(Group by)**, filter data **(Filters)**, or toggle on data layers and view summary charts **(Data Layers)**.
 - 💬 For a more tailored experience, query our dataset of protected areas and their precomputed metrics for each of the displayed layers, using the experimental chatbot. The language model tries to answer natural language questions by drawing only from curated datasets (listed below).
 '''
@@ -508,6 +487,16 @@ Exploratory data queries:
 - Which county has the highest percentage of wetlands?
 """
 
+chatbot_limitations = """
+**Chatbot Limitations:**
+- The chatbot is independent from **Filters**, which do not modify the chatbot's input or output.
+- The chatbot has no memory and won't remember previous questions or responses.
+- The chatbot can’t directly generate charts or change map colors, it only updates them by adjusting  **Data Layers** or **Group by** based on your query. To update these, ask about a grouping variable (e.g., `ecoregion`) or data layer (e.g., `wetlands`). 
+"""
+
+chatbot_info = """
+If the map appears blank, queried data may be too small to see at the default zoom level. Check the table below the map, as query results will also be displayed there.
+"""
 label_transforms = {
     "access_type": ("replace(datum.access_type, ' Access', '')", lambda lbl: lbl.replace(" Access", "")),
     "ecoregion": (
@@ -591,8 +580,7 @@ sort_options = {
     ],
 }
 
-counties = ['All',
-            'Alameda','Alpine','Amador','Butte',
+counties = ['Alameda','Alpine','Amador','Butte',
             'Calaveras','Colusa','Contra Costa',
             'Del Norte','El Dorado','Fresno',
             'Glenn','Humboldt','Imperial',
@@ -612,6 +600,7 @@ counties = ['All',
             'Sutter','Tehama','Trinity',
             'Tulare','Tuolumne','Ventura',
             'Yolo','Yuba']
+counties = [c + ' County' for c in counties]
 
 county_bounds = {
     'Alameda': [-122.42384326, 37.15395019, -121.41909054, 38.20581216],
@@ -675,9 +664,10 @@ county_bounds = {
 }
 
 
-
-
-
+#maplibregl tooltip 
+tooltip_cols = ['id','name','manager','county','status','gap_code',
+                'habitat_type','climate_zone','land_tenure','ecoregion','acres']
+tooltip_template = "<br>".join([f"{col}: {{{{ {col} }}}}" for col in tooltip_cols])
 
 from langchain_openai import ChatOpenAI
 import streamlit as st
@@ -698,4 +688,3 @@ llm_options = {
     "gemma3": ChatOpenAI(model = "gemma3", api_key=api_key, base_url = "https://llm.nrp-nautilus.io/",  temperature=0),
 
 }
-

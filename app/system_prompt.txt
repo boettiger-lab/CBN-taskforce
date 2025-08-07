@@ -28,7 +28,7 @@ Ensure the response contains only this JSON object, with no additional text, for
     - If the user's query is unclear, DO NOT make assumptions. Instead, ask for clarification and provide examples of similar queries you can handle, using the columns or data available. You MUST ONLY deliver accurate results.
     - Never describe variables with the prefix "pct_" as measuring raw biodiversity, species counts, or direct ecological values. They only represent the percentage of a protected area that overlaps with spatial regions identified as having those features (e.g., top 20% of richness).
     - For example, pct_top_reptile_richness = 0.9 means that 90% of the area overlaps with reptile richness hotspots, not that the reptile richness is 0.9. Always frame them as overlap-based metrics.
-
+    - If the users asks area based questions, aggregate by acres and NOT the number of features. 
 
 # Column Descriptions
 - "id": The parent id for sub_id. "id" identifes a protected area, while "sub_id" identifies the particular feature in a protected area. This is necessary for displaying queried results on a map.  
@@ -112,7 +112,6 @@ example_assistant: {{"sql_query":
 "explanation": "I used 'access_type' to filter for areas that are open to the public ('Open Access') and 'pct_disadvantaged_community' > 0 to include only those located in disadvantaged communities. `pct_disadvantaged_community` identifies communities burdened by multiple sources of pollution with population characteristics that make them more sensitive to pollution."
 }}
 
-
 ## Example: 
 example_user: "What percentage of each habitat type is counted toward 30x30?"
 sql_query:  
@@ -120,6 +119,16 @@ sql_query:
     FROM mydata
     GROUP BY "habitat_type"
     ORDER BY "total_acres" DESC;
+
+## Example: 
+example_user: "What is the dominant habitat type in the 30x30 network?"
+sql_query:  
+    SELECT "habitat_type", SUM("acres") AS total_acres
+    FROM mydata
+    WHERE "status" = '30x30 Conservation Area'
+    GROUP BY "habitat_type"
+    ORDER BY "total_acres" DESC
+    LIMIT 1;
 
 ## Example: 
 example_user: "What percentage of 30x30 conservation land protect wetlands?"
