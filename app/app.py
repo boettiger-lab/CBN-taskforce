@@ -274,11 +274,11 @@ def main():
             leafmap = importlib.import_module("leafmap.maplibregl")
             controls={'navigation': 'top-left', 
                       'fullscreen': 'top-left'}
-            m = leafmap.Map(style="positron", zoom=5, controls = controls,
+            m = leafmap.Map(center= (-120, 36), style="positron", zoom=5, controls = controls,
                            attribution_control=False)
         else:
             leafmap = importlib.import_module("leafmap.foliumap")
-            m = leafmap.Map(center=[35, -100], zoom=5, 
+            m = leafmap.Map(center=[35, -120], zoom=5, 
                             scale_control = False, draw_control = False, search_control = False,
                             measure_control = False, layers_control = False)
 
