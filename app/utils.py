@@ -17,7 +17,7 @@ from leafmap.foliumap import PMTilesMapLibreTooltip
 from branca.element import Template
 import minio
 import datetime
-
+import numpy as np
 ######################## UI FUNCTIONS 
 def get_buttons(style_options, style_choice):
     """
@@ -332,7 +332,7 @@ def area_chart(df, column, color_choice):
 def pie_chart(df, column, color_choice):
     chart = (
         alt.Chart(df)
-        .mark_arc(stroke="black", strokeWidth=0.1)
+        .mark_arc(outerRadius=120,stroke="black", strokeWidth=0.1)
         .encode(
             alt.Theta("percent_selected:Q"),
             alt.Order("order_index:O"),
@@ -347,10 +347,10 @@ def pie_chart(df, column, color_choice):
             ]
         )
         .properties(
-        height = 400,
+        height = 330,
         title={
             "text": f"Mapped Area by {color_choice}",
-            "subtitle": [f"The area currently shown on the map, divided among {color_choice} categories.","**Chart updates based on filters**"]
+            "subtitle": ["The area currently shown on the map,", f"divided among each {color_choice}.","**Chart updates based on filters**"]
 
         }).configure_title(
             fontSize=16,
@@ -364,8 +364,10 @@ def pie_chart(df, column, color_choice):
     
 
 def arc_chart(df, column, color_choice):
+    pi = 3.14159
     total_percent = df["percent_CA"].sum()
-    df["theta_scaled"] = (df["percent_CA"] * 3.14159)
+    df["theta_scaled"] = (df["percent_CA"] * pi)
+
     chart = (
         alt.Chart(df)
         .mark_arc(innerRadius=50, outerRadius=120, thetaOffset = -pi/2, stroke="black", strokeWidth=0.1 )
@@ -382,11 +384,38 @@ def arc_chart(df, column, color_choice):
                 alt.Tooltip("acres", type="quantitative", format=",.0f"),
             ]
         )
-        .properties(
-        height = 320,
+    )
+
+    ## uncomment to get a 30% tick mark on the area chart 
+    # start_x = -0.5
+    # start_y = 0.866
+#     start_x = -.5625
+#     start_y = 0.97525
+#     end_x = 0
+#     end_y = 0
+
+#     df = pd.DataFrame({
+#     'x': [start_x, end_x],
+#     'y': [start_y, end_y],
+#     'values': ['30%','']
+# })
+
+    # get a tick exactly at 30% progress
+#     tick = alt.Chart(df).mark_line(
+#     color='black',
+#     strokeDash=[2, 2],
+#     strokeWidth=2
+#     ).encode(
+#     x=alt.X('x:Q', scale=alt.Scale(domain=[-1.2, 1.2])),
+#     y=alt.Y('y:Q', scale=alt.Scale(domain=[-1.2, 1.2]))
+# )
+    # c2 = tick.mark_text(yOffset = -10).encode(text="values:N")
+    # chart = chart+tick + c2
+    chart = chart.properties(
+        height = 340,
         title={
             "text": f"California by {color_choice}",
-            "subtitle": [f"Total acres in California, divided among {color_choice} categories.","**Chart updates based on filters**"]
+            "subtitle": [f"Total acres in California,", f"divided among each {color_choice}.","**Chart updates based on filters**"]
 
         }).configure_title(
             fontSize=16,
@@ -394,7 +423,8 @@ def arc_chart(df, column, color_choice):
             anchor="middle",
             offset=15,
             subtitleColor="gray"
-        )
+        ).configure_axis(
+        disable = True
         )
     return chart
 
@@ -436,13 +466,14 @@ def get_chart_settings(x, feature_name, y=None, stacked=None, metric=None, perce
     elif percent_type == "Feature":
         chart_title = f"Distribution of\n{feature_name} by {x_title}"
         y_title = f"% of Total {feature_name}"
-        subtitle = f"Acres of {feature_name} in each {x_title},\ndivided by total acres of {feature_name}"
+        subtitle = [f"Acres of {feature_name} in each {x_title}",f"divided by total acres of {feature_name}","**Chart updates based on filters**"]
 
     if stacked:
-        chart_title = f"{x_title}\nby 30x30 Status"
         if metric != "acres":
-            subtitle = f'Acres of 30x30 Status within each {x_title} divided by total acres of each {x_title}'
+            chart_title = f"{x_title} Representation\n by 30x30 Status"
+            subtitle = [f'Acres of 30x30 Status within each {x_title}',f'divided by total acres of each {x_title}','**Chart updates based on filters**']
         else:
+            chart_title = f"{x_title}\nby 30x30 Status"
             subtitle = f'Acres of 30x30 Status within each {x_title}'
         
     elif metric == "acres" and not stacked:

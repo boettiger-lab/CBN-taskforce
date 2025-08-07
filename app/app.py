@@ -385,8 +385,8 @@ def main():
                         st.altair_chart(area_chart(df_network, column, color_choice), use_container_width=True)
     
                 # display the pill selection if we will use any barcharts
-                # if any_chart_toggled or show_stacked or show_chatbot_chart:
-                option_map = {'acres': "Acres", 'percent_network': "Composition", 'percent_feature': "Representation",}
+                if any_chart_toggled or show_stacked or show_chatbot_chart or (column not in ['status','gap_code']):
+                    option_map = {'acres': "Acres", 'percent_network': "Composition", 'percent_feature': "Representation",}
 
                 chart_choice = st.pills(
                     label="Bar chart metrics",
@@ -420,7 +420,8 @@ def main():
                         st.markdown(f'<p class="caption">{caption_text}</p>', unsafe_allow_html=True)
                 
                 if chart_choice == "percent_network":
-                    st.altair_chart(area_chart(df_network, column, color_choice), use_container_width=True)
+                    if column not in ['status','gap_code']:
+                        st.altair_chart(area_chart(df_network, column, color_choice), use_container_width=True)
                     
                 # Show data layer summary charts for toggled layers
                 for _, _, items in layer_config:
