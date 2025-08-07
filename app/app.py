@@ -200,6 +200,9 @@ def main():
                 elif isinstance(e, openai.RateLimitError):
                     st.error(error_messages["bad_request"](llm_choice, e, tb_str), icon="🚨")
                 
+                elif isinstance(e, openai.APIStatusError):
+                    st.error(error_messages["bad_request"](llm_choice, e, tb_str), icon="🚨")
+                
                 elif isinstance(e, openai.InternalServerError):
                     st.error(error_messages["internal_server_error"](llm_choice, e, tb_str), icon="🚨")
                 

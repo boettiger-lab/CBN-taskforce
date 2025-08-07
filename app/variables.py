@@ -408,20 +408,17 @@ select_colors = {
 
 error_messages = {
     "bad_request": lambda llm, e, tb_str: f"""
-**Error Code 400 – LLM Unavailable** 
+**Error – LLM Unavailable** 
 
 *The LLM you selected `{llm}` is no longer available. Please select a different model.*
 
 **Error Details:**
 `{type(e)}: {e}`
 
-Traceback:
-
-```{tb_str}```
 """,
 
     "internal_server_error": lambda llm, e, tb_str: f"""
-**Error Code 500 – LLM Temporarily Unavailable**
+**Error – LLM Temporarily Unavailable**
 
 The LLM you selected `{llm}` is currently down due to maintenance or provider outages. It may remain offline for several hours.
 
@@ -430,9 +427,6 @@ The LLM you selected `{llm}` is currently down due to maintenance or provider ou
 **Error Details:**
 `{type(e)}: {e}`
 
-Traceback:
-
-```{tb_str}```
 """,
 
     "unexpected_llm_error": lambda prompt, e, tb_str: f"""
@@ -701,6 +695,12 @@ if openrouter_api is None:
 
 llm_options = {
     "mistral-small-3.2-24b-instruct": ChatOpenAI(model = "mistralai/mistral-small-3.2-24b-instruct:free", api_key=openrouter_api, base_url = "https://openrouter.ai/api/v1",  temperature=0),
+    "hunyuan-a13b-instruct": ChatOpenAI(model = "tencent/hunyuan-a13b-instruct:free", api_key=openrouter_api, base_url = "https://openrouter.ai/api/v1",  temperature=0),
+    "deepseek-r1t2-chimera": ChatOpenAI(model = "tngtech/deepseek-r1t2-chimera:free", api_key=openrouter_api, base_url = "https://openrouter.ai/api/v1",  temperature=0),
+    "deepseek-r1-0528-qwen3-8b": ChatOpenAI(model = "deepseek/deepseek-r1-0528-qwen3-8b:free", api_key=openrouter_api, base_url = "https://openrouter.ai/api/v1",  temperature=0),
+    "sarvam-m": ChatOpenAI(model = "sarvamai/sarvam-m:free", api_key=openrouter_api, base_url = "https://openrouter.ai/api/v1",  temperature=0),
+    "devstral-small-2505": ChatOpenAI(model = "mistralai/devstral-small-2505:free", api_key=openrouter_api, base_url = "https://openrouter.ai/api/v1",  temperature=0),
+        "deepseek-chat-v3-0324": ChatOpenAI(model = "deepseek/deepseek-chat-v3-0324:free", api_key=openrouter_api, base_url = "https://openrouter.ai/api/v1",  temperature=0),
     "gpt-oss-20b": ChatOpenAI(model = "openai/gpt-oss-20b:free", api_key=openrouter_api, base_url = "https://openrouter.ai/api/v1",  temperature=0),
     "kimi-dev-72b": ChatOpenAI(model = "moonshotai/kimi-dev-72b:free", api_key=openrouter_api, base_url = "https://openrouter.ai/api/v1",  temperature=0),
     "olmo": ChatOpenAI(model = "olmo", api_key=api_key, base_url = "https://llm.nrp-nautilus.io/",  temperature=0),
