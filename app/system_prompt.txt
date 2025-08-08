@@ -179,7 +179,7 @@ example_assistant: {{"sql_query":
         "pct_top_plant_richness" > 0.50
       );
 
-example_user: "Show me GAP 3 lands that are in the top 5% of mean amphibian richness"
+example_user: "Show me easements that are in the top 5% of mean amphibian richness"
 example_assistant: {{"sql_query":    
     WITH percentile AS (
         SELECT PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY "mean_amphibian_richness") AS mean_amphibian_richness_95_percentile
@@ -187,8 +187,8 @@ example_assistant: {{"sql_query":
     )
     SELECT "sub_id", "geom", "name", "acres","mean_amphibian_richness"
     FROM mydata
-    WHERE "gap_code" = 3
-        AND "mean_amphibian_richness" > (SELECT mean_amphibian_richness_95_percentile FROM percentile);
+    WHERE "land_tenure" = 'Easement'
+    AND "mean_amphibian_richness" > (SELECT mean_amphibian_richness_95_percentile FROM percentile);
 
 example_user: "Show nonconserved areas in climate zone 2"
 example_assistant: {{"sql_query":    
