@@ -483,9 +483,8 @@ help_message = '''
 example_queries = """
 Mapping queries:
 - Show me GAP 3 lands in the top 10% of mean amphibian richness.
-- Show me easements where 90% or more of its area overlaps with regions of high biodiversity.
-- Show me amphibian biodiversity hotspots that aren't currently conserved.
-- Show me the areas with the highest bird richness in San Diego County. 
+- Show me easements where 70% or more of its area overlaps with regions of high plant biodiveristy.
+- Show me reptile biodiversity hotspots that aren't currently conserved.
 - Show me protected areas in disadvantaged communities.
 - Show me all 30x30 conservation areas managed by The Nature Conservancy.
 
@@ -496,6 +495,8 @@ Exploratory data queries:
 - How many acres are newly protected easements?
 - Which county has the highest percentage of wetlands?
 - Summarize the habitat types in the Mojave preserve.
+- What ecoregion has the highest bird species richness?
+
 """
 
 chatbot_limitations = """
@@ -695,16 +696,16 @@ if openrouter_api is None:
     openrouter_api = st.secrets["OPENROUTER_API_KEY"]
 
 llm_options = {
-    "mistral-small-3.2-24b-instruct": ChatOpenAI(model = "mistralai/mistral-small-3.2-24b-instruct:free", api_key=openrouter_api, base_url = "https://openrouter.ai/api/v1",  temperature=0),
     "hunyuan-a13b-instruct": ChatOpenAI(model = "tencent/hunyuan-a13b-instruct:free", api_key=openrouter_api, base_url = "https://openrouter.ai/api/v1",  temperature=0),
-    "deepseek-r1t2-chimera": ChatOpenAI(model = "tngtech/deepseek-r1t2-chimera:free", api_key=openrouter_api, base_url = "https://openrouter.ai/api/v1",  temperature=0),
+    "mistral-small-3.2-24b-instruct": ChatOpenAI(model = "mistralai/mistral-small-3.2-24b-instruct:free", api_key=openrouter_api, base_url = "https://openrouter.ai/api/v1",  temperature=0),
     "devstral-small-2505": ChatOpenAI(model = "mistralai/devstral-small-2505:free", api_key=openrouter_api, base_url = "https://openrouter.ai/api/v1",  temperature=0),
-        "deepseek-chat-v3-0324": ChatOpenAI(model = "deepseek/deepseek-chat-v3-0324:free", api_key=openrouter_api, base_url = "https://openrouter.ai/api/v1",  temperature=0),
     "gpt-oss-20b": ChatOpenAI(model = "openai/gpt-oss-20b:free", api_key=openrouter_api, base_url = "https://openrouter.ai/api/v1",  temperature=0),
+    "deepseek-r1t2-chimera": ChatOpenAI(model = "tngtech/deepseek-r1t2-chimera:free", api_key=openrouter_api, base_url = "https://openrouter.ai/api/v1",  temperature=0),
     "kimi-dev-72b": ChatOpenAI(model = "moonshotai/kimi-dev-72b:free", api_key=openrouter_api, base_url = "https://openrouter.ai/api/v1",  temperature=0),
+    # "deepseek-chat-v3-0324": ChatOpenAI(model = "deepseek/deepseek-chat-v3-0324:free", api_key=openrouter_api, base_url = "https://openrouter.ai/api/v1",  temperature=0),
     "olmo": ChatOpenAI(model = "olmo", api_key=api_key, base_url = "https://llm.nrp-nautilus.io/",  temperature=0),
     "llama3": ChatOpenAI(model = "llama3", api_key=api_key, base_url = "https://llm.nrp-nautilus.io/",  temperature=0),
-    "deepseek-r1": BaseChatOpenAI(model = "deepseek-r1", api_key=api_key, base_url = "https://llm.nrp-nautilus.io/",  temperature=0),
+    # "deepseek-r1": BaseChatOpenAI(model = "deepseek-r1", api_key=api_key, base_url = "https://llm.nrp-nautilus.io/",  temperature=0),
     "qwen3": ChatOpenAI(model = "qwen3", api_key=api_key, base_url = "https://llm.nrp-nautilus.io/",  temperature=0),
     "gemma3": ChatOpenAI(model = "gemma3", api_key=api_key, base_url = "https://llm.nrp-nautilus.io/",  temperature=0),
 

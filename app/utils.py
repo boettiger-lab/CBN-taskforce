@@ -218,10 +218,9 @@ def get_pmtiles_style(paint, pmtiles_file, low_res, filter_cols=None, filter_val
                 for col, val in zip(filter_cols, filter_vals)
             ]
             filter_expr = ["all", *filters]
-
-        metadata = leafmap.pmtiles_metadata(pmtiles_file)
-        source_layer_name = metadata['layer_names'][0]
-
+    
+    metadata = leafmap.pmtiles_metadata(pmtiles_file)
+    source_layer_name = metadata['layer_names'][0]
     config = {
         "id": "ca30x30",
         "source": "ca",
