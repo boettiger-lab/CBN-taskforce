@@ -219,10 +219,8 @@ def get_pmtiles_style(paint, pmtiles_file, low_res, filter_cols=None, filter_val
             ]
             filter_expr = ["all", *filters]
 
-    if low_res: 
-        source_layer_name = 'ca30x30_cbn_v3fgb'
-    else:
-        source_layer_name = re.sub(r'\W+', '', os.path.splitext(os.path.basename(pmtiles_file))[0])
+        metadata = leafmap.pmtiles_metadata(pmtiles_file)
+        source_layer_name = metadata['layer_names'][0]
 
     config = {
         "id": "ca30x30",

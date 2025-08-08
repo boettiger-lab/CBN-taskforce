@@ -1,7 +1,7 @@
 # urls for main layer 
 ca_parquet = 'https://minio.carlboettiger.info/public-ca30x30/ca30x30_cbn_v3.parquet'
 ca_pmtiles = 'https://minio.carlboettiger.info/public-ca30x30/ca30x30_cbn_v3.pmtiles'
-low_res_pmtiles = 'https://minio.carlboettiger.info/public-ca30x30/pmtiles_v3_options/ca30x30_cbn_v3_zg_coalesce_dense.pmtiles'
+low_res_pmtiles = 'https://minio.carlboettiger.info/public-ca30x30/pmtiles_v3_options/ca30x30_cbn_v3_zg.pmtiles'
 
 # computed by taking the sum of all the acres in this file:
 # https://minio.carlboettiger.info/public-ca30x30/CBN-data/Progress_data_new_protection/Land_Status_Zone_Ecoregion_Counties/all_regions_reGAP_county_eco.parquet
@@ -474,8 +474,9 @@ Include the steps you took to get this message and any other details that might 
 }
 
 help_message = '''
-- ❌ Safari/iOS not yet supported. For Safari/iOS users, change the **Leafmap module** below to Folium. 
-- 📊 Use this sidebar to color-code the map by different attributes **(Group by)**, filter data **(Filters)**, or toggle on data layers and view summary charts **(Data Layers)**.
+- ❌ Safari/iOS not fully supported. For Safari/iOS users, change the **Leafmap module** from MapLibre to Folium in **(Map Settings)** below. 
+- 📊 Use this sidebar to color-code the map by different attributes **(Group by)**, filter data **(Filters)**, toggle on data layers and view summary charts **(Data Layers)**, and customize mapping in **(Map Settings)**.
+- 🐢 If the map is lagging and slow to load, toggle on **Low Resolution** in **(Map Settings)**.
 - 💬 For a more tailored experience, query our dataset of protected areas and their precomputed metrics for each of the displayed layers, using the experimental chatbot. The language model tries to answer natural language questions by drawing only from curated datasets (listed below).
 '''
 
