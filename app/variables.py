@@ -44,7 +44,7 @@ chatbot_toggles = {key: False for key in keys}
 # data layers dict 
 layer_config = [
     #[(section, 'a_amph', [(col_name, full name, key, chatbot toggle key, citation)])]
-    ('🦜 Terrestrial Species', 'a_amph', [
+    ('🐻 Vertebrates', 'a_amph', [
         ('pct_top_amphibian_richness', 'Amphibian Richness', keys[0], chatbot_toggles[keys[0]], 'Areas with the top 20% of amphibian richness (Reference #5)'),
         ('pct_top_reptile_richness', 'Reptile Richness', keys[1], chatbot_toggles[keys[1]], 'Areas with the top 20% of reptile richness (Reference #5)'),
         ('pct_top_bird_richness', 'Bird Richness', keys[2], chatbot_toggles[keys[2]], 'Areas with the top 20% of bird richness (Reference #5)'),
@@ -52,7 +52,6 @@ layer_config = [
     ]),
     ('🌿 Plants', 'a_plant', [
         ('pct_top_plant_richness', 'Plant Richness', keys[4], chatbot_toggles[keys[4]], 'Areas with the top 20% of plant richness (Reference #6)'),
-
     ]),
     ('💧 Freshwater Resources', 'freshwater', [
         ('pct_wetlands', 'Wetlands', keys[5], chatbot_toggles[keys[5]], 'Areas that are freshwater emergent, freshwater forested/shrub, or estuarine and marine wetlands (Reference #7)'),
@@ -407,18 +406,26 @@ select_colors = {
 }
 
 error_messages = {
-    "bad_request": lambda llm: f"""
-**Error Code 400 – LLM Unavailable** 
+    "bad_request": lambda llm, e, tb_str: f"""
+**Error – LLM Unavailable** 
 
 *The LLM you selected `{llm}` is no longer available. Please select a different model.*
+
+**Error Details:**
+`{type(e)}: {e}`
+
 """,
-    
-    "internal_server_error": lambda llm: f"""
-**Error Code 500 – LLM Temporarily Unavailable**
+
+    "internal_server_error": lambda llm, e, tb_str: f"""
+**Error – LLM Temporarily Unavailable**
 
 The LLM you selected `{llm}` is currently down due to maintenance or provider outages. It may remain offline for several hours.
 
 **Please select a different model or try again later.**
+
+**Error Details:**
+`{type(e)}: {e}`
+
 """,
 
     "unexpected_llm_error": lambda prompt, e, tb_str: f"""
@@ -474,17 +481,20 @@ help_message = '''
 
 example_queries = """
 Mapping queries:
-- Show me the best areas to go birdwatching in San Diego County. 
+- Show me GAP 3 lands in the top 10% of mean amphibian richness.
+- Show me easements where 90% or more of its area overlaps with regions of high biodiversity.
 - Show me amphibian biodiversity hotspots that aren't currently conserved.
+- Show me the areas with the highest bird richness in San Diego County. 
 - Show me protected areas in disadvantaged communities.
 - Show me all 30x30 conservation areas managed by The Nature Conservancy.
-- Show me GAP 3 lands where 50% or more of the area overlaps with regions of high biodiversity.
 
 
 Exploratory data queries:
 - What is a GAP code?
+- What is the habitat composition of the 30x30 network?
 - How many acres are newly protected easements?
 - Which county has the highest percentage of wetlands?
+- Summarize the habitat types in the Mojave preserve.
 """
 
 chatbot_limitations = """
@@ -679,8 +689,18 @@ api_key = os.getenv("NRP_API_KEY")
 if api_key is None:
     api_key = st.secrets["NRP_API_KEY"]
 
+openrouter_api = os.getenv("OPENROUTER_API_KEY")
+if openrouter_api is None:
+    openrouter_api = st.secrets["OPENROUTER_API_KEY"]
+
 llm_options = {
-    "llama3-sdsc": ChatOpenAI(model = "llama3-sdsc", api_key=api_key, base_url = "https://llm.nrp-nautilus.io/",  temperature=0),
+    "mistral-small-3.2-24b-instruct": ChatOpenAI(model = "mistralai/mistral-small-3.2-24b-instruct:free", api_key=openrouter_api, base_url = "https://openrouter.ai/api/v1",  temperature=0),
+    "hunyuan-a13b-instruct": ChatOpenAI(model = "tencent/hunyuan-a13b-instruct:free", api_key=openrouter_api, base_url = "https://openrouter.ai/api/v1",  temperature=0),
+    "deepseek-r1t2-chimera": ChatOpenAI(model = "tngtech/deepseek-r1t2-chimera:free", api_key=openrouter_api, base_url = "https://openrouter.ai/api/v1",  temperature=0),
+    "devstral-small-2505": ChatOpenAI(model = "mistralai/devstral-small-2505:free", api_key=openrouter_api, base_url = "https://openrouter.ai/api/v1",  temperature=0),
+        "deepseek-chat-v3-0324": ChatOpenAI(model = "deepseek/deepseek-chat-v3-0324:free", api_key=openrouter_api, base_url = "https://openrouter.ai/api/v1",  temperature=0),
+    "gpt-oss-20b": ChatOpenAI(model = "openai/gpt-oss-20b:free", api_key=openrouter_api, base_url = "https://openrouter.ai/api/v1",  temperature=0),
+    "kimi-dev-72b": ChatOpenAI(model = "moonshotai/kimi-dev-72b:free", api_key=openrouter_api, base_url = "https://openrouter.ai/api/v1",  temperature=0),
     "olmo": ChatOpenAI(model = "olmo", api_key=api_key, base_url = "https://llm.nrp-nautilus.io/",  temperature=0),
     "llama3": ChatOpenAI(model = "llama3", api_key=api_key, base_url = "https://llm.nrp-nautilus.io/",  temperature=0),
     "deepseek-r1": BaseChatOpenAI(model = "deepseek-r1", api_key=api_key, base_url = "https://llm.nrp-nautilus.io/",  temperature=0),

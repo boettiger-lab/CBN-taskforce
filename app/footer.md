@@ -34,7 +34,7 @@ Data: https://data.carlboettiger.info/public-ca30x30
 12. **CAL FIRE (2023)**. *Historic Fire Perimeters*. Data: https://www.fire.ca.gov/Home/What-We-Do/Fire-Resource-Assessment-Program/GIS-Mapping-and-Data-Analytics
 
 #### LLMs
-This app can use a selection of open-weights language models hosted on the National Research Platform, https://nrp.ai/documentation/userdocs/ai/llm-managed/.
+This app can use a selection of open-weights language models hosted on the National Research Platform (https://nrp.ai/documentation/userdocs/ai/llm-managed/), and Open Router (https://openrouter.ai/models).
 
 ---
 

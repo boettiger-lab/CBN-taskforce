@@ -5,10 +5,8 @@ geoarrow-pandas==0.1.1
 geoarrow-types==0.2.0
 geopandas==1.0.1
 ibis-framework[duckdb]==10.3.1
-langchain==0.2.17
-langchain-community==0.2.19
-langchain-core==0.2.43
-langchain-openai==0.1.25
+langchain-core==0.3.61
+langchain-openai==0.3.18
 leafmap==0.38.12
 leafmap[maplibre]==0.38.12
 leafmap[foliumap]==0.38.12
@@ -22,3 +20,5 @@ shiny==0.10.2
 SQLAlchemy==2.0.35
 streamlit==1.44.1
 streamlit_folium==0.20.0
+
+
