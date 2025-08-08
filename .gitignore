@@ -196,3 +196,8 @@ k8s/secret-deployment.yaml
 duck.db
 query_log.csv
 **/*.zip
+**/*.shp..xml
+**/*.TablesByName..atx
+**/*.shp..xml
+**/*.gpkg
+**/*.lyrx
