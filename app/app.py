@@ -398,7 +398,7 @@ def main():
     
                 # display the pill selection if we will use any barcharts
                 if any_chart_toggled or show_stacked or show_chatbot_chart or (column not in ['status','gap_code']):
-                    option_map = {'percent_network': "Composition", 'percent_feature': "Representation",'acres': "Representation (Acres)", }
+                    option_map = {'percent_network': "Composition", 'percent_feature': "Representation",'acres': "Acres", }
 
                     chart_choice = st.pills(
                         label="Bar chart metrics",
