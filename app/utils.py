@@ -127,7 +127,7 @@ def get_summary(ca, combined_filter, column, main_group, feature_col, colors = N
     df = (ca.filter(combined_filter)
             .group_by(*column)
             .aggregate(**all_aggs)
-            .mutate(percent_CA=_.percent_CA.round(5), acres=_.acres.round(0),percent_selected=_.percent_selected.round(5))
+            .mutate(percent_CA=_.percent_CA.round(5), acres=_.acres.round(0), percent_selected=_.percent_selected.round(5))
          )
 
      # Compute total acres by group and percent of group
@@ -174,7 +174,7 @@ def get_summary_table(ca, column, select_colors, color_choice, filter_cols, filt
     if column in ["status", "gap_code"]:
         df_bar_30x30 = None 
     else:
-        df_bar_30x30 = get_summary(ca, combined_filter | (_.status.isin(['Non-Conservation Area'])), [column, 'status'], column, feature_col, color_table(select_colors, "30x30 Status", 'status'))
+        df_bar_30x30 = get_summary(ca, combined_filter, [column, 'status'], column, feature_col, color_table(select_colors, "30x30 Status", 'status'))
         df_bar_30x30 = df_bar_30x30[df_bar_30x30[column] != "None"]
     # dropping nones 
     return df_network, df_feature, df_tab, df_bar_30x30 
@@ -218,12 +218,9 @@ def get_pmtiles_style(paint, pmtiles_file, low_res, filter_cols=None, filter_val
                 for col, val in zip(filter_cols, filter_vals)
             ]
             filter_expr = ["all", *filters]
-
-    if low_res: 
-        source_layer_name = 'ca30x30_cbn_v3fgb'
-    else:
-        source_layer_name = re.sub(r'\W+', '', os.path.splitext(os.path.basename(pmtiles_file))[0])
-
+    
+    metadata = leafmap.pmtiles_metadata(pmtiles_file)
+    source_layer_name = metadata['layer_names'][0]
     config = {
         "id": "ca30x30",
         "source": "ca",
@@ -456,7 +453,7 @@ def get_chart_settings(x, feature_name, y=None, stacked=None, metric=None, perce
     if percent_type == "Network":
         chart_title = f"{feature_name} Within Each {x_title}"
         y_title = f"% of Area with {feature_name}"
-        subtitle = f"Acres of {feature_name} in each {x_title},\ndivided by total acres of each {x_title}"
+        subtitle = [f"Acres of {feature_name} in each {x_title},",f"divided by total acres of each {x_title}",'**Chart updates based on filters**']
 
     elif percent_type == "Feature":
         chart_title = f"Distribution of\n{feature_name} by {x_title}"
@@ -469,11 +466,12 @@ def get_chart_settings(x, feature_name, y=None, stacked=None, metric=None, perce
             subtitle = [f'Acres of 30x30 Status within each {x_title}',f'divided by total acres of each {x_title}','**Chart updates based on filters**']
         else:
             chart_title = f"{x_title}\nby 30x30 Status"
-            subtitle = f'Acres of 30x30 Status within each {x_title}'
+            subtitle = [f'Acres of 30x30 Status within each {x_title}','**Chart updates based on filters**']
         
     elif metric == "acres" and not stacked:
         chart_title = f"Acres of {feature_name.rstrip()}\nWithin Each {x_title}"
-    
+        subtitle = ['**Chart updates based on filters**']
+
     height = (
         350 if stacked else
         620 if "freshwater" in y else
@@ -567,7 +565,8 @@ def create_bar_chart(
         if metric != "acres":
             rule = alt.Chart(pd.DataFrame({'y_value': [0.3]})).mark_rule(
             color='red',
-            strokeDash=[5, 5]  
+            strokeDash=[5, 5],
+            strokeWidth=3,
             ).encode(
                 y='y_value'
             )

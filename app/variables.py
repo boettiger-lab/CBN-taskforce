@@ -1,7 +1,7 @@
 # urls for main layer 
 ca_parquet = 'https://minio.carlboettiger.info/public-ca30x30/ca30x30_cbn_v3.parquet'
 ca_pmtiles = 'https://minio.carlboettiger.info/public-ca30x30/ca30x30_cbn_v3.pmtiles'
-low_res_pmtiles = 'https://minio.carlboettiger.info/public-ca30x30/pmtiles_v3_options/ca30x30_cbn_v3_zg_coalesce_dense.pmtiles'
+low_res_pmtiles = 'https://minio.carlboettiger.info/public-ca30x30/pmtiles_v3_options/ca30x30_cbn_v3_zg.pmtiles'
 
 # computed by taking the sum of all the acres in this file:
 # https://minio.carlboettiger.info/public-ca30x30/CBN-data/Progress_data_new_protection/Land_Status_Zone_Ecoregion_Counties/all_regions_reGAP_county_eco.parquet
@@ -375,8 +375,8 @@ style_options = {
     "30x30 Status": status,
     "GAP Code": gap,
     "Ecoregion": ecoregion,
-    "Climate Zone": climate_zone,
     "Habitat Type": habitat_type,
+    "Climate Zone": climate_zone,
     "Manager Type": manager,
     "Land Tenure Type": land_tenure,
     "Access Type": access,
@@ -386,8 +386,8 @@ select_column = {
     "30x30 Status":  "status",
     "GAP Code": "gap_code",
     "Ecoregion":  "ecoregion",
-    "Climate Zone":  "climate_zone",
     "Habitat Type":  "habitat_type",
+    "Climate Zone":  "climate_zone",
     "Manager Type": "manager_type",
     "Land Tenure Type": "land_tenure",
     "Access Type": "access_type",
@@ -397,8 +397,8 @@ select_colors = {
     "30x30 Status": status["stops"],
     "GAP Code": gap["stops"],
     "Ecoregion": ecoregion["stops"],
-    "Climate Zone": climate_zone["stops"],
     "Habitat Type": habitat_type["stops"],
+    "Climate Zone": climate_zone["stops"],
     "Manager Type": manager["stops"],
     "Land Tenure Type": land_tenure["stops"],
     "Access Type": access["stops"],
@@ -474,20 +474,19 @@ Include the steps you took to get this message and any other details that might 
 }
 
 help_message = '''
-- ❌ Safari/iOS not yet supported. For Safari/iOS users, change the **Leafmap module** below to Folium. 
-- 📊 Use this sidebar to color-code the map by different attributes **(Group by)**, filter data **(Filters)**, or toggle on data layers and view summary charts **(Data Layers)**.
+- ❌ Safari/iOS not fully supported. For Safari/iOS users, change the **Leafmap module** from MapLibre to Folium in **(Map Settings)** below. 
+- 📊 Use this sidebar to color-code the map by different attributes **(Group by)**, filter data **(Filters)**, toggle on data layers and view summary charts **(Data Layers)**, and customize mapping in **(Map Settings)**.
+- 🐢 If the map is lagging and slow to load, toggle on **Low Resolution** in **(Map Settings)**.
 - 💬 For a more tailored experience, query our dataset of protected areas and their precomputed metrics for each of the displayed layers, using the experimental chatbot. The language model tries to answer natural language questions by drawing only from curated datasets (listed below).
 '''
 
 example_queries = """
 Mapping queries:
-- Show me GAP 3 lands in the top 10% of mean amphibian richness.
-- Show me easements where 90% or more of its area overlaps with regions of high biodiversity.
-- Show me amphibian biodiversity hotspots that aren't currently conserved.
-- Show me the areas with the highest bird richness in San Diego County. 
-- Show me protected areas in disadvantaged communities.
+- Show me bird biodiversity hotspots not covered by the 30x30 network.
+- Show me GAP 3 lands with mean amphibian richness in the top 10%.
+- Show me easements with 60% or more overlap with high plant biodiversity regions.
+- Show me protected areas that are open to the public in disadvantaged communities. 
 - Show me all 30x30 conservation areas managed by The Nature Conservancy.
-
 
 Exploratory data queries:
 - What is a GAP code?
@@ -495,6 +494,8 @@ Exploratory data queries:
 - How many acres are newly protected easements?
 - Which county has the highest percentage of wetlands?
 - Summarize the habitat types in the Mojave preserve.
+- What ecoregion has the highest bird species richness?
+
 """
 
 chatbot_limitations = """
@@ -695,15 +696,15 @@ if openrouter_api is None:
 
 llm_options = {
     "mistral-small-3.2-24b-instruct": ChatOpenAI(model = "mistralai/mistral-small-3.2-24b-instruct:free", api_key=openrouter_api, base_url = "https://openrouter.ai/api/v1",  temperature=0),
-    "hunyuan-a13b-instruct": ChatOpenAI(model = "tencent/hunyuan-a13b-instruct:free", api_key=openrouter_api, base_url = "https://openrouter.ai/api/v1",  temperature=0),
-    "deepseek-r1t2-chimera": ChatOpenAI(model = "tngtech/deepseek-r1t2-chimera:free", api_key=openrouter_api, base_url = "https://openrouter.ai/api/v1",  temperature=0),
     "devstral-small-2505": ChatOpenAI(model = "mistralai/devstral-small-2505:free", api_key=openrouter_api, base_url = "https://openrouter.ai/api/v1",  temperature=0),
-        "deepseek-chat-v3-0324": ChatOpenAI(model = "deepseek/deepseek-chat-v3-0324:free", api_key=openrouter_api, base_url = "https://openrouter.ai/api/v1",  temperature=0),
     "gpt-oss-20b": ChatOpenAI(model = "openai/gpt-oss-20b:free", api_key=openrouter_api, base_url = "https://openrouter.ai/api/v1",  temperature=0),
+    "deepseek-r1t2-chimera": ChatOpenAI(model = "tngtech/deepseek-r1t2-chimera:free", api_key=openrouter_api, base_url = "https://openrouter.ai/api/v1",  temperature=0),
     "kimi-dev-72b": ChatOpenAI(model = "moonshotai/kimi-dev-72b:free", api_key=openrouter_api, base_url = "https://openrouter.ai/api/v1",  temperature=0),
+    "hunyuan-a13b-instruct": ChatOpenAI(model = "tencent/hunyuan-a13b-instruct:free", api_key=openrouter_api, base_url = "https://openrouter.ai/api/v1",  temperature=0),
+    # "deepseek-chat-v3-0324": ChatOpenAI(model = "deepseek/deepseek-chat-v3-0324:free", api_key=openrouter_api, base_url = "https://openrouter.ai/api/v1",  temperature=0),
     "olmo": ChatOpenAI(model = "olmo", api_key=api_key, base_url = "https://llm.nrp-nautilus.io/",  temperature=0),
     "llama3": ChatOpenAI(model = "llama3", api_key=api_key, base_url = "https://llm.nrp-nautilus.io/",  temperature=0),
-    "deepseek-r1": BaseChatOpenAI(model = "deepseek-r1", api_key=api_key, base_url = "https://llm.nrp-nautilus.io/",  temperature=0),
+    # "deepseek-r1": BaseChatOpenAI(model = "deepseek-r1", api_key=api_key, base_url = "https://llm.nrp-nautilus.io/",  temperature=0),
     "qwen3": ChatOpenAI(model = "qwen3", api_key=api_key, base_url = "https://llm.nrp-nautilus.io/",  temperature=0),
     "gemma3": ChatOpenAI(model = "gemma3", api_key=api_key, base_url = "https://llm.nrp-nautilus.io/",  temperature=0),
 
