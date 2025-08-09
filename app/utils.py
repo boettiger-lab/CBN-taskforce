@@ -453,7 +453,7 @@ def get_chart_settings(x, feature_name, y=None, stacked=None, metric=None, perce
     if percent_type == "Network":
         chart_title = f"{feature_name} Within Each {x_title}"
         y_title = f"% of Area with {feature_name}"
-        subtitle = f"Acres of {feature_name} in each {x_title},\ndivided by total acres of each {x_title}"
+        subtitle = [f"Acres of {feature_name} in each {x_title},",f"divided by total acres of each {x_title}",'**Chart updates based on filters**']
 
     elif percent_type == "Feature":
         chart_title = f"Distribution of\n{feature_name} by {x_title}"
@@ -466,11 +466,12 @@ def get_chart_settings(x, feature_name, y=None, stacked=None, metric=None, perce
             subtitle = [f'Acres of 30x30 Status within each {x_title}',f'divided by total acres of each {x_title}','**Chart updates based on filters**']
         else:
             chart_title = f"{x_title}\nby 30x30 Status"
-            subtitle = f'Acres of 30x30 Status within each {x_title}'
+            subtitle = [f'Acres of 30x30 Status within each {x_title}','**Chart updates based on filters**']
         
     elif metric == "acres" and not stacked:
         chart_title = f"Acres of {feature_name.rstrip()}\nWithin Each {x_title}"
-    
+        subtitle = ['**Chart updates based on filters**']
+
     height = (
         350 if stacked else
         620 if "freshwater" in y else
