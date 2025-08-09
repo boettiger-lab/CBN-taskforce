@@ -127,7 +127,7 @@ def get_summary(ca, combined_filter, column, main_group, feature_col, colors = N
     df = (ca.filter(combined_filter)
             .group_by(*column)
             .aggregate(**all_aggs)
-            .mutate(percent_CA=_.percent_CA.round(5), acres=_.acres.round(0),percent_selected=_.percent_selected.round(5))
+            .mutate(percent_CA=_.percent_CA.round(5), acres=_.acres.round(0), percent_selected=_.percent_selected.round(5))
          )
 
      # Compute total acres by group and percent of group
@@ -174,7 +174,7 @@ def get_summary_table(ca, column, select_colors, color_choice, filter_cols, filt
     if column in ["status", "gap_code"]:
         df_bar_30x30 = None 
     else:
-        df_bar_30x30 = get_summary(ca, combined_filter | (_.status.isin(['Non-Conservation Area'])), [column, 'status'], column, feature_col, color_table(select_colors, "30x30 Status", 'status'))
+        df_bar_30x30 = get_summary(ca, combined_filter, [column, 'status'], column, feature_col, color_table(select_colors, "30x30 Status", 'status'))
         df_bar_30x30 = df_bar_30x30[df_bar_30x30[column] != "None"]
     # dropping nones 
     return df_network, df_feature, df_tab, df_bar_30x30 
@@ -564,7 +564,8 @@ def create_bar_chart(
         if metric != "acres":
             rule = alt.Chart(pd.DataFrame({'y_value': [0.3]})).mark_rule(
             color='red',
-            strokeDash=[5, 5]  
+            strokeDash=[5, 5],
+            strokeWidth=3,
             ).encode(
                 y='y_value'
             )
