@@ -322,7 +322,7 @@ def check_bounds(bounds, min_size = 0.8):
     west, south, east, north = bounds
     """
     Expand bounding box to ensure minimum width and height, and clamp within CA bounds.
-    Default is 80km across 
+    Default is 0.8 degrees 
     """
     west, south, east, north = bounds
     width = east - west
