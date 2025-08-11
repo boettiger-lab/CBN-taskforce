@@ -49,7 +49,7 @@ def main():
     
     chatbot_container = st.container()
     with chatbot_container:
-        llm_left_col, llm_right_col = st.columns([4,1], vertical_alignment = "bottom")
+        llm_left_col, llm_right_col = st.columns([2.5,1], vertical_alignment = "bottom")
         with llm_left_col:
             with st.popover("💬 Example Queries"):
                 st.markdown(example_queries)
@@ -245,8 +245,6 @@ def main():
             filter_vals.append([county_choice])
 
         st.divider()
-
-
     #### Data layers 
         st.markdown('<p class = "medium-font-sidebar"> Data Layers:</p>', help = "Select data layers to display summary charts.", unsafe_allow_html= True)
         #display toggles to turn on data layers            
@@ -268,23 +266,40 @@ def main():
         else:
             pmtiles_file = ca_pmtiles
 
+    ## filter data and get map styling, needs to be here so we can use it with map settings 
+    column = select_column[color_choice]
+    colors = color_table(select_colors, color_choice, column)
+    if 'llm_output' not in locals():
+        df_network, _, df_tab, df_bar_30x30 = get_summary_table(ca, column, select_colors, 
+                                                                color_choice, filter_cols, 
+                                                                filter_vals, colorby_vals)
+        style = get_pmtiles_style(style_options[color_choice], pmtiles_file, low_res, 
+                                  filter_cols, filter_vals) 
+    else:
+        if 'not_mapping' not in locals():
+            style = get_pmtiles_style(style_options[color_choice], pmtiles_file, low_res, ids = ids)
+        df_network, _ = get_summary_table_sql(ca, column, colors, ids)
+
+    with st.sidebar:
         #leafmap options 
         leafmap_choice = st.selectbox("Leafmap module", ['MapLibre','Folium'])
+        # mapping data 
+        legend, position, bg_color, fontsize, shape_type, controls = get_legend(style_options, color_choice, 
+                                                                    leafmap_choice, df_network, column)
+
         if leafmap_choice == "MapLibre":
             leafmap = importlib.import_module("leafmap.maplibregl")
-            controls={'navigation': 'top-left', 
-                      'fullscreen': 'top-left'}
             m = leafmap.Map(center= (-120, 36), style="positron", zoom=5, controls = controls,
                            attribution_control=False)
+
         else:
             leafmap = importlib.import_module("leafmap.foliumap")
-            m = leafmap.Map(center=[35, -120], zoom=5, 
+            m = leafmap.Map(center=[35, -120], zoom=5,
                             scale_control = False, draw_control = False, search_control = False,
                             measure_control = False, layers_control = False)
 
         #basemap choices
-        basemaps = leafmap.basemaps.keys()
-        b = st.selectbox("Basemap", basemaps,index= 40)
+        b = st.selectbox("Basemap", basemaps,index= 3)
         m.add_basemap(b, attribution = "")
 
         st.divider()
@@ -294,25 +309,14 @@ def main():
         st.markdown(":left_speech_bubble: [Get in touch or report an issue](https://github.com/boettiger-lab/CBN-taskforce/issues)")
         if st.button("🤖 Clear Chatbot Cache", on_click=run_sql.clear, help = 'Reset the chatbot’s cache (useful if it behaves unexpectedly)'):
             run_sql.clear()
-    
-    column = select_column[color_choice]
-    colors = color_table(select_colors, color_choice, column)
+
     main = st.container()
+    ## parameters for mapping the data (if we didn't use llm)
+    
+
     with main:
         map_col, stats_col = st.columns([3,2])
-    
-    ## parameters for mapping the data (if we didn't use llm)
-    if 'llm_output' not in locals():
-        df_network, _, df_tab, df_bar_30x30 = get_summary_table(ca, column, select_colors, color_choice, filter_cols, filter_vals,colorby_vals)
-        style = get_pmtiles_style(style_options[color_choice],pmtiles_file, low_res, filter_cols, filter_vals)
-            
-    else:
-        if 'not_mapping' not in locals():
-            style = get_pmtiles_style(style_options[color_choice], pmtiles_file, low_res, ids = ids)
-        df_network, _ = get_summary_table_sql(ca, column, colors, ids)
-    
-    ## mapping data 
-    legend, position, bg_color, fontsize = get_legend(style_options, color_choice, leafmap_choice, df_network, column)
+
 
     if 'not_mapping' not in locals():      
         if 'llm_output' not in locals():
@@ -320,28 +324,38 @@ def main():
                 bounds = get_county_bounds(county_choice)
             else:
                 bounds = [-124.42174575, 32.53428607, -114.13077782, 42.00950367]
-        
+
         ### mapping with maplibre
         if leafmap_choice == "MapLibre":
-       
-            m.add_pmtiles(pmtiles_file, style=style, name="30x30 Conserved Areas (Terrestrial)", 
-                          attribution = "CA Nature (2024)", tooltip=True, template = tooltip_template, fit_bounds=True)
+            m.add_pmtiles(pmtiles_file, style=style, 
+                          name="30x30 Conserved Areas (Terrestrial)", 
+                          attribution = "CA Nature (2024)", tooltip=True, 
+                          template = tooltip_template)
             m.fit_bounds(bounds)
-            m.add_legend(legend_dict = legend, fontsize = fontsize, bg_color = bg_color, position = position,
-                        title = '')
+            m.add_legend(title = '', legend_dict = legend, fontsize = fontsize, 
+                         bg_color = bg_color, position = position, 
+                         shape_type = shape_type)
         ### mapping with folium
         else: 
-            m.add_pmtiles(pmtiles_file, style=style, name="30x30 Conserved Areas (Terrestrial) by CA Nature (2024)",
+            # folium isn't happy with zooming into small bounds, giving it a minimum size bound (which is pretty large)
+            if 'llm_output' in locals():
+                bounds = check_bounds(bounds)
+                
+            m.add_pmtiles(pmtiles_file, style=style, 
+                          name="30x30 Conserved Areas (Terrestrial) by CA Nature (2024)",
                           tooltip=False, zoom_to_layer=True)
-            m.zoom_to_bounds(bounds)   
-            
             # add custom tooltip to pmtiles layer
             for layer in m._children.values():
                 if isinstance(layer, leafmap.PMTilesLayer):
                     pmtiles_layer = layer
                     break
             pmtiles_layer.add_child(CustomTooltip())
-            m.add_legend(legend_dict = legend, position = position, draggable = False, title = '')
+            style = {'background-color': 'rgba(255, 255, 255, 1)'}
+            m.add_legend(title = '', legend_dict = legend, style = style, 
+                         position = position, shape_type = shape_type, draggable = False)
+            m.zoom_to_bounds(bounds)   
+
+
 
     # check if any layer toggle is active
     any_chart_toggled = any(
@@ -454,7 +468,8 @@ def main():
                             # Percent of NETWORK
                             feature_col_net = f"pct_network_{suffix_clean}"
                             st.altair_chart(
-                                bar_chart(df_network, column, feature_col_net, label, metric=chart_choice, percent_type="Network"),
+                                bar_chart(df_network, column, feature_col_net, label,
+                                          metric=chart_choice, percent_type="Network"),
                                 use_container_width=True,
                             )
     
@@ -473,13 +488,15 @@ def main():
                             )
     
                             st.altair_chart(
-                                bar_chart(df_feature, column, feature_col_feat, label, metric=chart_choice, percent_type="Feature"),
+                                bar_chart(df_feature, column, feature_col_feat, label, 
+                                          metric=chart_choice, percent_type="Feature"),
                                 use_container_width=True,
                             )
                         else:
                             feature_col = f"acres_{suffix_clean}"
                             st.altair_chart(
-                                bar_chart(df_network, column, feature_col, label, metric=chart_choice),
+                                bar_chart(df_network, column, feature_col, label, 
+                                          metric=chart_choice),
                                 use_container_width=True,
                             )
 
