@@ -68,24 +68,6 @@ layer_config = [
 ]
 
 # colors for plotting 
-private_access_color = "#DE881E" # orange 
-public_access_color = "#3388ff" # blue
-purple = "#BF40BF" # purple
-mixed_color = "#005a00" # green
-year2023_color = "#26542C" # green
-year2024_color = "#F3AB3D" # orange 
-federal_color = "#529642" # green
-state_color = "#A1B03D" # light green
-local_color = "#365591" # blue
-special_color = "#0096FF" # blue
-private_color = "#7A3F1A" # brown
-joint_color = "#DAB0AE" # light pink
-county_color = "#DE3163" # magenta
-city_color = "#ADD8E6" #light blue
-hoa_color = "#A89BBC" # purple
-nonprofit_color =  "#D77031" #orange
-purple =  "#00008B" #purple
-cyan = "#1bc7c3" #cyan
 white =  "#FFFFFF" 
 
 # github logo 
@@ -204,17 +186,17 @@ manager = {
     'property': 'manager_type',
     'type': 'categorical',
     'stops': [
-        ['Federal', federal_color],
-        ['State', state_color],
-        ['Non Profit', nonprofit_color],
-        ['Special District', special_color],
+        ['Federal', "#529642"],
+        ['State', "#A1B03D"],
+        ['Non Profit', "#D77031"],
+        ['Special District', "#0096FF"],
         ['Unknown', "#bbbbbb"],
-        ['County', county_color],
-        ['City', city_color],
-        ['Joint', joint_color],
-        ['Tribal', purple],
-        ['Private', private_color],
-        ['HOA', hoa_color],
+        ['County', "#DE3163"],
+        ['City', "#ADD8E6"],
+        ['Joint', "#DAB0AE"],
+        ['Tribal', "#00008B"],
+        ['Private', "#7A3F1A"],
+        ['HOA', "#A89BBC"],
         ['None', white],
     ],
     'default': white
@@ -224,8 +206,8 @@ land_tenure = {
     'property': 'land_tenure',
     'type': 'categorical',
     'stops': [
-        ['Easement', private_access_color],
-        ['Non-Easement', public_access_color],
+        ['Easement', '#DE881E'],
+        ['Non-Easement', "#5B9BE0"],
         ['None', white],
 
     ],
@@ -235,10 +217,10 @@ access = {
     'property': 'access_type',
     'type': 'categorical',
     'stops': [
-        ['Open Access', public_access_color],
-        ['No Public Access', private_access_color],
+        ['Open Access', '#009E73'],
+        ['Restricted Access', '#E69F00'],
+        ['No Public Access', '#D55E00'],
         ['Unknown Access', "#bbbbbb"],
-        ['Restricted Access', purple],
         ['None', white],
     ],
     'default': white
@@ -352,7 +334,7 @@ habitat_type = {
     'type': 'categorical',
     'stops': [
         ['Agriculture', "#CCCCCC"],
-        ['Barren/Other', "#FFFFFF"],
+        ['Barren/Other', white],
         ['Conifer Forest', "#267300"],
         ['Conifer Woodland', "#ABCD66"],
         ['Desert Shrub', "#FFEBBE"],
@@ -365,7 +347,6 @@ habitat_type = {
         ['Water', "#BEFFE8"],
         ['Wetland', "#00A884"],
         ['None', white],
-
     ],
     'default': white
 }
@@ -673,6 +654,23 @@ county_bounds = {
     'Yolo': [-122.47292975, 38.26334133, -121.45117107, 38.97599413],  # padded
     'Yuba': [-121.63634257, 38.91834060, -121.00962750, 39.63941541]
 }
+
+
+
+basemaps = ['CartoDB.DarkMatter', 'CartoDB.DarkMatterNoLabels', 
+            'CartoDB.DarkMatterOnlyLabels','CartoDB.Positron', 
+            'CartoDB.PositronNoLabels', 'CartoDB.PositronOnlyLabels',
+            'CartoDB.Voyager', 'CartoDB.VoyagerLabelsUnder', 'CartoDB.VoyagerNoLabels',
+            'CartoDB.VoyagerOnlyLabels', 'CyclOSM', 'Esri.NatGeoWorldMap',
+            'Esri.WorldGrayCanvas', 'Esri.WorldPhysical', 'Esri.WorldShadedRelief',
+            'Esri.WorldStreetMap', 'Gaode.Normal', 'Gaode.Satellite',
+            'NASAGIBS.ASTER_GDEM_Greyscale_Shaded_Relief', 'NASAGIBS.BlueMarble', 
+            'NASAGIBS.ModisTerraBands367CR','NASAGIBS.ModisTerraTrueColorCR',
+            'NLCD 2021 CONUS Land Cover', 'OPNVKarte',
+            'OpenStreetMap', 'OpenTopoMap', 'SafeCast',
+            'TopPlusOpen.Color', 'TopPlusOpen.Grey', 'UN.ClearMap',
+            'USGS Hydrography', 'USGS.USImagery', 'USGS.USImageryTopo',
+            'USGS.USTopo']
 
 
 #maplibregl tooltip 

@@ -256,13 +256,16 @@ def get_legend(style_options, color_choice, leafmap_backend, df = None, column =
         if ~df.empty:
             categories = df[column].to_list() #if we filter out categories, don't show them on the legend 
             legend = {cat: color for cat, color in legend.items() if str(cat) in categories}
-    position, fontsize, bg_color = 'bottomleft', 15, 'white'
+    position, fontsize, bg_color = 'topright', 15, 'white'
+    controls={'navigation': 'bottom-left', 
+              'fullscreen':'bottom-left'}
+    shape_type = 'circle'
 
     if leafmap_backend == 'MapLibre':
-        position = 'bottom-left'
+        position = 'top-right'
 
-    # shorten legend for ecoregions 
-    if color_choice == "Ecoregion":
+    # shorten ecoregion legend labels + move around widgets to make room for legend 
+    if color_choice in "Ecoregion":
         legend = {key.replace("Northern California", "NorCal"): value for key, value in legend.items()} 
         legend = {key.replace("Southern California", "SoCal"): value for key, value in legend.items()} 
         legend = {key.replace("Southeastern", "SE."): value for key, value in legend.items()} 
@@ -271,11 +274,7 @@ def get_legend(style_options, color_choice, leafmap_backend, df = None, column =
         legend = {key.replace("Northwestern", "NW."): value for key, value in legend.items()} 
         bg_color = 'rgba(255, 255, 255, 0.6)'
         fontsize = 12
-        if leafmap_backend == 'MapLibre':
-            position = 'top-right'
-        else: 
-            position = 'topright'
-    return legend, position, bg_color, fontsize
+    return legend, position, bg_color, fontsize, shape_type, controls 
 
 
 ### tooltip for pmtiles
@@ -317,6 +316,35 @@ class CustomTooltip(PMTilesMapLibreTooltip):
     });
     {% endmacro %}
     """)
+
+
+def check_bounds(bounds, min_size = 0.9):
+    west, south, east, north = bounds
+    """
+    Expand bounding box to ensure minimum width and height, and clamp within CA bounds.
+    Default is 0.9 degrees 
+    """
+    west, south, east, north = bounds
+    width = east - west
+    height = north - south
+
+    if width < min_size:
+        mid_x = (west + east) / 2
+        west = mid_x - min_size / 2
+        east = mid_x + min_size / 2
+
+    if height < min_size:
+        mid_y = (south + north) / 2
+        south = mid_y - min_size / 2
+        north = mid_y + min_size / 2
+
+    ca_west, ca_south, ca_east, ca_north = [-124.42174575, 32.53428607, -114.13077782, 42.00950367]
+    west = max(west, ca_west)
+    east = min(east, ca_east)
+    south = max(south, ca_south)
+    north = min(north, ca_north)
+
+    return [west, south, east, north]
 
 
 ######################## CHART FUNCTIONS 
@@ -615,12 +643,13 @@ def create_bar_chart(
         symbolStrokeWidth=0.1,
         direction="horizontal",
         orient="top",
-        columns=2,
+        columns=1,
         title=None,
         labelOffset=2,
         offset=5,
         symbolType="square",
         labelFontSize=13,
+        labelLimit = 300,
     ).configure_title(
         fontSize=16,
         align="center",
