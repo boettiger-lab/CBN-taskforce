@@ -20,7 +20,7 @@ def main():
 
     ca = con.table("mydata")
 
-    st.set_page_config(layout="wide", page_title="CA Protected Areas Explorer", page_icon=":globe:")
+    st.set_page_config(layout="wide", page_title="CA 30x30 Planning & Assessment Tool", page_icon=":globe:")
     # session state for syncing app 
     for key in keys:
         if key not in st.session_state:
@@ -36,7 +36,7 @@ def main():
     #customizing style with CSS 
     st.markdown(app_formatting,unsafe_allow_html=True)
     
-    st.markdown("<h2>CA 30x30 Planning & Assessment Prototype</h2>", unsafe_allow_html=True)
+    st.markdown("<h2>CA 30x30 Planning & Assessment Tool</h2>", unsafe_allow_html=True)
     
     st.markdown('<p class="medium-font"> In October 2020, Governor Newsom issued <a href="https://www.gov.ca.gov/wp-content/uploads/2020/10/10.07.2020-EO-N-82-20-.pdf" target="_blank">Executive Order N-82-20</a>, which establishes a state goal of conserving 30% of California’s lands and coastal waters by 2030 – known as <a href="https://www.californianature.ca.gov/" target="_blank">CA 30x30</a>. </p>',
     unsafe_allow_html=True)
