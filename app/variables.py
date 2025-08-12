@@ -472,8 +472,7 @@ Mapping queries:
 Exploratory data queries:
 - What is a GAP code?
 - What is the habitat composition of the 30x30 network?
-- How many acres are newly protected easements?
-- Which county has the highest percentage of wetlands?
+- Which county has the highest percentage of 30x30 conservation areas?
 - Summarize the habitat types in the Mojave preserve.
 - What ecoregion has the highest bird species richness?
 
