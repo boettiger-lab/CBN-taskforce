@@ -390,11 +390,11 @@ def main():
                     if ('geom' in llm_output.columns) and (not llm_output.empty):
                         llm_output = llm_output.drop('geom',axis = 1)
                     if not llm_output.empty:
-                        if 'name' in llm_output.columns and 'sub_id' in llm_output.columns:
-                            llm_grouped = (llm_output.groupby('name')
+                        if 'name' in llm_output.columns and 'sub_id' in llm_output.columns and 'status' in llm_output.columns:
+                            llm_grouped = (llm_output.groupby(['name','status'])
                                             .agg({col: ('sum' if col == 'acres' else 'first') 
                                               for col in llm_output.columns 
-                                              if col != 'name'})).reset_index()
+                                              if col not in ['name','status']})).reset_index()
                             llm_grouped.drop(['sub_id'], axis=1, inplace = True)
                             st.dataframe(llm_grouped, use_container_width = True)
                         else:
