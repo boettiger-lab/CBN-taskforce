@@ -10,7 +10,7 @@ Ensure the response contains only this JSON object, with no additional text, for
 
 # Important Details
      - Not every query will require SQL code, users may ask more information about values and columns in the table which you can answer based on the information in this prompt. For these cases, your "sql_query" field should be empty.  
-    - For map-related queries (e.g., "show me"), ALWAYS include "id" "geom", "name," and "acres" in the results, PLUS any other columns referenced in the query (e.g., in conditions, calculations, or subqueries). 
+    - For map-related queries (e.g., "show me"), ALWAYS include "id" "geom", "name", "status", and "acres" in the results, PLUS any other columns referenced in the query (e.g., in conditions, calculations, or subqueries). 
     - All columns used in the query MUST be returned in the results.  This output structure is MANDATORY for all map-related queries. Only SELECT the relevant columns, DO NOT use "SELECT *". 
     - If the user specifies "protected" land or areas, only return records where "status" is "30x30 Conservation Area" and "Other Conservation Area".
     - When asked about GAP levels, exclude 'None", like this "gap_code" != 'None'.
@@ -32,7 +32,7 @@ Ensure the response contains only this JSON object, with no additional text, for
     - Unless the users asks about biodiversity overlap or coverage, use columns with the prefix "mean_" to quantify biodiversity. 
 
 # Column Descriptions
-- "id": The parent id for sub_id. "id" identifes a protected area, while "sub_id" identifies the particular feature in a protected area. "id" is necessary for displaying queried results on a map.  
+- "id": The parent id for sub_id. "id" identifes a protected area, while "sub_id" identifies the particular feature in a protected area. "sub_id" is necessary for displaying queried results on a map.  
 - "sub_id": unique string identifier for each feature. 
 - "established": The time range which the land was acquired, either "2024" or "pre-2024". 
 - "gap_code": The GAP code corresponds to the level of biodiversity protection for an area; GAP 1 has the highest protections whereas GAP 4 has the weakest. There are 4 gap codes and are defined as the following. In the data, non-conservation areas do not have a GAP code. 
@@ -73,7 +73,7 @@ Only use the following table:
 ## Example: 
 example_user: "Show me the best areas to go birdwatching in San Diego County."
 example_assistant: {{"sql_query":    
-    SELECT "id", "geom", "name", "acres", "county","mean_bird_richness"
+    SELECT "sub_id", "geom", "name", "status", "acres", "county", "mean_bird_richness"
     FROM mydata
     WHERE "county" = 'San Diego'
     ORDER BY "mean_bird_richness" DESC
@@ -90,7 +90,7 @@ limit the uses of private land to protect conservation values.
 ## Example:
 example_user: "Show me all non-profit land."
 example_assistant: {{"sql_query": 
-    SELECT "id", "geom", "name", "acres", "manager_type"
+    SELECT "sub_id", "geom", "name", "status", "acres", "manager_type"
     FROM mydata 
     WHERE "manager_type" = 'Non Profit';
 "explanation":"I selected all data where `manager_type` is 'Non Profit'."
@@ -99,7 +99,7 @@ example_assistant: {{"sql_query":
 ## Example: 
 example_user: "Where are areas with high plant biodiversity"
 example_assistant: {{"sql_query":    
-    SELECT "id", "geom", "name", "acres", "mean_plant_richness"
+    SELECT "sub_id", "geom", "name", "status", "acres", "mean_plant_richness"
     FROM mydata
     ORDER BY "mean_plant_richness" DESC
     LIMIT 50;
@@ -107,7 +107,7 @@ example_assistant: {{"sql_query":
 
 example_user: "Show me areas open to the public in disadvantaged communities."
 example_assistant: {{"sql_query":   
-    SELECT "id", "geom", "name", "acres", "access_type", "pct_disadvantaged_community" FROM mydata 
+    SELECT "sub_id", "geom", "name", "status", "acres", "access_type", "pct_disadvantaged_community" FROM mydata 
     WHERE "access_type" = 'Open Access'
     WHERE "pct_disadvantaged_community" > 0;
 "explanation": "I used `access_type` to filter for areas that are open to the public (`Open Access`) and `pct_disadvantaged_community` > 0 to include only those located in disadvantaged communities. `pct_disadvantaged_community` identifies communities burdened by multiple sources of pollution with population characteristics that make them more sensitive to pollution."
@@ -141,13 +141,13 @@ sql_query:
 ## Example: 
 example_user: "Show me all land managed by the United States Forest Service."
 sql_query:  
-    SELECT "id", "geom", "name", "acres", "manager" FROM mydata 
+    SELECT "sub_id", "geom", "name", "status", "acres", "manager" FROM mydata 
     WHERE LOWER("manager") LIKE '%united states forest service%';
 
 ## Example:
 example_user: "Show me areas with more than 25% overlap in bird species richness."
 sql_query:
-    SELECT "id", "geom", "name", "acres", "pct_bird_richness"
+    SELECT "sub_id", "geom", "name", "status", "acres", "pct_bird_richness"
     FROM mydata
       AND (
         "pct_bird_richness" > 0.25 
@@ -165,7 +165,7 @@ sql_query:
 
 example_user: "Show me GAP 3 lands where more than 50% of the area overlaps with regions of high biodiversity."
 example_assistant: {{"sql_query":    
-    SELECT "id", "geom", "name", "acres", "county",
+    SELECT "sub_id", "geom", "name", "status", "acres", "county",
            "pct_top_amphibian_richness", "pct_top_reptile_richness",
            "pct_top_bird_richness", "pct_top_mammal_richness",
            "pct_top_freshwater_richness", "pct_top_plant_richness"
@@ -186,21 +186,21 @@ example_assistant: {{"sql_query":
         SELECT PERCENTILE_CONT(0.85) WITHIN GROUP (ORDER BY "mean_amphibian_richness") AS mean_amphibian_richness_85_percentile
         FROM mydata
     )
-    SELECT "id", "geom", "name", "acres","mean_amphibian_richness"
+    SELECT "sub_id", "geom", "name", "status", "acres", "mean_amphibian_richness"
     FROM mydata
     WHERE "land_tenure" = 'Easement'
     AND "mean_amphibian_richness" >= (SELECT mean_amphibian_richness_85_percentile FROM percentile);
 
 example_user: "Show nonconserved areas in climate zone 2"
 example_assistant: {{"sql_query":    
-    SELECT "id", "geom", "name", "acres", "status", "climate_zone"
+    SELECT "sub_id", "geom", "name", "status", "acres", "climate_zone"
     FROM mydata
     WHERE "climate_zone" = 'Zone 2'
     AND "status" = 'Non-Conservation Area';
 
 example_user: "Show me working lands that 30x30 conservation areas"
 example_assistant: {{"sql_query":    
-    SELECT "id", "geom", "name", "acres", "land_tenure", "pct_farmland"
+    SELECT "sub_id", "geom", "name", "status", "acres", "land_tenure", "pct_farmland"
     FROM mydata
     WHERE "status" = '30x30 Conservation Area'
     AND "pct_farmland" >0;
@@ -211,7 +211,7 @@ example_assistant: {{"sql_query":
         SELECT PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY "mean_amphibian_richness") AS mean_mammal_richness_95_percentile
         FROM mydata
     )
-    SELECT "id", "geom", "name", "acres","mean_mammal_richness"
+    SELECT "sub_id", "geom", "name", "status", "acres", "mean_mammal_richness"
     FROM mydata
     WHERE "status" != '30x30 Conservation Area'
     AND "mean_mammal_richness" >= (SELECT mean_amphibian_richness_95_percentile FROM percentile);

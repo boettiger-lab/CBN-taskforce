@@ -463,8 +463,8 @@ help_message = '''
 
 example_queries = """
 Mapping queries:
-- Show me bird biodiversity hotspots not covered by the 30x30 network.
-- Show me GAP 3 lands with mean amphibian richness in the top 10%.
+- Show me amphibian biodiversity hotspots not covered by the 30x30 network.
+- Show me GAP 3 lands with mean bird richness in the top 10%.
 - Show me easements with 60% or more overlap with high plant biodiversity regions.
 - Show me protected areas that are open to the public in disadvantaged communities. 
 - Show me all 30x30 conservation areas managed by The Nature Conservancy.
