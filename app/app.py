@@ -95,7 +95,7 @@ def main():
         sql_query = output.sql_query
         explanation =output.explanation
         if not sql_query: # if the chatbot can't generate a SQL query.
-            return pd.DataFrame({'id' : []}),'', explanation
+            return pd.DataFrame({'sub_id' : []}),'', explanation
         result = ca.sql(sql_query).execute()
         if result.empty:
             explanation = "This query did not return any results. Please try again with a different query."
@@ -139,7 +139,7 @@ def main():
                                 st.stop()
                                 
                             # output without mapping columns (id, geom)
-                            elif "id" not in llm_output.columns and "geom" not in llm_output.columns:
+                            elif "sub_id" not in llm_output.columns and "geom" not in llm_output.columns:
                                 st.write(llm_output)
                                 not_mapping = True
         
@@ -151,8 +151,8 @@ def main():
                                     st.code(sql_query,language = "sql") 
                                     
                         # extract ids, columns, bounds if present
-                        if "id" in llm_output.columns and not llm_output.empty:
-                            ids = list(set(llm_output['id'].tolist()))
+                        if "sub_id" in llm_output.columns and not llm_output.empty:
+                            ids = list(set(llm_output['sub_id'].tolist()))
                             llm_cols = extract_columns(sql_query)
                             bounds = llm_output.total_bounds.tolist()
                         else:
@@ -390,12 +390,12 @@ def main():
                     if ('geom' in llm_output.columns) and (not llm_output.empty):
                         llm_output = llm_output.drop('geom',axis = 1)
                     if not llm_output.empty:
-                        if 'name' in llm_output.columns and 'id' in llm_output.columns:
+                        if 'name' in llm_output.columns and 'sub_id' in llm_output.columns:
                             llm_grouped = (llm_output.groupby('name')
                                             .agg({col: ('sum' if col == 'acres' else 'first') 
                                               for col in llm_output.columns 
                                               if col != 'name'})).reset_index()
-                            llm_grouped.drop(['id'], axis=1, inplace = True)
+                            llm_grouped.drop(['sub_id'], axis=1, inplace = True)
                             st.dataframe(llm_grouped, use_container_width = True)
                         else:
                             st.dataframe(llm_output, use_container_width = True)
