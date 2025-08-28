@@ -3,8 +3,9 @@ Authors: **Cassie Buhler** ([CIRES](https://cires.colorado.edu/), [ESIIL](https:
 
 Made in collaboration with the [California Biodiversity Network (CBN)](https://cabiodiversitynetwork.org/)
 
-License: BSD-2-clause
+[![DOI](https://zenodo.org/badge/950257719.svg)](https://doi.org/10.5281/zenodo.16988638)
 
+License: BSD-2-clause
 
 Data: https://data.carlboettiger.info/public-ca30x30
 
