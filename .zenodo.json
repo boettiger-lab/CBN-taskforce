@@ -1,30 +1,32 @@
 {
-    "creators": [
-        {
-            "name": "Buhler, Cassidy Kim",
-            "orcid": "0000-0003-4157-4273",
-            "affiliation": "University of Colorado Boulder",
-        },
-        {
-            "name": "Boettiger, Carl",
-            "orcid": "0000-0002-1642-628X",
-            "affiliation": "University of California Berkeley"
-        }
-    ],
-    "title": "CA 30x30 Planning & Assessment Tool",
-    "description": "A decision-support tool developed in collaboration with the California Biodiversity Network to align with the CA 30x30 Biodiversity Assessment. The tool can answer complex, real world natural language queries asked by conservation partner organizations, responding with reproducible, verifiable data summaries, charts, maps and text through careful integration of open weights language models and cloud optimized ecological and socio-environmental data. With this tool, you can explore habitats and features that support biodiversity within California&rsquo;s 30x30 conservation areas, other conservation areas, and non-conserved lands. This tool provides insight into what is conserved, what is lacking protection, and opportunities to fill these gaps.",
-    "access_right": "open",
-    "license": "bsd-2-clause",
-    "doi": "",
-    "related_identifiers": [
-        {
-            "identifier": "https://doi.org/10.5281/zenodo.14933817",
-            "relation": "isVarientOf",
-            "resource_type": "software"
-        }
-    ],
-    "upload_type": "software",
-    "grants": [
-        {"id": "10.13039/100000001::2153040"}
-    ]
+   "creators":[
+      {
+         "name":"Buhler, Cassidy Kim",
+         "orcid":"0000-0003-4157-4273",
+         "affiliation":"University of Colorado Boulder"
+      },
+      {
+         "name":"Boettiger, Carl",
+         "orcid":"0000-0002-1642-628X",
+         "affiliation":"University of California Berkeley"
+      }
+   ],
+   "title":"CA 30x30 Planning & Assessment Tool",
+   "description":"A decision-support tool developed in collaboration with the California Biodiversity Network to align with the CA 30x30 Biodiversity Assessment. The tool can answer complex, real world natural language queries asked by conservation partner organizations, responding with reproducible, verifiable data summaries, charts, maps and text through careful integration of open weights language models and cloud optimized ecological and socio-environmental data. With this tool, you can explore habitats and features that support biodiversity within California's 30x30 conservation areas, other conservation areas, and non-conserved lands. This tool provides insight into what is conserved, what is lacking protection, and opportunities to fill these gaps.",
+   "access_right":"open",
+   "license":"bsd-2-clause",
+   "doi":"10.5281/zenodo.16988638",
+   "related_identifiers":[
+      {
+         "identifier":"https://doi.org/10.5281/zenodo.14933817",
+         "relation":"isVarientOf",
+         "resource_type":"software"
+      }
+   ],
+   "upload_type":"software",
+   "grants":[
+      {
+         "id":"10.13039/100000001::2153040"
+      }
+   ]
 }
