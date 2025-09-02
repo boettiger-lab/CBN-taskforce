@@ -19,7 +19,7 @@
    "related_identifiers":[
       {
          "identifier":"https://doi.org/10.5281/zenodo.14933817",
-         "relation":"isVarientOf",
+         "relation":"isVariantFormOf",
          "resource_type":"software"
       }
    ],
