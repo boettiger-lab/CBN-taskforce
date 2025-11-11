@@ -698,11 +698,9 @@ llm_options = {
     "deepseek-r1t2-chimera": ChatOpenAI(model = "tngtech/deepseek-r1t2-chimera:free", api_key=openrouter_api, base_url = "https://openrouter.ai/api/v1",  temperature=0),
     "kimi-dev-72b": ChatOpenAI(model = "moonshotai/kimi-dev-72b:free", api_key=openrouter_api, base_url = "https://openrouter.ai/api/v1",  temperature=0),
     "hunyuan-a13b-instruct": ChatOpenAI(model = "tencent/hunyuan-a13b-instruct:free", api_key=openrouter_api, base_url = "https://openrouter.ai/api/v1",  temperature=0),
-    # "deepseek-chat-v3-0324": ChatOpenAI(model = "deepseek/deepseek-chat-v3-0324:free", api_key=openrouter_api, base_url = "https://openrouter.ai/api/v1",  temperature=0),
-    "olmo": ChatOpenAI(model = "olmo", api_key=api_key, base_url = "https://llm.nrp-nautilus.io/",  temperature=0),
-    "llama3": ChatOpenAI(model = "llama3", api_key=api_key, base_url = "https://llm.nrp-nautilus.io/",  temperature=0),
-    # "deepseek-r1": BaseChatOpenAI(model = "deepseek-r1", api_key=api_key, base_url = "https://llm.nrp-nautilus.io/",  temperature=0),
-    "qwen3": ChatOpenAI(model = "qwen3", api_key=api_key, base_url = "https://llm.nrp-nautilus.io/",  temperature=0),
-    "gemma3": ChatOpenAI(model = "gemma3", api_key=api_key, base_url = "https://llm.nrp-nautilus.io/",  temperature=0),
+    "olmo": ChatOpenAI(model = "olmo", api_key=api_key, base_url = "http://ellm.nrp-nautilus.io/",  temperature=0),
+    "llama3": ChatOpenAI(model = "llama3", api_key=api_key, base_url = "http://ellm.nrp-nautilus.io/",  temperature=0),
+    "qwen3": ChatOpenAI(model = "qwen3", api_key=api_key, base_url = "http://ellm.nrp-nautilus.io/",  temperature=0),
+    "gemma3": ChatOpenAI(model = "gemma3", api_key=api_key, base_url = "http://ellm.nrp-nautilus.io/",  temperature=0),
 
 }
