@@ -356,15 +356,9 @@ def area_chart(df, column, color_choice):
     sort, _, _, _,_,_,_= get_chart_settings(column,color_choice)
     df = df.copy()
     df[column] = df[column].apply(lambda x: get_label_transform(column, x))
-    
-    unique_labels = sorted(df[column].unique())
-    if sort == 'x':
-        labels_sorted = unique_labels
-    elif sort == '-x':
-        labels_sorted = unique_labels[::-1]
-    else:
-        labels_sorted = sort 
-
+    order_df = df.groupby(column)['percent_selected'].mean().sort_values()
+    labels_sorted = order_df.index.tolist()[::-1]
+        
     cat_dtype = CategoricalDtype(categories=labels_sorted, ordered=True)
     df["order_index"] = df[column].astype(cat_dtype).cat.codes  
     
