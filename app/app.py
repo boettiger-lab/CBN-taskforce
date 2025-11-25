@@ -290,7 +290,7 @@ def main():
         if leafmap_choice == "MapLibre":
             leafmap = importlib.import_module("leafmap.maplibregl")
             m = leafmap.Map(center= (-120, 36), style="positron", zoom=5, controls = controls,
-                           attribution_control=False)
+                           attribution_control=False, use_message_queue=True)
 
         else:
             leafmap = importlib.import_module("leafmap.foliumap")
