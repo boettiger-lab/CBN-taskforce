@@ -750,8 +750,29 @@ llm_options = {
         extra_body=data_policy
     ),
 
-    "olmo-2-0325-32b-instruct": ChatOpenAI(
-        model="olmo",
+    "gemma-3-27b-it": ChatOpenAI(
+        model="gemma3",
+        api_key=api_key,
+        base_url=nrp_endpoint,
+        temperature=0
+    ),
+
+    "gpt-oss-120b": ChatOpenAI(
+        model="gpt-oss",
+        api_key=api_key,
+        base_url=nrp_endpoint,
+        temperature=0
+    ),
+
+    "glm-4.6-gptq-int4-int8mix": ChatOpenAI(
+        model="glm-4.6",
+        api_key=api_key,
+        base_url=nrp_endpoint,
+        temperature=0
+    ),
+
+    "glm-4.5v-fp8": ChatOpenAI(
+        model="glm-v",
         api_key=api_key,
         base_url=nrp_endpoint,
         temperature=0
