@@ -442,7 +442,6 @@ Include the query you ran and any other relevant details. Thanks!
 Traceback:
 
 ```{tb_str}```
-
 ---
 
 🚨 **Help Us Improve!**
@@ -451,7 +450,20 @@ Please help us fix this issue by reporting it on GitHub:
 [📄 Report this issue](https://github.com/boettiger-lab/CBN-taskforce/issues)
 
 Include the steps you took to get this message and any other details that might help us debug. Thanks!
-"""
+""",
+
+    "llm_sql_error": lambda llm, e, tb_str: f"""
+**Error – Query Generation Failed**
+
+The selected model `{llm}` generated an invalid SQL query and the database could not execute it.
+
+**What to do:**
+- Try running your query again OR
+- Select a different model
+
+**Error Details:**
+`{type(e)}: {e}`
+""",
 }
 
 help_message = '''
@@ -702,6 +714,18 @@ data_policy = {
 }
 
 llm_options = {
+    "gemma-3-27b-it": ChatOpenAI(
+        model="gemma3",
+        api_key=api_key,
+        base_url=nrp_endpoint,
+        temperature=0
+    ),
+    "gpt-oss-120b": ChatOpenAI(
+        model="gpt-oss",
+        api_key=api_key,
+        base_url=nrp_endpoint,
+        temperature=0
+    ),
     "trinity-mini": ChatOpenAI(
         model="arcee-ai/trinity-mini:free",
         api_key=openrouter_api,
@@ -715,17 +739,5 @@ llm_options = {
         base_url=openrouter_endpoint,
         temperature=0,
         extra_body=data_policy
-    ),
-    "gemma-3-27b-it": ChatOpenAI(
-        model="gemma3",
-        api_key=api_key,
-        base_url=nrp_endpoint,
-        temperature=0
-    ),
-    "gpt-oss-120b": ChatOpenAI(
-        model="gpt-oss",
-        api_key=api_key,
-        base_url=nrp_endpoint,
-        temperature=0
     ),
 }

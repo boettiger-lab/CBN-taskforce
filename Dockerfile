@@ -8,14 +8,10 @@ RUN apt-get update && apt-get install -y \
     git \
     && rm -rf /var/lib/apt/lists/*
 
-# install deps first (better caching)
 COPY requirements.txt /app/requirements.txt
 RUN pip install --no-cache-dir -r /app/requirements.txt
 
-# copy code
 COPY app/ /app/app/
 
-EXPOSE 8080
-HEALTHCHECK CMD curl --fail http://localhost:8080/_stcore/health
-
-ENTRYPOINT ["streamlit", "run", "app/app.py", "--server.port=8080", "--server.address=0.0.0.0"]
+# bind to the port HF provides
+ENTRYPOINT ["bash", "-lc", "streamlit run app/app.py --server.address=0.0.0.0 --server.port ${PORT:-7860}"]
