@@ -9,6 +9,7 @@ from variables import *
 from utils import *
 import traceback
 import importlib
+import duckdb
 
 def main():
     con = ibis.duckdb.connect("duck.db", extensions=["spatial"])
@@ -183,16 +184,14 @@ def main():
                 tb_str = traceback.format_exc()  # full multiline traceback string
                 if isinstance(e, openai.BadRequestError):
                     st.error(error_messages["bad_request"](llm_choice, e, tb_str), icon="🚨")
-                    
+                elif isinstance(e, duckdb.BinderException):
+                    st.error(error_messages["llm_sql_error"](llm_choice, e, tb_str), icon="🚨")
                 elif isinstance(e, openai.RateLimitError):
                     st.error(error_messages["bad_request"](llm_choice, e, tb_str), icon="🚨")
-                
                 elif isinstance(e, openai.APIStatusError):
                     st.error(error_messages["bad_request"](llm_choice, e, tb_str), icon="🚨")
-                
                 elif isinstance(e, openai.InternalServerError):
                     st.error(error_messages["internal_server_error"](llm_choice, e, tb_str), icon="🚨")
-                
                 elif isinstance(e, openai.NotFoundError):
                     st.error(error_messages["internal_server_error"](llm_choice, e, tb_str), icon="🚨")
                 else:
@@ -340,7 +339,6 @@ def main():
             # folium isn't happy with zooming into small bounds, giving it a minimum size bound (which is pretty large)
             if 'llm_output' in locals():
                 bounds = check_bounds(bounds)
-                
             m.add_pmtiles(pmtiles_file, style=style, 
                           name="30x30 Conserved Areas (Terrestrial) by CA Nature (2024)",
                           tooltip=False, zoom_to_layer=True)
