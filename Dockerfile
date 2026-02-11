@@ -13,11 +13,5 @@ RUN pip install --no-cache-dir -r /app/requirements.txt
 
 COPY app/ /app/app/
 
-# optional; metadata only
-EXPOSE 7860
-
-# optional; if you keep a healthcheck, make it use PORT
-HEALTHCHECK CMD curl --fail http://localhost:${PORT:-7860}/_stcore/health || exit 1
-
-# the real fix: bind to the port HF provides
+# bind to the port HF provides
 ENTRYPOINT ["bash", "-lc", "streamlit run app/app.py --server.address=0.0.0.0 --server.port ${PORT:-7860}"]
