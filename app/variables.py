@@ -702,14 +702,6 @@ data_policy = {
 }
 
 llm_options = {
-    "devstral-2512": ChatOpenAI(
-        model="mistralai/devstral-2512:free",
-        api_key=openrouter_api,
-        base_url=openrouter_endpoint,
-        temperature=0,
-        extra_body=data_policy
-    ),
-
     "trinity-mini": ChatOpenAI(
         model="arcee-ai/trinity-mini:free",
         api_key=openrouter_api,
@@ -717,7 +709,6 @@ llm_options = {
         temperature=0,
         extra_body=data_policy
     ),
-
     "nemotron-nano-9b-v2": ChatOpenAI(
         model="nvidia/nemotron-nano-9b-v2:free",
         api_key=openrouter_api,
@@ -725,12 +716,16 @@ llm_options = {
         temperature=0,
         extra_body=data_policy
     ),
-    
     "gemma-3-27b-it": ChatOpenAI(
         model="gemma3",
         api_key=api_key,
         base_url=nrp_endpoint,
         temperature=0
     ),
-
+    "gpt-oss-120b": ChatOpenAI(
+        model="gpt-oss",
+        api_key=api_key,
+        base_url=nrp_endpoint,
+        temperature=0
+    ),
 }
