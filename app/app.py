@@ -14,12 +14,12 @@ import duckdb
 def main():
     con = ibis.duckdb.connect("duck.db", extensions=["spatial"])
     current_tables = con.list_tables()
-    
-    if "mydata" not in set(current_tables):
-        tbl = con.read_parquet(ca_parquet)
-        con.create_table("mydata", tbl)
 
-    ca = con.table("mydata")
+    if "ca30x30" not in set(current_tables):
+        tbl = con.read_parquet(ca_parquet)
+        con.create_table("ca30x30", tbl)
+
+    ca = con.table("ca30x30")
 
     st.set_page_config(layout="wide", page_title="CA 30x30 Planning & Assessment Tool", page_icon=":globe:")
     # session state for syncing app 
@@ -72,9 +72,9 @@ def main():
         template = file.read()
     
     from langchain_openai import ChatOpenAI
-    managers = ca.sql("SELECT DISTINCT manager FROM mydata;").execute()
-    names = ca.sql("SELECT name FROM mydata GROUP BY name HAVING SUM(acres) >10000;").execute()
-    ecoregions = ca.sql("SELECT DISTINCT ecoregion FROM mydata;").execute()
+    managers = ca.sql("SELECT DISTINCT manager FROM ca30x30;").execute()
+    names = ca.sql("SELECT name FROM ca30x30 GROUP BY name HAVING SUM(acres) >10000;").execute()
+    ecoregions = ca.sql("SELECT DISTINCT ecoregion FROM ca30x30;").execute()
     
     from langchain_core.prompts import ChatPromptTemplate
     prompt = ChatPromptTemplate.from_messages([
@@ -283,8 +283,8 @@ def main():
         #leafmap options 
         leafmap_choice = st.selectbox("Leafmap module", ['MapLibre','Folium'])
         # mapping data 
-        legend, position, bg_color, fontsize, shape_type, controls = get_legend(style_options, color_choice, 
-                                                                    leafmap_choice, df_network, column)
+        legend, position, bg_color, fontsize, shape_type, controls = get_legend(style_options, color_choice,leafmap_choice, df_network, column)
+
 
         if leafmap_choice == "MapLibre":
             leafmap = importlib.import_module("leafmap.maplibregl")
