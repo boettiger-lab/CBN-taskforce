@@ -23,6 +23,7 @@ import re
 from minio.error import S3Error
 import logging
 import io
+import uuid
 
 ######################## UI FUNCTIONS 
 def get_buttons(style_options, style_choice):
