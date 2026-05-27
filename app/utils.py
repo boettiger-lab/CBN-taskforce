@@ -260,7 +260,7 @@ def get_legend(style_options, color_choice, leafmap_backend, df = None, column =
     if df is not None and not df.empty:
         categories = df[column].to_list() #if we filter out categories, don't show them on the legend 
         legend = {cat: color for cat, color in legend.items() if str(cat) in categories}
-position, fontsize, bg_color = 'topright', 15, 'white'
+    position, fontsize, bg_color = 'topright', 15, 'white'
     controls={'navigation': 'bottom-left', 
               'fullscreen':'bottom-left'}
     shape_type = 'circle'
